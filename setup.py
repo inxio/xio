@@ -6,11 +6,9 @@ from setuptools import (
     find_packages,
 )
 
-import xio
-
 setup(
     name='xio',
-    version=xio.__version__,
+    version='0.0.1',
     python_requires='>=2.7.*',
     description="""simple micro framework for microservices""",
     long_description=open('README.md').read(),
