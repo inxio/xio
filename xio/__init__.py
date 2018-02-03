@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 
 from .core.lib.env import env, context, __PATH__ as path
 from .core.lib.request import request

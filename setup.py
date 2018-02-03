@@ -8,7 +8,7 @@ from setuptools import (
 
 setup(
     name='xio',
-    version='0.0.1',
+    version='0.0.2',
     python_requires='>=2.7.*',
     description="""simple micro framework for microservices""",
     long_description=open('README.md').read(),
