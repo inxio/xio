@@ -1,6 +1,28 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import sys
+
+if sys.version_info.major == 2:
+    install_requires = [
+        "requests", 
+        "pyyaml", 
+        "web3",
+        "bitcoin",
+        'ethereum',
+        "web3"
+    ]
+else:
+    install_requires = [
+        "requests", 
+        "pyyaml", 
+        "gevent", 
+        "uwsgi", 
+        "ws4py", 
+        "web3",
+    ]
+
+
 from setuptools import (
     setup,
     find_packages,
@@ -16,17 +38,7 @@ setup(
     author_email='ludovic.jacquelin@gmail.com',
     url='https://github.com/inxio/xio',
     include_package_data=True,
-    install_requires=[
-        "requests", 
-        "pyyaml", 
-        "gevent", 
-        "uwsgi", 
-        "ws4py", 
-        "pycryptodome",
-        "web3",
-        "bitcoin",
-        #"ethereum"
-    ],
+    install_requires= install_requires,
     py_modules=['xio'],
     #scripts=['xio/bin/xio'],
     license="MIT",
