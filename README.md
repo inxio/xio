@@ -1,4 +1,3 @@
-# README #
 
 ### About xio
 
