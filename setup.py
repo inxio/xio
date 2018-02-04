@@ -8,6 +8,7 @@ if sys.version_info.major == 2:
         "requests", 
         "pyyaml", 
         "web3",
+        "pynacl",
         "bitcoin",
         'ethereum',
         "web3"
@@ -15,7 +16,8 @@ if sys.version_info.major == 2:
 else:
     install_requires = [
         "requests", 
-        "pyyaml", 
+        "pyyaml",
+        "pynacl",
         "gevent", 
         "uwsgi", 
         "ws4py", 
