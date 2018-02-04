@@ -29,7 +29,7 @@ Xio is builded on concept of resources, app and node
 
 ### Requirements
 
-You need Python 2.7
+You need Python >= 2.7
 
 The server component use [Gevent ](https://pypi.python.org/pypi/gevent) 
 
