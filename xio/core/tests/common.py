@@ -23,6 +23,11 @@ def checkPeer(peertype):
     assert peer.key.public
     assert peer.key.address
 
+    # basic client instance 
+    cli = xio.client(peer)
+    assert cli and cli.__class__.__name__.lower()=='resource', Exception('ERROR FACTORY %s' % peertype)
+    assert cli.about().content.get('id')==peer.id, Exception('ERROR FACTORY %s' % peertype)
+
     # client instance using server instance .. eg xio.app( app )
     from xio.core import resource
     cli = factory(peer)
@@ -51,5 +56,13 @@ def checkPeer(peertype):
     cli = peer.connect(app)
     info = cli.get().content
     assert info.get('client').get('id')==peer.id
+
+    # peer connected peers
+    assert peer.peers
+    peer.peers.register(app)
+    assert peer.peers.db.count()==1
+
+
+    
 
 

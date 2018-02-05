@@ -65,4 +65,16 @@ class Peer(resource.Resource):
         return cli.connect()
 
 
+    def encrypt(self,message,dst_public_key=None):
+        return self.key.encryption.encrypt(message,dst_public_key=dst_public_key)
+
+    def decrypt(self,message):
+        return self.key.encryption.decrypt(message)
+
+
+
+
+
+
+
        
