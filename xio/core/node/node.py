@@ -9,8 +9,6 @@ from xio.core.app.app import App
 from xio.core.lib.logs import log
 from xio.core.lib.utils import is_string, urlparse, generateuid
 
-from .peers import Peers
-
 import traceback
 from pprint import pprint
 import datetime
@@ -38,7 +36,9 @@ class Node(App):
         App.__init__(self,name,**kwargs)
 
         self.uid = generateuid()
-        self.peers = Peers(self)
+
+        from xio.core.network.network import Network
+        self.network = Network()
         self.services = [] # list of APP services to deliver
 
 

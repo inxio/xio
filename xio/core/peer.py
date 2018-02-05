@@ -2,8 +2,9 @@
 # -*- coding: utf-8 -*-
 
 from . import resource 
-from .lib.crypto import crypto
+from . import peers 
 
+from .lib.crypto import crypto
 
 class Peer(resource.Resource):
 
@@ -32,6 +33,8 @@ class Peer(resource.Resource):
             self.key = crypto.key(token=token) 
             self.id = self.key.address
             self.token = token
+
+        self.peers = peers.Peers(self)
 
         resource.Resource.__init__(self,**kwargs) 
 
