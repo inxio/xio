@@ -50,7 +50,71 @@ class TestCases(unittest.TestCase):
         assert cli.get(app.id).content.get('client').get('id')==user.id
 
 
-    """
+
+    def test_node_lookup(self):
+
+        node = xio.node()
+        app = xio.app()
+        peer = node.peers.register(app)
+
+        # list all peers
+        for peer in node.peers.select():
+            assert peer.endpoint == app
+            assert peer.id==app.id
+
+        # get peer by uid
+        assert node.peers.get( peer.uid ).id==app.id
+
+        # get peer by id
+        assert node.peers.select( id=peer.id )[0].id==app.id
+
+
+
+    def test_node_delivery(self):
+
+        node = xio.node()
+        app = xio.app()
+        app.put('www',lambda req: req._debug() if req.GET else req.PASS )
+        peer = node.peers.register(app)
+        cli = xio.client(node)
+
+        # deliver by id
+        res = node.request('ABOUT','www/'+app.id)
+        assert res.status ==  200
+        assert res.content.get('id') == app.id
+        assert cli.about(app.id).content.get('id') == app.id
+        
+        # deliver by uid
+        res = node.request('ABOUT','www/'+peer.uid)
+        assert res.status ==  200
+        assert res.content.get('id') == app.id
+        assert cli.about(peer.uid).content.get('id') == app.id
+
+        # request handling
+        assert cli.get(app.id).content.get('method') == 'GET'
+        
+
+
+    def test_base_sync(self):
+
+        node1 = xio.node()
+        node2 = xio.node()
+    
+        # register app on node1
+        node1.register( xio.app() )
+        # register node1 on node2
+        node2.peers.register(node1)
+        # sync node2
+        node2.peers.sync()
+        
+        assert node2.peers.db.count()==2
+
+
+      
+    """  
+
+
+
 
     def test_base_sync(self):
 
@@ -107,88 +171,6 @@ class TestCases(unittest.TestCase):
         export = node1.peers.export()
         assert len(export)>=3
 
-        
-
-    def test_node_lookup(self):
-
-        node = xio.node()
-        app = xio.app()
-        peer = node.peers.register(app)
-
-        # list all peers
-        for peer in node.peers.select():
-            assert peer.endpoint == app
-            assert peer.id==app.id
-
-        # get peer by uid
-        assert node.peers.get( peer.uid ).id==app.id
-
-        # get peer by id
-        assert node.peers.select( id=peer.id )[0].id==app.id
-
-        # get peer by nodeid
-        #assert node.peers.select( nodeid=node.id )[0].id==app.id
-
-
-
-    def test_node_delivery(self):
-
-        node = xio.node()
-        app = xio.app()
-        peer = node.peers.register(app)
-
-        # about
-        res = node.request('ABOUT','www/'+app.id)
-        assert res.status ==  200
-        assert res.content.get('id') == app.id
-
-        # deliver by id
-        res = node.request('GET','www/'+app.id)
-        assert res.status ==  200
-
-        # deliver by uid
-        res = node.request('GET','www/'+peer.uid)
-        assert res.status ==  200
-
-        # deliver by xrn
-        #res = node.request('GET','www/xrn:xio:app1')
-        #assert res.content ==  'OKAPP1'
-
-
-
-    def _test_node_about_app(self):
-
-        # check relative path for node resources
-        app = xio.app()
-        node = xio.node()
-        node.peers.register(app)
-
-        cli = node.request('GET','www/'+app.id) 
-        assert cli.request('ABOUT','').content.get('id')==app.id
-        assert cli.about().content.get('id')==app.id
-
-        # check about retreiving
-        app1 = xio.app()
-        app1._about = {'name':'xrn:xio:app1'}
-        app1.put('www', lambda req: 'OKAPP1') 
-
-        node = xio.node()
-        node.peers.register(app1) #######TOFIX
-
-        app = node.request('GET','www/'+app1.id) 
-        assert app.path == 'www/'+app1.id
-
-        www1 = node.request('GET','www/'+app1.id).content 
-        www2 = app.request('GET','').content 
-        www3 = app.get().content 
-
-        assert www1 == www2 == www3 == 'OKAPP1'
-
-        about1 = node.request('ABOUT','www/'+app1.id).content 
-        about2 = app.request('ABOUT').content 
-        about3 = app.about().content
-
-        assert about1 == about2 #== about3 
 
 
     def _test_network_sync(self):
