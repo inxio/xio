@@ -80,9 +80,7 @@ def getLogServiceHandler(**config):
     stdoutHandler = logging.StreamHandler(sys.stdout)
     stdoutHandler.setFormatter( ColoredFormatter('%(levelname)s\t%(ext)s%(path)s\t%(message)s') )
 
-
-    # attention au addHandler qui rajoute le handler a chaque appel (doublon)
-    #logger.addHandler(fileHandler) # a reactiver pb suite bascule docker, multiprocess etc
+    #logger.addHandler(fileHandler) # tofix
     logger.addHandler(stdoutHandler)
     logger = CustomAdapter(logger, {'path':'','ext':''})
     return logger

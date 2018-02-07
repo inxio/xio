@@ -7,6 +7,11 @@ import xio
 import sys
 from pprint import pprint
 
+node = xio.node()
+node.register( xio.app() )
+node.register( xio.user() )
+assert node.peers.db.count()==2
+
 
 class TestCases(unittest.TestCase):
 

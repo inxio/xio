@@ -36,9 +36,6 @@ class Node(App):
         App.__init__(self,name,**kwargs)
 
         self.uid = generateuid()
-
-        from xio.core.network.network import Network
-        self.network = Network()
         self.services = [] # list of APP services to deliver
 
 

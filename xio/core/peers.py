@@ -10,7 +10,7 @@ from xio.core.lib.request import Request,Response
 from xio.core.lib.logs import log
 
 from xio.core.lib.utils import is_string, urlparse, md5
-
+from xio.core.peer import Peer
 
 from xio import db
 
@@ -57,7 +57,7 @@ class Peers:
 
         if not is_string(endpoint):
         
-            from .peer import Peer
+            
             assert isinstance(endpoint,Peer) or isinstance(endpoint, collections.Callable)   
             if not peertype:   
                 peertype = endpoint.__class__.__name__.lower()

@@ -14,9 +14,6 @@ class Tests(unittest.TestCase):
     def test2(self):
         assert True
 
-    def test3(self):
-        assert False
-
 
 
 if __name__=='__main__':

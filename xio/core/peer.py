@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 from . import resource 
-from . import peers 
 
 from .lib.crypto import crypto
 
@@ -34,9 +33,15 @@ class Peer(resource.Resource):
             self.id = self.key.address
             self.token = token
 
-        self.peers = peers.Peers(self)
-
         resource.Resource.__init__(self,**kwargs) 
+
+        import xio    
+        from .peers import Peers
+        self.peers = Peers()
+        self.network = xio.context.network
+
+
+
 
     @classmethod
     def factory(cls,*args,**kwargs): 
