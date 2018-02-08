@@ -89,15 +89,16 @@ class Key:
 
     def generateToken(self):
         nonce = str(int(time.time()))
-        message = self.address+'-'+nonce
+        message = b'%s-%s' % (str_to_bytes(self.address),str_to_bytes(nonce))
+        print (message)
         sig = self.sign(message)
-        token = '-'.join(sig)
+        token = b'-'.join(sig)
         assert self.recoverToken(token)==self.address
         
         return token
 
         
-        token = nonce+'-'+'-'.join([str(p) for p in sig])
+        token = nonce+b'-'+b'-'.join([str_to_bytes(p) for p in sig])
         if hasattr(self._handler,'recover'):
             address = nonce or str(int(time.time()))  # warning : wrong address recovered if int   
             sig = self.sign(nonce)
@@ -120,11 +121,11 @@ class Key:
 
 
     def recoverToken(self,token):
-        nfo = token.split('-')
+        nfo = token.split(b'-')
         verifikey = nfo[0]
         signed = nfo[1]
         message = self.verify(verifikey,signed)
-        address,nonce = message.split('-')
+        address,nonce = message.split(b'-')
         return address
 
         
@@ -133,7 +134,6 @@ class Key:
             address = nfo[0]
             nonce = nfo[1]
             sig = nfo[1]
-            print self, self._handler.verify
             
             assert self.verify(address+'-'+nonce,sig)
             

@@ -38,7 +38,6 @@ class TestCases(unittest.TestCase):
 
     def test_from_private(self):
         key = Key(priv=TEST_PRIVATE)
-        print(key.public)
         assert key.public == TEST_PUBLIC
         assert key.address.lower() == TEST_ADDRESS.lower() # toChecksumAddress in python2 ?
         
@@ -47,9 +46,6 @@ class TestCases(unittest.TestCase):
         k1 = Key(seed=TEST_SEED)
         k2 = Key(seed=TEST_SEED)
         k3 = Key(seed='other seed')
-
-        print k1.private
-        print k1.public
 
         assert k1.private == TEST_PRIVATE
         assert k1.public == TEST_PUBLIC
@@ -62,7 +58,6 @@ class TestCases(unittest.TestCase):
         
         k1 = Key()
         assert k1.token
-        print k1.token
         assert k1.recoverToken(k1.token)==k1.address
         
         k2 = Key(token=k1.token)

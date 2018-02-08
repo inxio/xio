@@ -62,7 +62,7 @@ class NaclHandler:
         # check result
         assert message == self.verify(verify_key_hex,encode_hex(signed))
         
-        return (verify_key_hex,encode_hex(signed))
+        return (str_to_bytes(verify_key_hex),str_to_bytes(encode_hex(signed)))
         
 
     @staticmethod

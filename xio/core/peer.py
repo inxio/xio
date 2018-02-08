@@ -5,6 +5,9 @@ from . import resource
 
 from .lib.crypto import crypto
 
+from xio.core.lib.utils import generateuid
+
+
 class Peer(resource.Resource):
 
     __XMETHODS__ = False
@@ -13,6 +16,7 @@ class Peer(resource.Resource):
     id = None
     token = None
     network = None
+    uuid = None
 
     def __init__(self,id=None,network=None,**kwargs):
         
@@ -32,6 +36,8 @@ class Peer(resource.Resource):
             self.key = crypto.key(token=token) 
             self.id = self.key.address
             self.token = token
+
+        self.uuid = generateuid()
 
         resource.Resource.__init__(self,**kwargs) 
 

@@ -9,6 +9,7 @@ import sys
 from pprint import pprint
 
 
+
 def checkPeer(peertype):
 
     factory = getattr(xio,peertype)
@@ -21,10 +22,10 @@ def checkPeer(peertype):
     assert factory(seed=seed).id == factory(seed=seed).id
     peer = factory()
     assert peer.id
-    assert peer.id
+    assert peer.uuid
     assert peer.token
     assert peer.key
-    assert peer.key._private
+    assert peer.key.private
     assert peer.key.public
     assert peer.key.address
 
@@ -124,14 +125,10 @@ class TestCases(unittest.TestCase):
     def test_recover(self):
     
         user1 = xio.user()
-        user2 = xio.user(key=user1.key._private)
+        user2 = xio.user(key=user1.key.private)
         assert user2.id==user1.id
         user3 = xio.user(token=user1.token)
         assert user3.id==user1.id
-
-        print (user1.id)
-        print (user2.id)
-        print (user3.id)
         assert user1.id==user2.id==user3.id
 
 
