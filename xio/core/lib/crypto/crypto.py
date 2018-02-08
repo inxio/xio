@@ -9,8 +9,8 @@ import base64
 import uuid
 import json
 import time
-            
-from .handlers.bitcoinHandler import BitcoinHandler
+
+from .handlers.naclHandler import NaclHandler
 
 try:
     from .handlers.bitcoinHandler import BitcoinHandler
@@ -25,12 +25,6 @@ except Exception as err:
     WEB3_HANDLER = None
 
 
-try:
-    from .handlers.naclHandler import NaclHandler
-    NACL_HANDLER = NaclHandler
-except:
-    NACL_HANDLER = False
-
 
 
 def key(*args,**kwargs):
@@ -40,30 +34,30 @@ class Key:
 
     def __init__(self,priv=None,token=None,seed=None):
 
-        handler_cls = BITCOIN_HANDLER or WEB3_HANDLER
+        handler_cls = NaclHandler
 
         if token:
             self._handler = handler_cls # no instance, only static method allowed
-            self._private = None
+            self.private = None
             self.public = None
             self.token = token
             self.address = self.recoverToken(token)
             self.encryption = None
         else:        
             self._handler = handler_cls(private=priv,seed=seed)
-            self._private = self._handler.priv
-            self.public = self._handler.pub
-            self.address = self._handler.address
+            self.private = self._handler.private
+            self.public = self._handler.public
+            self.address = self.public #self._handler.address
             self.token = self.generateToken() if not token else token
+            self.encryption = self._handler.encryption
 
+        """
         try: 
             self.address = web3.Web3('').toChecksumAddress(self.address)  
         except:
             pass     
+        """
         
-        self.encryption = NACL_HANDLER(self._private) if NACL_HANDLER and self._private else None
-
-
     def encrypt(self,message,*args,**kwargs):
         return self.encryption.encrypt(message,*args,**kwargs)
 
@@ -72,7 +66,10 @@ class Key:
 
     def sign(self,message):
         return self._handler.sign(message)
-
+        
+    def verify(self,message,sig):
+        return self._handler.verify(message,sig)
+        
     def export(self,password):
         import os
         import os.path
@@ -90,18 +87,31 @@ class Key:
             json.dump(crypted, f, indent=4)  
 
 
-    def generateToken(self,nonce=None):
+    def generateToken(self):
+        nonce = str(int(time.time()))
+        message = self.address+'-'+nonce
+        sig = self.sign(message)
+        token = '-'.join(sig)
+        assert self.recoverToken(token)==self.address
+        
+        return token
+
+        
+        token = nonce+'-'+'-'.join([str(p) for p in sig])
         if hasattr(self._handler,'recover'):
-            nonce = nonce or str(int(time.time()))  # warning : wrong address recovered if int   
+            address = nonce or str(int(time.time()))  # warning : wrong address recovered if int   
             sig = self.sign(nonce)
             if isinstance(sig,tuple):
+                # web3, nacl
                 token = nonce+'-'+'-'.join([str(p) for p in sig])
             else:
+                # other
                 token = nonce+'-'+sig
         else:
-            sig = self.sign(pub)
+            base = self.address+'-'+nonce
+            sig = self.sign(base)
             sig = encode_hex(sig)
-            token = pub+'-'+sig
+            token = base+'-'+sig
 
         # check
         address = self.recoverToken(token)
@@ -111,20 +121,38 @@ class Key:
 
     def recoverToken(self,token):
         nfo = token.split('-')
-        nonce = nfo.pop(0)
-        sig = nfo
-        if len(sig)==1: 
-            if len(nonce)==128: #tofix  
-                #ecda
-                pub = nonce
-                sig = sig[0]
-                address = self._handler.verify(pub,pub,sig)
-            else:   
-                #bitcoin like
-                sig = sig[0]
+        verifikey = nfo[0]
+        signed = nfo[1]
+        message = self.verify(verifikey,signed)
+        address,nonce = message.split('-')
+        return address
+
+        
+        nfo = token.split('-')
+        if len(nfo)==3:
+            address = nfo[0]
+            nonce = nfo[1]
+            sig = nfo[1]
+            print self, self._handler.verify
+            
+            assert self.verify(address+'-'+nonce,sig)
+            
+        else:
+            # OLD VERSION
+            nonce = nfo.pop(0)
+            sig = nfo
+            if len(sig)==1: 
+                if len(nonce)==128: #tofix  
+                    #ecda
+                    pub = nonce
+                    sig = sig[0]
+                    address = self._handler.verify(pub,pub,sig)
+                else:   
+                    #bitcoin like
+                    sig = sig[0]
+                    address = self._handler.recover(nonce,sig)
+            else: # ethereum
                 address = self._handler.recover(nonce,sig)
-        else: # ethereum
-            address = self._handler.recover(nonce,sig)
         return address
 
 
