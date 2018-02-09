@@ -24,7 +24,7 @@ class TestCases(unittest.TestCase):
 
     def test_base(self):
 
-        assert to_string(encode_hex( sha3_256(TEST_SEED) ))  == to_string(TEST_SHA256)
+        assert encode_hex( sha3_256(TEST_SEED) )  == TEST_SHA256.decode()
 
         key = Key()
         assert key.private
@@ -88,8 +88,8 @@ class TestCases(unittest.TestCase):
         
         key = Key(priv=TEST_PRIVATE)
         #if key.ethereum:
-        assert to_string(key.ethereum.private) == to_string(TEST_ETHEREUM_PRIVATE)
-        assert to_string(key.ethereum.address) == to_string(TEST_ETHEREUM_ADDRESS)
+        assert key.ethereum.private == TEST_ETHEREUM_PRIVATE.decode()
+        assert key.ethereum.address == TEST_ETHEREUM_ADDRESS.decode()
 
 
 if __name__ == '__main__':
