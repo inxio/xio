@@ -39,9 +39,7 @@ class NaclHandler:
         if private:
             self._naclpriv = SigningKey( decode_hex(private) )
         elif seed:
-            hseed = sha3_256( seed )
-            #hseed = decode_hex(nacl.hash.sha256( seed )) # pb car pas dispo en js ?
-            self._naclpriv = SigningKey( hseed )
+            self._naclpriv = SigningKey( seed )
         else:
             self._naclpriv = SigningKey.generate()
             

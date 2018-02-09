@@ -6,16 +6,13 @@ from xio.core.lib.crypto.crypto import sha3_256, encode_hex, decode_hex, Key, to
 import unittest
 
 TEST_SEED       = b'very weak seed'
+TEST_SHA256     = b'37b75e9adbf125f93fb14b41cb4fe530e6dd6e4a9c854ab1b33c513cc561e05b'
+
 TEST_PRIVATE    = b'37b75e9adbf125f93fb14b41cb4fe530e6dd6e4a9c854ab1b33c513cc561e05b'
 TEST_PUBLIC     = b'2f8527d027626f176a31b1818bdba6c51d0d0aa6f3b54d715c18c3ce1d5fc77f'
 TEST_ADDRESS    = TEST_PUBLIC
-TEST_SHA256     = b'37b75e9adbf125f93fb14b41cb4fe530e6dd6e4a9c854ab1b33c513cc561e05b' ############### ????????????????? idem private ??????
 
-TEST_ETHEREUM_PRIVATE = b'268f83ae9544cf4370319a0d7954a9ba501665fd0bddd826d96e1c0ddd3a6def'
-TEST_ETHEREUM_ADDRESS = b'0xebc76cd27332cd8bf5e35e50860a4af4e3e80cfb' 
-
-TEST_BITCOIN_PRIVATE = b'??'
-TEST_BITCOIN_ADDRESS = b'??'
+TEST_ETHEREUM_ADDRESS = b'0xf05c29f39956dff46827c24392f8c2ed0b3c951b' 
 
 key = Key(priv=TEST_PRIVATE)
 
@@ -88,7 +85,8 @@ class TestCases(unittest.TestCase):
         
         key = Key(priv=TEST_PRIVATE)
         #if key.ethereum:
-        assert key.ethereum.private == TEST_ETHEREUM_PRIVATE.decode()
+        print (key.ethereum.address)
+        #assert key.ethereum.private == TEST_ETHEREUM_PRIVATE.decode()
         assert key.ethereum.address == TEST_ETHEREUM_ADDRESS.decode()
 
 

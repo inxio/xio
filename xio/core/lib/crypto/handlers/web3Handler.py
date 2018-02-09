@@ -6,7 +6,7 @@ from .common import *
 
 class Web3Handler:
 
-    def __init__(self,private=None,seed=None):
+    def __init__(self,private=None):
 
         self._web3 = web3.Web3('')
 
@@ -15,13 +15,11 @@ class Web3Handler:
             self.private = private
             self.address = account.address
         elif seed:
-            seed = sha3_256( seed )
-            self._account = self._web3.eth.account.privateKeyToAccount(key)
+            self._account = self._web3.eth.account.fromSeed(key)
             self.private = self._account.privateKey.hex()[2:]
         else:
             self._account = self._web3.eth.account.create()
             self.private = self._account.privateKey.hex()[2:]
-            
             
         self.address = self._account.address
         self.address = self._web3.toChecksumAddress(self.address) 

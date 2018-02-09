@@ -39,6 +39,10 @@ class Key:
 
         handler_cls = NaclHandler
 
+        if seed:
+            priv = encode_hex(sha3_256( seed ))
+            seed = None
+
         if token:
             self._handler = handler_cls # no instance, only static method allowed
             self.private = None
@@ -56,7 +60,8 @@ class Key:
 
         ethereum_handler = BITCOIN_ETH_HANDLER or WEB3_HANDLER
         if ethereum_handler:
-            self.ethereum = ethereum_handler(seed=self.private)
+            #self.ethereum = ethereum_handler(seed=self.private)
+            self.ethereum = ethereum_handler(private=self.private)
         """
         try: 
             self.ethereum.address = web3.Web3('').toChecksumAddress(self.address)  
