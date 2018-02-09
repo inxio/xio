@@ -12,10 +12,13 @@ import time
 
 from .handlers.naclHandler import NaclHandler
 
+
 try:
-    from .handlers.bitcoinHandler import BitcoinHandler
+    from .handlers.bitcoinHandler import BitcoinHandler, BitcoinEthereumHandler
+    BITCOIN_ETH_HANDLER = BitcoinEthereumHandler
     BITCOIN_HANDLER = BitcoinHandler
 except Exception as err:
+    BITCOIN_ETH_HANDLER = None
     BITCOIN_HANDLER = None
 
 try:
@@ -51,11 +54,14 @@ class Key:
             self.token = self.generateToken() if not token else token
             self.encryption = self._handler.encryption
 
+        ethereum_handler = BITCOIN_ETH_HANDLER or WEB3_HANDLER
+        if ethereum_handler:
+            self.ethereum = ethereum_handler(seed=self.private)
         """
         try: 
-            self.address = web3.Web3('').toChecksumAddress(self.address)  
+            self.ethereum.address = web3.Web3('').toChecksumAddress(self.address)  
         except:
-            pass     
+            self.ethereum = None    
         """
         
     def encrypt(self,message,*args,**kwargs):
@@ -90,14 +96,13 @@ class Key:
     def generateToken(self):
         nonce = str(int(time.time()))
         message = b'%s-%s' % (str_to_bytes(self.address),str_to_bytes(nonce))
-        print (message)
         sig = self.sign(message)
         token = b'-'.join(sig)
         assert self.recoverToken(token)==self.address
         
         return token
 
-        
+        """
         token = nonce+b'-'+b'-'.join([str_to_bytes(p) for p in sig])
         if hasattr(self._handler,'recover'):
             address = nonce or str(int(time.time()))  # warning : wrong address recovered if int   
@@ -118,7 +123,7 @@ class Key:
         address = self.recoverToken(token)
         assert address==self.address
         return token
-
+        """
 
     def recoverToken(self,token):
         nfo = token.split(b'-')
@@ -128,7 +133,7 @@ class Key:
         address,nonce = message.split(b'-')
         return address
 
-        
+        """
         nfo = token.split('-')
         if len(nfo)==3:
             address = nfo[0]
@@ -154,5 +159,5 @@ class Key:
             else: # ethereum
                 address = self._handler.recover(nonce,sig)
         return address
-
+        """
 

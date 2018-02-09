@@ -1,26 +1,30 @@
 #!/usr/bin/env python
 #-*- coding: utf-8 -*--
 
-from xio.core.lib.crypto.crypto import sha3_256, encode_hex, decode_hex, Key
+from xio.core.lib.crypto.crypto import sha3_256, encode_hex, decode_hex, Key, to_string
 
 import unittest
 
-TEST_SEED       = 'very weak seed'
-TEST_PRIVATE    = '37b75e9adbf125f93fb14b41cb4fe530e6dd6e4a9c854ab1b33c513cc561e05b'
-TEST_PUBLIC     = '2f8527d027626f176a31b1818bdba6c51d0d0aa6f3b54d715c18c3ce1d5fc77f'
+TEST_SEED       = b'very weak seed'
+TEST_PRIVATE    = b'37b75e9adbf125f93fb14b41cb4fe530e6dd6e4a9c854ab1b33c513cc561e05b'
+TEST_PUBLIC     = b'2f8527d027626f176a31b1818bdba6c51d0d0aa6f3b54d715c18c3ce1d5fc77f'
 TEST_ADDRESS    = TEST_PUBLIC
+TEST_SHA256     = b'37b75e9adbf125f93fb14b41cb4fe530e6dd6e4a9c854ab1b33c513cc561e05b' ############### ????????????????? idem private ??????
 
-#TEST_PUB = '8f334d35c7203478f34e5f12ee43ee6bc9e1c3b6be4536f8a28a1b093c77f18f0308f0be7c5d7aa6c7770bbda9f7b05e6863709d3dcc59843a42c68783308a22'
-#TEST_ADDRESS = '0x7D6945e959303CBd4eFE06caB90ED67bA197D520'
+TEST_ETHEREUM_PRIVATE = b'268f83ae9544cf4370319a0d7954a9ba501665fd0bddd826d96e1c0ddd3a6def'
+TEST_ETHEREUM_ADDRESS = b'0xebc76cd27332cd8bf5e35e50860a4af4e3e80cfb' 
 
+TEST_BITCOIN_PRIVATE = b'??'
+TEST_BITCOIN_ADDRESS = b'??'
 
+key = Key(priv=TEST_PRIVATE)
 
 class TestCases(unittest.TestCase):
 
 
     def test_base(self):
 
-        assert encode_hex( sha3_256(b'') ) == 'c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470'
+        assert to_string(encode_hex( sha3_256(TEST_SEED) ))  == to_string(TEST_SHA256)
 
         key = Key()
         assert key.private
@@ -80,6 +84,12 @@ class TestCases(unittest.TestCase):
             key1.decrypt(crypted)==message
         
 
+    def test_ethereum(self):
+        
+        key = Key(priv=TEST_PRIVATE)
+        #if key.ethereum:
+        assert to_string(key.ethereum.private) == to_string(TEST_ETHEREUM_PRIVATE)
+        assert to_string(key.ethereum.address) == to_string(TEST_ETHEREUM_ADDRESS)
 
 
 if __name__ == '__main__':

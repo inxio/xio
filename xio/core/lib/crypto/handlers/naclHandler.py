@@ -8,7 +8,7 @@ from .common import *
 import nacl.utils
 from nacl.public import PrivateKey, PublicKey, SealedBox, Box
 from nacl.signing import SigningKey
-
+import nacl.hash
 
 
 class NaclEncryptionHandler:
@@ -40,7 +40,8 @@ class NaclHandler:
             self._naclpriv = SigningKey( decode_hex(private) )
         elif seed:
             hseed = sha3_256( seed )
-            self._naclpriv = SigningKey(hseed)
+            #hseed = decode_hex(nacl.hash.sha256( seed )) # pb car pas dispo en js ?
+            self._naclpriv = SigningKey( hseed )
         else:
             self._naclpriv = SigningKey.generate()
             
