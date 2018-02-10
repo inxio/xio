@@ -12,7 +12,7 @@ class BitcoinEthereumHandler:
         if private:
             priv = private
         elif seed:
-            priv = encode_hex( sha3_256( seed ) )
+            priv = encode_hex( sha3_keccak_256( seed ) )
         else:
             seed = uuid.uuid4().hex
             master_key = bitcoin.bip32_master_key(seed.encode())
@@ -53,7 +53,7 @@ class BitcoinEthereumHandler:
         pub = decode_hex(pub)
         pub = pub[1:] if len(pub)==65 else pub
         assert len(pub)==64
-        address = sha3_256(pub)[12:]
+        address = sha3_keccak_256(pub)[12:]
         address = "0x"+encode_hex(address)
         return address
 

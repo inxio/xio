@@ -14,7 +14,6 @@ from .core.resource import resource, client
 from .core.user import user
 from .core.app.app import app
 from .core.network.network import network
-#from .core.network.service import service
 from .core.node.node import node
 from .core import handlers
 

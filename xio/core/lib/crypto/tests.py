@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #-*- coding: utf-8 -*--
 
-from xio.core.lib.crypto.crypto import sha3_256, encode_hex, decode_hex, Key, to_string
+from xio.core.lib.crypto.crypto import sha3_keccak_256, encode_hex, decode_hex, Key, to_string
 
 import unittest
 
@@ -21,7 +21,7 @@ class TestCases(unittest.TestCase):
 
     def test_base(self):
 
-        assert encode_hex( sha3_256(TEST_SEED) )  == TEST_SHA256.decode()
+        assert encode_hex( sha3_keccak_256(TEST_SEED) )  == TEST_SHA256.decode()
 
         key = Key()
         assert key.private
@@ -84,10 +84,10 @@ class TestCases(unittest.TestCase):
     def test_ethereum(self):
         
         key = Key(priv=TEST_PRIVATE)
-        #if key.ethereum:
-        print (key.ethereum.address)
-        #assert key.ethereum.private == TEST_ETHEREUM_PRIVATE.decode()
-        assert key.ethereum.address == TEST_ETHEREUM_ADDRESS.decode()
+        if key.ethereum:
+            #print (key.ethereum.address)
+            #assert key.ethereum.private == TEST_ETHEREUM_PRIVATE.decode()
+            assert key.ethereum.address == TEST_ETHEREUM_ADDRESS.decode()
 
 
 if __name__ == '__main__':

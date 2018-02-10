@@ -40,7 +40,7 @@ class Key:
         handler_cls = NaclHandler
 
         if seed:
-            priv = encode_hex(sha3_256( seed ))
+            priv = encode_hex(sha3_keccak_256( seed ))
             seed = None
 
         if token:
@@ -62,12 +62,11 @@ class Key:
         if ethereum_handler:
             #self.ethereum = ethereum_handler(seed=self.private)
             self.ethereum = ethereum_handler(private=self.private)
-        """
-        try: 
-            self.ethereum.address = web3.Web3('').toChecksumAddress(self.address)  
-        except:
-            self.ethereum = None    
-        """
+            try: 
+                self.ethereum.address = web3.Web3('').toChecksumAddress(self.address)  
+            except:
+                pass   
+
         
     def encrypt(self,message,*args,**kwargs):
         return self.encryption.encrypt(message,*args,**kwargs)
@@ -80,23 +79,6 @@ class Key:
         
     def verify(self,message,sig):
         return self._handler.verify(message,sig)
-        
-    def export(self,password):
-        import os
-        import os.path
-        import json
-        assert self.key
-        hname = self._w3.sha3(text=username).hex()
-        filename = 'xio.user.'+hname
-        crypted = self._w3account.encrypt(password)
-
-        keystoredir = '/data/xio/keystore'
-        if not os.path.isdir(keystoredir):
-            os.makedirs(keystoredir)
-
-        with open(keystoredir+'/'+filename,'w') as f:
-            json.dump(crypted, f, indent=4)  
-
 
     def generateToken(self):
         nonce = str(int(time.time()))
@@ -104,31 +86,8 @@ class Key:
         sig = self.sign(message)
         token = b'-'.join(sig)
         assert self.recoverToken(token)==self.address
-        
         return token
 
-        """
-        token = nonce+b'-'+b'-'.join([str_to_bytes(p) for p in sig])
-        if hasattr(self._handler,'recover'):
-            address = nonce or str(int(time.time()))  # warning : wrong address recovered if int   
-            sig = self.sign(nonce)
-            if isinstance(sig,tuple):
-                # web3, nacl
-                token = nonce+'-'+'-'.join([str(p) for p in sig])
-            else:
-                # other
-                token = nonce+'-'+sig
-        else:
-            base = self.address+'-'+nonce
-            sig = self.sign(base)
-            sig = encode_hex(sig)
-            token = base+'-'+sig
-
-        # check
-        address = self.recoverToken(token)
-        assert address==self.address
-        return token
-        """
 
     def recoverToken(self,token):
         nfo = token.split(b'-')
@@ -138,31 +97,4 @@ class Key:
         address,nonce = message.split(b'-')
         return address
 
-        """
-        nfo = token.split('-')
-        if len(nfo)==3:
-            address = nfo[0]
-            nonce = nfo[1]
-            sig = nfo[1]
-            
-            assert self.verify(address+'-'+nonce,sig)
-            
-        else:
-            # OLD VERSION
-            nonce = nfo.pop(0)
-            sig = nfo
-            if len(sig)==1: 
-                if len(nonce)==128: #tofix  
-                    #ecda
-                    pub = nonce
-                    sig = sig[0]
-                    address = self._handler.verify(pub,pub,sig)
-                else:   
-                    #bitcoin like
-                    sig = sig[0]
-                    address = self._handler.recover(nonce,sig)
-            else: # ethereum
-                address = self._handler.recover(nonce,sig)
-        return address
-        """
 
