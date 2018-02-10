@@ -1,27 +1,30 @@
 #!/usr/bin/env python
 #-*- coding: utf-8 -*--
 
-from xio.core.lib.crypto.crypto import sha3_keccak_256, encode_hex, decode_hex, Key, to_string
+from xio.core.lib.crypto.crypto import sha256, sha3_keccak_256, encode_hex, decode_hex, Key, to_string
 
 import unittest
 
-TEST_SEED       = b'very weak seed'
-TEST_SHA256     = b'37b75e9adbf125f93fb14b41cb4fe530e6dd6e4a9c854ab1b33c513cc561e05b'
+TEST_SEED               = b'very weak seed'
+TEST_SHA256             = b'c55487a5417d759e04f5d57d34e11151e2fc04a2048c8b19dca9ed3c59a8a49e'
+TEST_SHA3_KECCAK_256    = b'37b75e9adbf125f93fb14b41cb4fe530e6dd6e4a9c854ab1b33c513cc561e05b'
 
-TEST_PRIVATE    = b'37b75e9adbf125f93fb14b41cb4fe530e6dd6e4a9c854ab1b33c513cc561e05b'
-TEST_PUBLIC     = b'2f8527d027626f176a31b1818bdba6c51d0d0aa6f3b54d715c18c3ce1d5fc77f'
-TEST_ADDRESS    = TEST_PUBLIC
+TEST_PRIVATE            = b'c55487a5417d759e04f5d57d34e11151e2fc04a2048c8b19dca9ed3c59a8a49e'
+TEST_PUBLIC             = b'145a1afd1792a23c79eb267ec53ae02117d44a13659cb44f7ec4de3579bbf8a7'
+TEST_ADDRESS            = TEST_PUBLIC
 
-TEST_ETHEREUM_ADDRESS = b'0xf05c29f39956dff46827c24392f8c2ed0b3c951b' 
 
-key = Key(priv=TEST_PRIVATE)
+TEST_ETHEREUM_PRIVATE   = b'ef62ee9dee29b728a62ae606299fe8d1100cdf878a02b04a944d70f2627a5875' 
+TEST_ETHEREUM_ADDRESS   = b'0x3ec381e7291d7058ac13fe74998cd02d580500d2' 
+
 
 class TestCases(unittest.TestCase):
 
 
     def test_base(self):
-
-        assert encode_hex( sha3_keccak_256(TEST_SEED) )  == TEST_SHA256.decode()
+        
+        assert sha256(TEST_SEED)  == TEST_SHA256
+        assert sha3_keccak_256(TEST_SEED)  == TEST_SHA3_KECCAK_256
 
         key = Key()
         assert key.private
@@ -46,7 +49,7 @@ class TestCases(unittest.TestCase):
         
         k1 = Key(seed=TEST_SEED)
         k2 = Key(seed=TEST_SEED)
-        k3 = Key(seed='other seed')
+        k3 = Key(seed=b'other seed')
 
         assert k1.private == TEST_PRIVATE
         assert k1.public == TEST_PUBLIC
@@ -82,12 +85,10 @@ class TestCases(unittest.TestCase):
         
 
     def test_ethereum(self):
-        
-        key = Key(priv=TEST_PRIVATE)
+        key = Key(seed=TEST_SEED)
         if key.ethereum:
-            #print (key.ethereum.address)
-            #assert key.ethereum.private == TEST_ETHEREUM_PRIVATE.decode()
-            assert key.ethereum.address == TEST_ETHEREUM_ADDRESS.decode()
+            assert key.ethereum.private == TEST_ETHEREUM_PRIVATE
+            assert key.ethereum.address == TEST_ETHEREUM_ADDRESS
 
 
 if __name__ == '__main__':

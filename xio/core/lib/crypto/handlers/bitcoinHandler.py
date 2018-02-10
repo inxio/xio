@@ -12,7 +12,7 @@ class BitcoinEthereumHandler:
         if private:
             priv = private
         elif seed:
-            priv = encode_hex( sha3_keccak_256( seed ) )
+            priv = sha3_keccak_256( seed )
         else:
             seed = uuid.uuid4().hex
             master_key = bitcoin.bip32_master_key(seed.encode())
@@ -28,11 +28,12 @@ class BitcoinEthereumHandler:
         pub = bitcoin.privtopub(decode_hex(priv))
         pub = pub[1:]
         assert pub
+        assert len(pub)==64
 
         # address
         self.private = priv
         self.public = encode_hex(pub)
-        self.address = self.pub2address(self.public)
+        self.address = self.pub2EthereumAddress(self.public)
         assert len(self.address)==42
 
 
@@ -45,17 +46,17 @@ class BitcoinEthereumHandler:
     def recover(message,sig): 
         pub = bitcoin.ecdsa_recover(message, sig) 
         pub = pub[2:] # pub already hex encoded
-        return BitcoinHandler.pub2address(pub)
+        return self.pub2EthereumAddress(pub)
         
 
     @staticmethod
-    def pub2address(pub):
+    def pub2EthereumAddress(pub):
         pub = decode_hex(pub)
         pub = pub[1:] if len(pub)==65 else pub
         assert len(pub)==64
-        address = sha3_keccak_256(pub)[12:]
+        address = decode_hex(sha3_keccak_256(pub))[12:]
         address = "0x"+encode_hex(address)
-        return address
+        return str_to_bytes(address)
 
 
 class BitcoinHandler:

@@ -39,10 +39,6 @@ class Key:
 
         handler_cls = NaclHandler
 
-        if seed:
-            priv = encode_hex(sha3_keccak_256( seed ))
-            seed = None
-
         if token:
             self._handler = handler_cls # no instance, only static method allowed
             self.private = None
@@ -57,14 +53,17 @@ class Key:
             self.address = self.public #self._handler.address
             self.token = self.generateToken() if not token else token
             self.encryption = self._handler.encryption
+            assert len(self.private)==64
+
 
         ethereum_handler = BITCOIN_ETH_HANDLER or WEB3_HANDLER
         if ethereum_handler:
-            #self.ethereum = ethereum_handler(seed=self.private)
-            self.ethereum = ethereum_handler(private=self.private)
+            self.ethereum = ethereum_handler(seed=self.private)
             try: 
+                #self.ethereum = ethereum_handler(seed=self.private)
                 self.ethereum.address = web3.Web3('').toChecksumAddress(self.address)  
             except:
+                #self.ethereum = None
                 pass   
 
         

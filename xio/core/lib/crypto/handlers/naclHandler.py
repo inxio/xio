@@ -39,6 +39,7 @@ class NaclHandler:
         if private:
             self._naclpriv = SigningKey( decode_hex(private) )
         elif seed:
+            seed = decode_hex( nacl.hash.sha256(seed) )
             self._naclpriv = SigningKey( seed )
         else:
             self._naclpriv = SigningKey.generate()
