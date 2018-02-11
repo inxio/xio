@@ -14,19 +14,19 @@ from .handlers.naclHandler import NaclHandler
 
 
 try:
+    from .handlers.web3Handler import Web3Handler
+    WEB3_HANDLER = Web3Handler
+except Exception as err:
+    WEB3_HANDLER = None
+
+
+try:
     from .handlers.bitcoinHandler import BitcoinHandler, BitcoinEthereumHandler
     BITCOIN_ETH_HANDLER = BitcoinEthereumHandler
     BITCOIN_HANDLER = BitcoinHandler
 except Exception as err:
     BITCOIN_ETH_HANDLER = None
     BITCOIN_HANDLER = None
-
-try:
-    from .handlers.web3Handler import Web3Handler
-    WEB3_HANDLER = Web3Handler
-except Exception as err:
-    WEB3_HANDLER = None
-
 
 
 
@@ -61,6 +61,7 @@ class Key:
         self.token = to_string(self.token)
 
         ethereum_handler = BITCOIN_ETH_HANDLER or WEB3_HANDLER
+        self.ethereum = None
         if ethereum_handler:
             self.ethereum = ethereum_handler(seed=self.private)
             try: 

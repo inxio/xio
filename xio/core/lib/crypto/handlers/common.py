@@ -13,7 +13,7 @@ def sha256(x):
     return nacl.hash.sha256(x)
 
 # SHA3 KECCAK 256
-
+sha3_keccak_256 = None
 try:
     from Crypto.Hash import keccak
     def sha3_keccak_256(x): 
@@ -21,8 +21,11 @@ try:
         return str_to_bytes(h)
 
 except ImportError:
-    import sha3 as _sha3
-    def sha3_keccak_256(x): 
-        h = _sha3.keccak_256(x).hexdigest()
-        return str_to_bytes(h)
+    try:
+        import sha3 as _sha3
+        def sha3_keccak_256(x): 
+            h = _sha3.keccak_256(x).hexdigest()
+            return str_to_bytes(h)
+    except:
+        pass
 

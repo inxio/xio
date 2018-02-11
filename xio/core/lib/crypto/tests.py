@@ -24,7 +24,8 @@ class TestCases(unittest.TestCase):
     def test_base(self):
         
         assert sha256(TEST_SEED)  == TEST_SHA256
-        assert sha3_keccak_256(TEST_SEED)  == TEST_SHA3_KECCAK_256
+        if sha3_keccak_256:
+            assert sha3_keccak_256(TEST_SEED)  == TEST_SHA3_KECCAK_256
 
         key = Key()
         assert key.private
