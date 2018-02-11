@@ -51,7 +51,7 @@ class TestCases(unittest.TestCase):
 
     def _test_app_server_module(self):
 
-        from apptest.app import app 
+        from .apptest.app import app 
 
         assert app
 
@@ -91,7 +91,7 @@ class TestCases(unittest.TestCase):
     def test_app_cient_package(self):
         # client can not access to private resources : only www resources are allowed
 
-        from apptest.app import app 
+        from .apptest.app import app 
 
         app = xio.app( app )
 
@@ -102,7 +102,7 @@ class TestCases(unittest.TestCase):
 
     def _test_app_ext(self):
         
-        from apptest.app import app 
+        from .apptest.app import app 
 
         # xio ext 
         assert xio.app('xrn:xio:admin')
@@ -115,7 +115,7 @@ class TestCases(unittest.TestCase):
 
     def _test_app_services(self):
         
-        from apptest.app import app 
+        from .apptest.app import app 
         ext1 = app.get('services/ext1')
 
         assert ext1.status==200
@@ -130,7 +130,7 @@ class TestCases(unittest.TestCase):
 
     def _test_app_tests(self):
         
-        from apptest.app import app 
+        from .apptest.app import app 
 
         testresult = app.test().content
         assert testresult['qos'] == 66
@@ -249,7 +249,7 @@ class TestCases(unittest.TestCase):
 
     def _test_app_www_content_type(self):
     
-        from apptest.app import app 
+        from .apptest.app import app 
 
         # check index
         assert app.get('www').content.read().strip() == 'INDEX'

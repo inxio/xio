@@ -2,8 +2,11 @@
 *.xio
 *.log
 .DS_Store
+dev
 build
 dist
 *.egg*
+
+.tox
 
 

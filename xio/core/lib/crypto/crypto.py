@@ -9,14 +9,9 @@ import base64
 import uuid
 import json
 import time
-            
-from .handlers.bitcoinHandler import BitcoinHandler
 
-try:
-    from .handlers.bitcoinHandler import BitcoinHandler
-    BITCOIN_HANDLER = BitcoinHandler
-except Exception as err:
-    BITCOIN_HANDLER = None
+from .handlers.naclHandler import NaclHandler
+
 
 try:
     from .handlers.web3Handler import Web3Handler
@@ -26,10 +21,12 @@ except Exception as err:
 
 
 try:
-    from .handlers.naclHandler import NaclHandler
-    NACL_HANDLER = NaclHandler
-except:
-    NACL_HANDLER = False
+    from .handlers.bitcoinHandler import BitcoinHandler, BitcoinEthereumHandler
+    BITCOIN_ETH_HANDLER = BitcoinEthereumHandler
+    BITCOIN_HANDLER = BitcoinHandler
+except Exception as err:
+    BITCOIN_ETH_HANDLER = None
+    BITCOIN_HANDLER = None
 
 
 
@@ -40,30 +37,40 @@ class Key:
 
     def __init__(self,priv=None,token=None,seed=None):
 
-        handler_cls = BITCOIN_HANDLER or WEB3_HANDLER
+        handler_cls = NaclHandler
 
         if token:
             self._handler = handler_cls # no instance, only static method allowed
-            self._private = None
+            self.private = None
             self.public = None
             self.token = token
             self.address = self.recoverToken(token)
             self.encryption = None
         else:        
             self._handler = handler_cls(private=priv,seed=seed)
-            self._private = self._handler.priv
-            self.public = self._handler.pub
-            self.address = self._handler.address
+            self.private = self._handler.private
+            self.public = self._handler.public
+            self.address = self.public #self._handler.address
             self.token = self.generateToken() if not token else token
+            self.encryption = self._handler.encryption
+            assert len(self.private)==64
 
-        try: 
-            self.address = web3.Web3('').toChecksumAddress(self.address)  
-        except:
-            pass     
+
+        # fix id & token => utf8
+        self.address = to_string(self.address)
+        self.token = to_string(self.token)
+
+        ethereum_handler = BITCOIN_ETH_HANDLER or WEB3_HANDLER
+        self.ethereum = None
+        if ethereum_handler:
+            self.ethereum = ethereum_handler(seed=self.private)
+            try: 
+                self.ethereum.address = to_string(self.ethereum.address)
+                self.ethereum.address = web3.Web3('').toChecksumAddress(self.address)  
+            except:
+                pass   
+
         
-        self.encryption = NACL_HANDLER(self._private) if NACL_HANDLER and self._private else None
-
-
     def encrypt(self,message,*args,**kwargs):
         return self.encryption.encrypt(message,*args,**kwargs)
 
@@ -72,59 +79,26 @@ class Key:
 
     def sign(self,message):
         return self._handler.sign(message)
+        
+    def verify(self,message,sig):
+        return self._handler.verify(message,sig)
 
-    def export(self,password):
-        import os
-        import os.path
-        import json
-        assert self.key
-        hname = self._w3.sha3(text=username).hex()
-        filename = 'xio.user.'+hname
-        crypted = self._w3account.encrypt(password)
-
-        keystoredir = '/data/xio/keystore'
-        if not os.path.isdir(keystoredir):
-            os.makedirs(keystoredir)
-
-        with open(keystoredir+'/'+filename,'w') as f:
-            json.dump(crypted, f, indent=4)  
-
-
-    def generateToken(self,nonce=None):
-        if hasattr(self._handler,'recover'):
-            nonce = nonce or str(int(time.time()))  # warning : wrong address recovered if int   
-            sig = self.sign(nonce)
-            if isinstance(sig,tuple):
-                token = nonce+'-'+'-'.join([str(p) for p in sig])
-            else:
-                token = nonce+'-'+sig
-        else:
-            sig = self.sign(pub)
-            sig = encode_hex(sig)
-            token = pub+'-'+sig
-
-        # check
-        address = self.recoverToken(token)
-        assert address==self.address
+    def generateToken(self):
+        nonce = str(int(time.time()))
+        message = b'%s-%s' % (str_to_bytes(self.address),str_to_bytes(nonce))
+        sig = self.sign(message)
+        token = b'-'.join(sig)
+        assert self.recoverToken(token)==self.address
         return token
 
 
     def recoverToken(self,token):
-        nfo = token.split('-')
-        nonce = nfo.pop(0)
-        sig = nfo
-        if len(sig)==1: 
-            if len(nonce)==128: #tofix  
-                #ecda
-                pub = nonce
-                sig = sig[0]
-                address = self._handler.verify(pub,pub,sig)
-            else:   
-                #bitcoin like
-                sig = sig[0]
-                address = self._handler.recover(nonce,sig)
-        else: # ethereum
-            address = self._handler.recover(nonce,sig)
+        token = str_to_bytes(token)
+        nfo = token.split(b'-')
+        verifikey = nfo[0]
+        signed = nfo[1]
+        message = self.verify(verifikey,signed)
+        address,nonce = message.split(b'-')
         return address
 
 

@@ -208,7 +208,7 @@ class ReqClient:
             self.token = token
             if token:
                 import xio
-                account = xio.key(token=token)
+                account = xio.user(token=token)
                 self.id = account.id    
 
         self._feedback = req.context.get('feedback')

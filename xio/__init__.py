@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-__version__ = "0.0.2"
+__version__ = "0.0.3"
 
 from .core.lib.env import env, context, __PATH__ as path
 from .core.lib.request import request
@@ -11,9 +11,10 @@ from .core.lib.data.data import data
 from .core.lib.db.db import db
 
 from .core.resource import resource, client
-from .core.app.app import app
-from .core.node.node import node
 from .core.user import user
+from .core.app.app import app
+from .core.network.network import network
+from .core.node.node import node
 from .core import handlers
 
 context.init()

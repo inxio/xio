@@ -20,7 +20,7 @@ if sys.version_info.major == 2:
 else:
     import http.client
     from http.cookies import SimpleCookie
-    import urllib2.error 
+    import urllib.error 
 
     
 

@@ -39,9 +39,8 @@ class Context(dict):
         assert self.user.id
 
         # SETUP DEFAULT XIO ENDPOINT
-        network_uri = config.get('network', xioenvdefault.get('node') )
-        if network_uri:
-            self.node = xio.client(network_uri)
+        network_uri = config.get('network', xioenvdefault.get('network') )
+        self.network = xio.network(network_uri)
 
 context = Context()
 

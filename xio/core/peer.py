@@ -2,7 +2,10 @@
 # -*- coding: utf-8 -*-
 
 from . import resource 
+
 from .lib.crypto import crypto
+
+from xio.core.lib.utils import generateuid, to_string
 
 
 class Peer(resource.Resource):
@@ -13,6 +16,7 @@ class Peer(resource.Resource):
     id = None
     token = None
     network = None
+    uuid = None
 
     def __init__(self,id=None,network=None,**kwargs):
         
@@ -33,7 +37,17 @@ class Peer(resource.Resource):
             self.id = self.key.address
             self.token = token
 
+        self.uuid = generateuid()
+
         resource.Resource.__init__(self,**kwargs) 
+
+        import xio    
+        from .peers import Peers
+        self.peers = Peers()
+        self.network = xio.context.network
+
+
+
 
     @classmethod
     def factory(cls,*args,**kwargs): 
@@ -60,6 +74,18 @@ class Peer(resource.Resource):
         assert peer and isinstance(peer,resource.Resource)
         cli = resource.resource( peer, client=self)
         return cli.connect()
+
+
+    def encrypt(self,message,dst_public_key=None):
+        return self.key.encryption.encrypt(message,dst_public_key=dst_public_key)
+
+    def decrypt(self,message):
+        return self.key.encryption.decrypt(message)
+
+
+
+
+
 
 
        

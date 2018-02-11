@@ -41,10 +41,10 @@ def resource(handler=None,context=None,about=None,**kwargs):
         handler = pythonResourceHandler(handler)
     elif isinstance(handler, collections.Callable):
         handler = pythonCallableHandler(handler)
-    elif handler and '0x' in handler:
-        handler = PeerHandler(handler)
     elif handler and ':' in handler:
         handler,basepath = env.resolv(handler) 
+    elif handler and is_string( handler ):
+        handler = PeerHandler(handler)
     elif handler:
         raise Exception('UNHANDLED RESOURCE HANDLER (%s)' % handler)
 

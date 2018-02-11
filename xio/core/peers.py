@@ -4,12 +4,13 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 
-from xio.core.resource import resource, handleRequest
+from xio.core.resource import resource,Resource, handleRequest
 
 from xio.core.lib.request import Request,Response
 from xio.core.lib.logs import log
 
 from xio.core.lib.utils import is_string, urlparse, md5
+from xio.core.peer import Peer
 
 from xio import db
 
@@ -38,9 +39,9 @@ PEER_MOD_PRIVATE = 'private'        # private use for node or other localhost ap
 
 class Peers:
 
-    def __init__(self,node):
-        self.id = node.id
-        self.db = db('xio:node:%s' % self.id).container('peers')
+    def __init__(self,peer=None):
+        self.id = peer.id if peer else None
+        self.db = db('xio:peer:%s' % self.id).container('peers')
 
 
     def register(self,endpoint=None,nodeid=None,type=None,uid=None,id=None,name=None):
@@ -55,6 +56,8 @@ class Peers:
         assert endpoint
 
         if not is_string(endpoint):
+        
+            
             assert isinstance(endpoint,Peer) or isinstance(endpoint, collections.Callable)   
             if not peertype:   
                 peertype = endpoint.__class__.__name__.lower()
@@ -248,20 +251,18 @@ class Peers:
                 traceback.print_exc()
 
 
-from xio.core.peer import Peer 
-
-class PeerClient(Peer): 
-
+class PeerClient(Resource): 
 
     def __init__(self,**data):
         self.data = data
+        self.id = data.get('id')
+        self.name = data.get('name')
         self.endpoint = data.get('endpoint')
         self.status = data.get('status')
         self.type = data.get('type')
         self.uid = data.get('uid')
         self.conn_type = data.get('conn_type')
-        id = data.get('id')
-        Peer.__init__(self,id=id) 
+        Resource.__init__(self) 
         self.status = data.get('status')
 
     def check(self): 
