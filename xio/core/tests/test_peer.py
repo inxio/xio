@@ -18,7 +18,7 @@ def checkPeer(peertype):
     assert factory().id != factory().id, Exception('ERROR GENETERATE UID %s' % peertype)
 
     # server instance    
-    seed = 'myseed%s' % peertype
+    seed = u'myseed%s' % peertype
     assert factory(seed=seed).id == factory(seed=seed).id
     peer = factory()
     assert peer.id

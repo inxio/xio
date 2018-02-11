@@ -5,7 +5,7 @@ from . import resource
 
 from .lib.crypto import crypto
 
-from xio.core.lib.utils import generateuid
+from xio.core.lib.utils import generateuid, to_string
 
 
 class Peer(resource.Resource):

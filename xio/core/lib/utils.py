@@ -20,6 +20,8 @@ except ImportError:
 
 if sys.version_info.major == 2:
 
+    import codecs
+
     def str_to_bytes(value):
         if isinstance(value, (bytes, bytearray)):
             return bytes(value)
@@ -71,16 +73,16 @@ else:
 
 
 def to_string(value):
-    if isinstance(value, bytes):
-        return value
-    if isinstance(value, str):
-        return bytes(value, 'utf-8')
-    if isinstance(value, int):
-        return bytes(str(value), 'utf-8')
+    if value!=None:
+        if isinstance(value, (bytes, bytearray)):
+            value = value.decode()
+        else:
+            value = str(value)
     return value
 
-
-
+def to_bytes(value):
+    return str_to_bytes(value)
+    
 
 def is_int(i):
     try:
@@ -104,7 +106,7 @@ def generateuid():
 
 def md5(txt):
     assert txt
-    txt = to_string(txt)
+    txt = to_bytes(txt)
     return hashlib.md5(txt).hexdigest()
 
 

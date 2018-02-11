@@ -123,12 +123,12 @@ class Tests(unittest.TestCase):
 
         # get item 
         r = tb.get('item1',fields=['field3','field2.field22.field222'])
-        assert r.keys()==['field3','field2'] and r['field2'].keys()==['field22'] and r['field2']['field22'].keys()==['field222'] and r['field2']['field22']['field222']=='value222'
+        assert list(r.keys())==['field3','field2'] and list(r['field2'].keys())==['field22'] and list(r['field2']['field22'].keys())==['field222'] and r['field2']['field22']['field222']=='value222'
 
         # select
         r = list(tb.select(fields=['field3']))
 
-        assert r[0].keys()==['field3'] 
+        assert list(r[0].keys())==['field3'] 
 
 
 

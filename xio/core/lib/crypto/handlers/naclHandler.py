@@ -23,7 +23,7 @@ class NaclEncryptionHandler:
     def encrypt(self,message,dst_public_key=None):
         publicKey = PublicKey( decode_hex(dst_public_key) ) if dst_public_key else self._naclpub
         sealed_box = SealedBox(publicKey)
-        encrypted = sealed_box.encrypt(to_string(message))
+        encrypted = sealed_box.encrypt(str_to_bytes(message))
         return encode_hex(encrypted)
 
     def decrypt(self,message):
@@ -39,7 +39,7 @@ class NaclHandler:
         if private:
             self._naclpriv = SigningKey( decode_hex(private) )
         elif seed:
-            seed = decode_hex( nacl.hash.sha256(seed) )
+            seed = decode_hex( nacl.hash.sha256( str_to_bytes(seed) ) )
             self._naclpriv = SigningKey( seed )
         else:
             self._naclpriv = SigningKey.generate()

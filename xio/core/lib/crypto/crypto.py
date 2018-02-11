@@ -56,14 +56,17 @@ class Key:
             assert len(self.private)==64
 
 
+        # fix id & token => utf8
+        self.address = to_string(self.address)
+        self.token = to_string(self.token)
+
         ethereum_handler = BITCOIN_ETH_HANDLER or WEB3_HANDLER
         if ethereum_handler:
             self.ethereum = ethereum_handler(seed=self.private)
             try: 
-                #self.ethereum = ethereum_handler(seed=self.private)
+                self.ethereum.address = to_string(self.ethereum.address)
                 self.ethereum.address = web3.Web3('').toChecksumAddress(self.address)  
             except:
-                #self.ethereum = None
                 pass   
 
         
@@ -89,6 +92,7 @@ class Key:
 
 
     def recoverToken(self,token):
+        token = str_to_bytes(token)
         nfo = token.split(b'-')
         verifikey = nfo[0]
         signed = nfo[1]

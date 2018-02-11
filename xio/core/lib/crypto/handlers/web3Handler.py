@@ -15,7 +15,7 @@ class Web3Handler:
             self.private = private
             self.address = account.address
         elif seed:
-            seed = encode_hex(sha3_keccak_256( seed ))
+            seed = sha3_keccak_256( seed )
             self._account = self._web3.eth.account.create(seed)
             self.private = self._account.privateKey.hex()[2:]
         else:

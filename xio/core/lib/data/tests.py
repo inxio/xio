@@ -5,10 +5,6 @@
 import xio 
 
 import unittest
-from pprint import pprint
-import sys
-
-
 
 testdata = [
     {
@@ -48,15 +44,15 @@ class Tests(unittest.TestCase):
         data = xio.data(testdata[0])
 
         r = data.adapt('field1') 
-        assert r.keys()==['field1']
+        assert list(r.keys())==['field1']
         r = data.adapt('field1,field3') 
-        assert r.keys()==['field1','field3']
+        assert list(r.keys())==['field1','field3']
         r = data.adapt('field2') 
-        assert r.keys()==['field2'] and r['field2']['field22']['field221']=='r1v221'
+        assert list(r.keys())==['field2'] and r['field2']['field22']['field221']=='r1v221'
         r = data.adapt('field2.field21')
-        assert r.keys()==['field2'] and r['field2'].keys()==['field21'] and r['field2']['field21']=='r1v21'
+        assert list(r.keys())==['field2'] and list(r['field2'].keys())==['field21'] and r['field2']['field21']=='r1v21'
         r = data.adapt('field3,field2.field22.field222') 
-        assert r.keys()==['field3','field2'] and r['field2'].keys()==['field22'] and r['field2']['field22'].keys()==['field222'] and r['field2']['field22']['field222']=='r1v222'
+        assert list(r.keys())==['field3','field2'] and list(r['field2'].keys())==['field22'] and list(r['field2']['field22'].keys())==['field222'] and r['field2']['field22']['field222']=='r1v222'
 
                 
 

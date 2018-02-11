@@ -11,11 +11,11 @@ TEST_SHA3_KECCAK_256    = b'37b75e9adbf125f93fb14b41cb4fe530e6dd6e4a9c854ab1b33c
 
 TEST_PRIVATE            = b'c55487a5417d759e04f5d57d34e11151e2fc04a2048c8b19dca9ed3c59a8a49e'
 TEST_PUBLIC             = b'145a1afd1792a23c79eb267ec53ae02117d44a13659cb44f7ec4de3579bbf8a7'
-TEST_ADDRESS            = TEST_PUBLIC
+TEST_ADDRESS            = TEST_PUBLIC.decode()
 
 
 TEST_ETHEREUM_PRIVATE   = b'ef62ee9dee29b728a62ae606299fe8d1100cdf878a02b04a944d70f2627a5875' 
-TEST_ETHEREUM_ADDRESS   = b'0x3ec381e7291d7058ac13fe74998cd02d580500d2' 
+TEST_ETHEREUM_ADDRESS   = u'0x3ec381e7291d7058ac13fe74998cd02d580500d2' 
 
 
 class TestCases(unittest.TestCase):
@@ -62,7 +62,7 @@ class TestCases(unittest.TestCase):
         
         k1 = Key()
         assert k1.token
-        assert k1.recoverToken(k1.token)==k1.address
+        assert to_string(k1.recoverToken(k1.token))==k1.address
         
         k2 = Key(token=k1.token)
         assert k2.address == k1.address
