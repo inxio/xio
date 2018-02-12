@@ -10,7 +10,7 @@ from setuptools import (
 
 setup(
     name = 'xio',
-    version = '0.0.3',
+    version = '0.0.4',
     python_requires = '>=2.7.*',
     description = """simple microframework for microservices rapid prototyping""",
     long_description = open('README.md').read(),
@@ -22,6 +22,7 @@ setup(
         "requests", 
         "pyyaml",
         "pynacl",
+        "gevent"
     ],
     py_modules = ['xio'],
     #scripts=['xio/bin/xio'],
