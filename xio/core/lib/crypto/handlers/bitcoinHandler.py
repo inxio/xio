@@ -42,21 +42,41 @@ class BitcoinEthereumHandler:
         assert self.recover(message,sig)==self.address
         return sig
 
-    @staticmethod
-    def recover(message,sig): 
+    @classmethod
+    def recover(cls,message,sig): 
         pub = bitcoin.ecdsa_recover(message, sig) 
         pub = pub[2:] # pub already hex encoded
-        return self.pub2EthereumAddress(pub)
+        return cls.pub2EthereumAddress(pub)
         
 
-    @staticmethod
-    def pub2EthereumAddress(pub):
+    @classmethod
+    def pub2EthereumAddress(cls,pub):
         pub = decode_hex(pub)
         pub = pub[1:] if len(pub)==65 else pub
         assert len(pub)==64
         address = decode_hex(sha3_keccak_256(pub))[12:]
         address = "0x"+encode_hex(address)
         return str_to_bytes(address)
+
+
+    def generateToken(self):
+        import time
+        nonce = str(int(time.time()))
+        sig = self.sign(nonce)
+        token = nonce+'-'+sig
+        assert self.recoverToken(token)==self.address
+        return token
+
+
+    @classmethod    
+    def recoverToken(cls,token):
+        nfo = token
+        nonce,sig = token.split('-')
+        address = cls.recover(nonce,sig)
+        return address
+
+
+
 
 
 class BitcoinHandler:
@@ -106,5 +126,10 @@ class BitcoinHandler:
         pub = decode_hex(pub)
         address = bitcoin.pubtoaddress(decode_hex(priv))
         return address
+
+
+
+
+
 
 

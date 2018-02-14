@@ -9,6 +9,7 @@ import nacl.utils
 from nacl.public import PrivateKey, PublicKey, SealedBox, Box
 from nacl.signing import SigningKey
 import nacl.hash
+import time
 
 
 class NaclEncryptionHandler:
@@ -69,5 +70,29 @@ class NaclHandler:
     def verify(verify_key_hex,signed):
         verifyKey = nacl.signing.VerifyKey(verify_key_hex, encoder=nacl.encoding.HexEncoder)
         return verifyKey.verify( decode_hex(signed) )
+
+
+
+    def generateToken(self):
+        nonce = str(int(time.time()))
+        message = b'%s-%s' % (str_to_bytes(self.public),str_to_bytes(nonce))
+        sig = self.sign(message)
+        token = b'-'.join(sig)
+        assert self.recoverToken(token)==self.public
+        return token
+
+    @classmethod    
+    def recoverToken(cls,token):
+        token = str_to_bytes(token)
+        nfo = token.split(b'-')
+        verifikey = nfo[0]
+        signed = nfo[1]
+        message = cls.verify(verifikey,signed)
+        address,nonce = message.split(b'-')
+        return address
+
+
+
+
 
         

@@ -83,22 +83,13 @@ class Key:
     def verify(self,message,sig):
         return self._handler.verify(message,sig)
 
-    def generateToken(self):
-        nonce = str(int(time.time()))
-        message = b'%s-%s' % (str_to_bytes(self.address),str_to_bytes(nonce))
-        sig = self.sign(message)
-        token = b'-'.join(sig)
-        assert self.recoverToken(token)==self.address
-        return token
+    def generateToken(self,scheme=None):
+        h = self._handler if not scheme else getattr(self,scheme)
+        return h.generateToken()
 
 
-    def recoverToken(self,token):
-        token = str_to_bytes(token)
-        nfo = token.split(b'-')
-        verifikey = nfo[0]
-        signed = nfo[1]
-        message = self.verify(verifikey,signed)
-        address,nonce = message.split(b'-')
-        return address
+    def recoverToken(self,token,scheme=None):
+        h = self._handler if not scheme else getattr(self,scheme)
+        return h.recoverToken(token)
 
 
