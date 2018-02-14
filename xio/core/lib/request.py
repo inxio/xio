@@ -102,10 +102,18 @@ class Request(object):
 
         self.log = getattr(self.context.get('root'),'log',None)
         self.server = self.context.get('root') # do not work : to fix
+
+        # handling auth
+        if client: # and 'authorization' in client.context:
+            print('????',client.context)
+            self.headers['Authorization'] = client.context.get('authorization')
+
+        self.auth = Auth(self)
         
         # handling client
         if client:
-            self.headers['Authorization'] = 'Bearer %s' % client.token
+            
+            #self.headers['Authorization'] = 'Bearer %s' % client.token
             client = ReqClient(self,client,client_context)
         else:
             login = password = token = None
@@ -145,6 +153,10 @@ class Request(object):
             'query': self.query,
             'data': self.data,
             'profile': self.profile,
+            'auth': {
+                'scheme': self.auth.scheme,
+                'token': self.auth.token,
+            },
             'client': {
                 'id': self.client.id,
                 'token': self.client.token,
@@ -167,6 +179,26 @@ class Response:
 
     def __repr__(self):
         return 'RESPONSE %s %s' % (self.status,self.content_type)
+
+class Auth:
+
+    scheme = None
+    token = None
+
+    def __init__(self,req):
+        self.req = req
+        authorization = req.headers.get('Authorization',req.headers.get('authorization' ) ) 
+        if authorization:
+            scheme,token = authorization.split(' ')
+            self.scheme = scheme
+            self.token = token
+
+    def require(self,key,value):
+        if key=='scheme':
+            if self.scheme != value:
+                self.req.response.headers['WWW-Authenticate'] = '%s realm="%s", charset="UTF-8"' % (value,'xio realm')
+                raise Exception(401)
+
 
 
 class Cookie:

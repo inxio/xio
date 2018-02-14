@@ -163,7 +163,7 @@ def handleRequest(func):
                 req.response.status = args[0]
                 resp = ' '.join( str(v) for v in args )
             else:
-                #traceback.print_exc() 
+                traceback.print_exc() 
                 req.response.status = 500
                 resp = None
             if req.debug:
