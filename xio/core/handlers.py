@@ -17,8 +17,9 @@ import yaml
 import copy
 import json
 import requests
-from pprint import pprint
+import inspect
 
+from pprint import pprint
 
 import mimetypes
 mimetypes.init()
@@ -112,6 +113,49 @@ class pythonCallableHandler:
     def __call__(self,req):
         return self.handler( req )      
         
+
+
+    
+class pythonObjectHandler:
+
+    def __init__(self,handler,context=None):
+    
+        self.handler = handler
+        self.api = {}
+        for name in dir(self.handler):
+            if name[0]!='_':
+                h = getattr(self.handler,name)
+                if callable(h):
+                    argspec = inspect.getargspec(h)
+                    print ('...',name)
+                    print ('...',argspec)
+                    params = []
+                    for arg in argspec.args[1:]: # skip self args .. not working with @staticmethod
+                        print ('...   ', arg)
+                        param = {
+                            'name': arg
+                        }
+                        params.append(param)    
+
+                    self.api[name.lower()] = {
+                        'handler': h,
+                        'input': {
+                            'params': params
+                        }
+                    }
+        pprint(self.api)
+        
+
+    def __call__(self,req):
+
+        method = req.xmethod or req.method
+        print (method)
+        args = ()
+        h = self.api.get( method.lower(),{}).get('handler')
+        assert h, Exception(404)
+        return h(*args)
+
+
 
 class HttpHandler:
 

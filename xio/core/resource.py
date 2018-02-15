@@ -41,12 +41,15 @@ def resource(handler=None,context=None,about=None,**kwargs):
         handler = pythonResourceHandler(handler)
     elif isinstance(handler, collections.Callable):
         handler = pythonCallableHandler(handler)
-    elif handler and ':' in handler:
+    elif handler and is_string( handler ) and ':' in handler:
         handler,basepath = env.resolv(handler) 
     elif handler and is_string( handler ):
         handler = PeerHandler(handler)
     elif handler:
-        raise Exception('UNHANDLED RESOURCE HANDLER (%s)' % handler)
+        # test fallback handler => object introspection
+        # alternative is to add __call__ method on class
+        handler = pythonObjectHandler(handler)
+        #raise Exception('UNHANDLED RESOURCE HANDLER (%s)' % handler)
 
     return Resource(handler=handler,handler_path=basepath,handler_context=context,about=about,**kwargs)
 
