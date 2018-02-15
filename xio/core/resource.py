@@ -228,7 +228,7 @@ class Resource(object):
 
         self._handler = handler if handler else self.content if self.content and isinstance(self.content, collections.Callable) else None
         self._handler_path = handler_path
-        self._handler_context = handler_context
+        self._handler_context = handler_context or {}
         self._parent = parent
         self._root = root or (parent._root if parent else self)
         self._children =  collections.OrderedDict()

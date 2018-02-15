@@ -38,9 +38,11 @@ class Key:
     def __init__(self,priv=None,token=None,seed=None):
 
         handler_cls = NaclHandler
+        ethereum_handler = BITCOIN_ETH_HANDLER or WEB3_HANDLER
 
         if token:
             self._handler = handler_cls # no instance, only static method allowed
+            self.ethereum = ethereum_handler
             self.private = None
             self.public = None
             self.token = token
@@ -55,20 +57,22 @@ class Key:
             self.encryption = self._handler.encryption
             assert len(self.private)==64
 
+            self.ethereum = None
+            if ethereum_handler:
+                self.ethereum = ethereum_handler(seed=self.private)
+                try: 
+                    self.ethereum.address = to_string(self.ethereum.address)
+                    self.ethereum.address = web3.Web3('').toChecksumAddress(self.address)  
+                except:
+                    pass   
+
 
         # fix id & token => utf8
         self.address = to_string(self.address)
         self.token = to_string(self.token)
 
-        ethereum_handler = BITCOIN_ETH_HANDLER or WEB3_HANDLER
-        self.ethereum = None
-        if ethereum_handler:
-            self.ethereum = ethereum_handler(seed=self.private)
-            try: 
-                self.ethereum.address = to_string(self.ethereum.address)
-                self.ethereum.address = web3.Web3('').toChecksumAddress(self.address)  
-            except:
-                pass   
+        
+
 
         
     def encrypt(self,message,*args,**kwargs):
@@ -89,6 +93,9 @@ class Key:
 
 
     def recoverToken(self,token,scheme=None):
+        if isinstance(token,tuple):
+            scheme,token = token
+            scheme = scheme.split('/').pop()
         h = self._handler if not scheme else getattr(self,scheme)
         return h.recoverToken(token)
 

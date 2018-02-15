@@ -80,7 +80,7 @@ class Peer(resource.Resource):
             if auhtenticate:
                 scheme = auhtenticate.split(' ').pop(0).split('/').pop()
                 #print scheme
-                cli.context['authorization'] = 'xio/'+scheme+' '+self.key.generateToken(scheme)
+                cli._handler_context['authorization'] = 'xio/'+scheme+' '+self.key.generateToken(scheme)
                 #print cli.context
                 res = cli.connect()
         return res

@@ -103,18 +103,11 @@ class Request(object):
         self.log = getattr(self.context.get('root'),'log',None)
         self.server = self.context.get('root') # do not work : to fix
 
-        # handling auth
-        if client: # and 'authorization' in client.context:
-            print('????',client.context)
-            self.headers['Authorization'] = client.context.get('authorization')
-
-        self.auth = Auth(self)
-        
+        self.client = ReqClient(self,client_context,peer=client)
+        """
         # handling client
         if client:
-            
-            #self.headers['Authorization'] = 'Bearer %s' % client.token
-            client = ReqClient(self,client,client_context)
+            client = ReqClient(self,client_context,peer=client)
         else:
             login = password = token = None
             token = self.headers.get('XIO-token',self.headers.get('xio_token', self.context.get('cookies',{}).get('token') ))
@@ -135,6 +128,7 @@ class Request(object):
             client = ReqClient(self,token,client_context)
         
         self.client = client
+        """
         
 
     def __getattr__(self, name):
@@ -153,15 +147,15 @@ class Request(object):
             'query': self.query,
             'data': self.data,
             'profile': self.profile,
-            'auth': {
-                'scheme': self.auth.scheme,
-                'token': self.auth.token,
-            },
             'client': {
+                'auth': {
+                    'scheme': self.client.auth.scheme,
+                    'token': self.client.auth.token,
+                },
                 'id': self.client.id,
-                'token': self.client.token,
                 'context': self.client.context,
                 'peer': self.client.peer
+
             },
             'server': self.server,
         }
@@ -179,26 +173,6 @@ class Response:
 
     def __repr__(self):
         return 'RESPONSE %s %s' % (self.status,self.content_type)
-
-class Auth:
-
-    scheme = None
-    token = None
-
-    def __init__(self,req):
-        self.req = req
-        authorization = req.headers.get('Authorization',req.headers.get('authorization' ) ) 
-        if authorization:
-            scheme,token = authorization.split(' ')
-            self.scheme = scheme
-            self.token = token
-
-    def require(self,key,value):
-        if key=='scheme':
-            if self.scheme != value:
-                self.req.response.headers['WWW-Authenticate'] = '%s realm="%s", charset="UTF-8"' % (value,'xio realm')
-                raise Exception(401)
-
 
 
 class Cookie:
@@ -225,12 +199,42 @@ class Cookie:
         return self._data.get(key)
 
 
+class Auth:
+
+    scheme = None
+    token = None
+
+    def __init__(self,client):
+        self.req = client.req
+
+        authorization = self.req.headers.get('Authorization',self.req.headers.get('authorization', client.context.get('authorization')) ) 
+
+        if authorization:
+            scheme,token = authorization.split(' ')
+            self.scheme = scheme
+            self.token = token
+
+    def require(self,key,value):
+        if key=='scheme':
+            if self.scheme != value:
+                self.req.response.headers['WWW-Authenticate'] = '%s realm="%s", charset="UTF-8"' % (value,'xio realm')
+                raise Exception(401)
+
+
+
 class ReqClient:
 
-    def __init__(self,req,token,context=None):
+    def __init__(self,req,context=None,peer=None):
         self.req = req
         self.id = None
-        self.peer = None
+        self.peer = None # peer args only for test purpose ?
+        self.context = context
+        self.auth = Auth(self)
+        if self.auth.token:
+            import xio
+            self.peer = xio.user(token=(self.auth.scheme,self.auth.token))
+        self.id = self.peer.id if self.peer else None
+        """
         if hasattr(token,'id'):
             peer = token
             self.id = peer.id
@@ -242,7 +246,7 @@ class ReqClient:
                 import xio
                 account = xio.user(token=token)
                 self.id = account.id    
-
+        """
         self._feedback = req.context.get('feedback')
         self._wsendpoint = req.context.get('wsendpoint')
         self.send = self._send if self._feedback else None
@@ -257,6 +261,7 @@ class ReqClient:
     
             if self.context and self.context[0]=='{':
                 self.context = json.loads(self.context)
+
 
     def auth(self):
         return bool(self.token)
