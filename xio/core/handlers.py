@@ -127,42 +127,26 @@ class pythonObjectHandler:
                 h = getattr(self.handler,name)
                 if callable(h):
                     argspec = inspect.getargspec(h)
-                    print ('...',name)
-                    print ('...',argspec)
                     params = []
-                    autoargs = []
                     args = argspec.args
-                    if args[0] == 'self':
-                        autoargs.append('self')  
-                    if args[1] == 'user':
-                        autoargs.append('user') 
-                    for arg in argspec.args[len(autoargs):]: # skip self args .. not working with @staticmethod
-                        print ('...   ', arg)
+                    for arg in argspec.args[1:]: # skip self args .. not working with @staticmethod
                         param = {
                             'name': arg
                         }
                         params.append(param)    
-
                     self.api[name.lower()] = {
                         'handler': h,
                         'input': {
-                            'auto': autoargs,
                             'params': params
                         }
                     }
 
         
-
     def __call__(self,req):
-        req.client.auth.require('scheme','xio/ethereum')
         method = req.xmethod or req.method
-        print ('=== OBJ CALL ===>',req)
-        pprint(req._debug())
         args = []
         cfg = self.api.get( method.lower(),{})
         assert cfg, Exception(404)
-        if 'user' in cfg.get('input',{}).get('auto',[]):
-            args.append(req.client.id) 
         h = self.api.get( method.lower(),{}).get('handler')
         assert h, Exception(404)
         return h(*args)
