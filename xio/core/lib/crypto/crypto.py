@@ -62,8 +62,8 @@ class Key:
                 self.ethereum = ethereum_handler(seed=self.private)
                 try: 
                     self.ethereum.address = to_string(self.ethereum.address)
-                    import web3
-                    self.ethereum.address = web3.Web3('').toChecksumAddress(self.ethereum.address)  
+                    #import web3
+                    #self.ethereum.address = web3.Web3('').toChecksumAddress(self.ethereum.address)  
                 except Exception as err:
                     print ('ETHEREUM ERROR', err)
 
