@@ -39,7 +39,7 @@ class BitcoinEthereumHandler:
 
     def sign(self,message): 
         sig = bitcoin.ecdsa_sign(message,self.private)
-        assert self.recover(message,sig)==self.address
+        assert self.recover(message,sig).lower()==self.address.lower()
         return sig
 
     @classmethod
@@ -64,7 +64,7 @@ class BitcoinEthereumHandler:
         nonce = str(int(time.time()))
         sig = self.sign(nonce)
         token = nonce+'-'+sig
-        assert self.recoverToken(token)==self.address
+        assert self.recoverToken(token).lower()==self.address.lower()
         return token
 
 
