@@ -227,13 +227,14 @@ class ReqClient:
     def __init__(self,req,context=None,peer=None):
         self.req = req
         self.id = None
-        self.peer = None # peer args only for test purpose ?
+        self._peer = peer # warning originale peer for testcase (correct id require token based raccount ecover)
         self.context = context
         self.auth = Auth(self)
+        # if not peer we create a keyless user from token 
         if self.auth.token:
             import xio
             self.peer = xio.user(token=(self.auth.scheme,self.auth.token))
-        self.id = self.peer.id if self.peer else None
+            self.id = self.peer.id if self.peer else None
         """
         if hasattr(token,'id'):
             peer = token
