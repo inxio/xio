@@ -164,14 +164,15 @@ def handleRequest(func):
             #print('*******',args[0], isinstance(args[0],int) )
             if args and isinstance(args[0],int):
                 req.response.status = args[0]
-                resp = ' '.join( str(v) for v in args )
+                resp = args[1] if len(args)>1 else None
+                #resp = ' '.join( str(v) for v in args ) # to remove, we need raise Exception(402,content)
             else:
                 traceback.print_exc() 
                 req.response.status = 500
                 resp = None
             if req.debug:
                 print('...' * dbglevel,'ERR',resp)
-            #print('*******',req.response.status )      
+            #print('*******',req.response.status, resp)      
         if not isinstance(resp, Resource):
             req.path = ori_path
             resp = self._toResource(req,resp) # ,
@@ -383,6 +384,19 @@ class Resource(object):
         else:
             resp = self._defaultHandler(req)
             handler_path = None
+
+        # test handling 401/402 -> @handleAuth
+        if resp.status==401:
+            print ('401 recevied by', self)
+            
+        if resp.status==402:
+            print ('402 recevied by', self)
+            print (self._handler_context)
+            print (self.context)
+            print (resp.content)
+            peer = self.context.get('client')
+            peer.key.ethereum.signTransaction(resp.content)
+            #die()
 
         return resp if isinstance(resp,Resource) else self._toResource(req,resp,handler_path) # put handler_path in response metadata ?
 

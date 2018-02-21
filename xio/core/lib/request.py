@@ -214,12 +214,23 @@ class Auth:
             self.scheme = scheme
             self.token = token
 
-    def require(self,key,value):
+    def require(self,key,value,content=None):
+    
         if key=='scheme':
             if self.scheme != value:
                 self.req.response.headers['WWW-Authenticate'] = '%s realm="%s", charset="UTF-8"' % (value,'xio realm')
                 raise Exception(401)
+                
+        elif key=='signature':
+            # quick testcase : if peer able to sign we convert original data
+            # using virtual peer capacity ? eg: req.client.sign(tx) ... direct if _peer else http401
+            #if req.client._peer:
+            #    signed = c.sign(req.client._peer.key.ethereum.private)
 
+            if self.req.headers.get('Content-Type') != 'application/signature':  
+                self.req.response.headers['WWW-Authenticate'] = '%s realm="%s", charset="UTF-8"' % (value,'xio realm')
+                self.req.response.status = 402
+                raise Exception(402,content)
 
 
 class ReqClient:
