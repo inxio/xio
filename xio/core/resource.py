@@ -95,6 +95,49 @@ def extractAbout(h):
     return about
 
 
+def handleAuth(func):
+    """
+    handle
+        -> 401
+        -> 402
+    """
+
+    @wraps(func)
+    def _(self,method,*args,**kwargs):
+
+        resp = func(self,method,*args,**kwargs)
+
+        peer = self.context.get('client')
+        if hasattr(peer,'key') and hasattr(peer.key,'private'):
+
+            print('--------', peer.key)
+
+            # test handling 401/402 -> @handleAuth
+            if resp.status==401:
+                print ('401 recevied by', self)
+                
+            if resp.status==402:
+                print ('402 recevied by', self)
+                print (self._handler_context)
+                print (self.context)
+                print (resp.content)
+                peer = self.context.get('client')
+                print ('peer',peer)
+                signed = peer.key.ethereum.signTransaction(resp.content)
+                print(signed)
+                # redo call
+                print('REDO CALL',args,kwargs)
+                headers = {
+                    'Content-Type': 'application/signature'
+                }
+                resp = func(self,method,data=signed,headers=headers)
+                print (resp)
+                wala()
+                #die()
+            
+        return resp
+
+    return _
 
 def handleRequest(func):
     """
@@ -367,6 +410,7 @@ class Resource(object):
         return res
 
 
+    @handleAuth    
     @handleRequest
     @handleDelegate
     def request(self,req):
@@ -384,19 +428,6 @@ class Resource(object):
         else:
             resp = self._defaultHandler(req)
             handler_path = None
-
-        # test handling 401/402 -> @handleAuth
-        if resp.status==401:
-            print ('401 recevied by', self)
-            
-        if resp.status==402:
-            print ('402 recevied by', self)
-            print (self._handler_context)
-            print (self.context)
-            print (resp.content)
-            peer = self.context.get('client')
-            peer.key.ethereum.signTransaction(resp.content)
-            #die()
 
         return resp if isinstance(resp,Resource) else self._toResource(req,resp,handler_path) # put handler_path in response metadata ?
 
