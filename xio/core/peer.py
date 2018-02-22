@@ -73,7 +73,10 @@ class Peer(resource.Resource):
     def connect(self,peer):
         assert peer and isinstance(peer,resource.Resource)
         cli = resource.resource( peer, client=self)
+        return cli
+        """
         res = cli.connect()
+
         # handle auth scheme update
         if res.status == 401:
             auhtenticate = res.headers.get('WWW-Authenticate')
@@ -83,6 +86,7 @@ class Peer(resource.Resource):
                 cli._handler_context['authorization'] = 'xio/'+scheme+' '+self.key.generateToken(scheme)
                 #print cli.context
                 res = cli.connect()
+        """
         return res
 
 

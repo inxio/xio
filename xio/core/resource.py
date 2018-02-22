@@ -98,8 +98,8 @@ def extractAbout(h):
 def handleAuth(func):
     """
     handle
-        -> 401
-        -> 402
+        -> 401 : WWW-Authenticate for automatic authorization
+        -> 402 : signature request : content must be signed and resend 
     """
 
     @wraps(func)
@@ -110,30 +110,26 @@ def handleAuth(func):
         peer = self.context.get('client')
         if hasattr(peer,'key') and hasattr(peer.key,'private'):
 
-            print('--------', peer.key)
-
             # test handling 401/402 -> @handleAuth
             if resp.status==401:
                 print ('401 recevied by', self)
+                auhtenticate = resp.headers.get('WWW-Authenticate')
+                if auhtenticate:
+                    scheme = auhtenticate.split(' ').pop(0).split('/').pop()
+                    #print scheme
+                    token = peer.key.generateToken(scheme)
+                    self._handler_context['authorization'] = 'xio/'+scheme+' '+token
+                    #print cli.context
+                    resp = func(self,method,*args,**kwargs)
                 
             if resp.status==402:
-                print ('402 recevied by', self)
-                print (self._handler_context)
-                print (self.context)
-                print (resp.content)
                 peer = self.context.get('client')
-                print ('peer',peer)
                 signed = peer.key.ethereum.signTransaction(resp.content)
-                print(signed)
-                # redo call
                 print('REDO CALL',args,kwargs)
                 headers = {
                     'Content-Type': 'application/signature'
                 }
                 resp = func(self,method,data=signed,headers=headers)
-                print (resp)
-                wala()
-                #die()
             
         return resp
 
