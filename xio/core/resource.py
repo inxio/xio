@@ -124,7 +124,7 @@ def handleAuth(func):
                 
             if resp.status==402:
                 peer = self.context.get('client')
-                signed = peer.key.ethereum.signTransaction(resp.content)
+                signed = peer.key.account('ethereum').signTransaction(resp.content)
                 print('REDO CALL',args,kwargs)
                 headers = {
                     'Content-Type': 'application/signature'
