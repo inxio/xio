@@ -24,11 +24,9 @@ if sys.version_info.major == 2:
 
     def str_to_bytes(value):
         if isinstance(value, (bytes, bytearray)):
-            return bytes(value)
-        elif isinstance(value, unicode):
-            return codecs.encode(value, 'utf8')
+            return value
         else:
-            raise TypeError("require text, bytes, or bytearray")
+            return bytes(value)
             
 
     def decode_hex(s):

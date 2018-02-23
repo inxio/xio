@@ -78,19 +78,28 @@ class BitcoinEthereumHandler:
 
 
     def signTransaction(self,data):
+        """
+        https://github.com/ethereum/pyethereum
+        """
         import rlp
         from ethereum.transactions import Transaction
 
+        print ('======= crypto signTransaction')
+        from pprint import pprint
+        pprint(data)
         tx = Transaction(
             nonce       = data.get('nonce'),
             gasprice    = data.get('gasPrice'),
             startgas    = data.get('gas'),
             to          = data.get('to'),
             value       = data.get('value'),
-            data        = b'',
+            data        = data.get('data'),
         )
         
         tx.sign(self.private)
+
+        pprint(tx.to_dict())
+
         raw_tx = rlp.encode(tx)
         raw_tx_hex = encode_hex(raw_tx) #self.ethereum.web3.toHex(raw_tx)
         return raw_tx_hex
