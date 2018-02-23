@@ -24,6 +24,10 @@ class Network(peer.Peer):
     @classmethod
     def factory(cls,id=None,*args,**kwargs):
 
+        if id.startswith('0x'):
+            from networkHandler import NetworkHandler
+            id = NetworkHandler(id)
+
         if not id:
             return cls(**kwargs)
                 
