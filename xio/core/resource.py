@@ -125,11 +125,10 @@ def handleAuth(func):
             if resp.status==402:
                 peer = self.context.get('client')
                 signed = peer.key.account('ethereum').signTransaction(resp.content)
-                print('REDO CALL',args,kwargs)
-                headers = {
-                    'Content-Type': 'application/signature'
-                }
-                resp = func(self,method,data=signed,headers=headers)
+                # do call again
+                kwargs.setdefault('headers',{})
+                kwargs['headers']['XIO-Signature'] = signed
+                resp = func(self,method,*args,**kwargs)
             
         return resp
 

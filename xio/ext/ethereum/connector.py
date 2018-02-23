@@ -80,7 +80,8 @@ class Connector:
     def transaction(self,data):
         return Transaction(self,data)
 
-
+    def sendRawTransaction(self,raw):
+        return self.web3.eth.sendRawTransaction(raw) 
 
 class Transaction:
 
@@ -140,6 +141,6 @@ class Transaction:
 
 
     def send(self):
-        return self.ethereum.web3.eth.sendRawTransaction(self.raw)  
+        return self.ethereum.sendRawTransaction(self.raw)  
         
 

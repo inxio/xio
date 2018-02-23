@@ -227,10 +227,12 @@ class Auth:
             #if req.client._peer:
             #    signed = c.sign(req.client._peer.key.ethereum.private)
 
-            if self.req.headers.get('Content-Type') != 'application/signature':  
+            signature = self.req.headers.get('XIO-Signature')
+            if not signature:  
                 self.req.response.headers['WWW-Authenticate'] = '%s realm="%s", charset="UTF-8"' % (value,'xio realm')
                 self.req.response.status = 402
                 raise Exception(402,content)
+            return signature
 
 
 class ReqClient:
