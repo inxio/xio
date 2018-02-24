@@ -26,21 +26,23 @@ class Context(dict):
         import xio
 
         config = config or self.config or {}
-
-        # SETUP DEFAULT USER
-        id = config.get('id')
-        token = config.get('token')
-        private_key = config.get('key')
-
         try:
-            self.user = xio.user(id=str(id),token=str(token),key=str(private_key))
-        except:
-            self.user = xio.user()
-        assert self.user.id
+            # SETUP DEFAULT USER
+            id = config.get('id')
+            token = config.get('token')
+            private_key = config.get('key')
 
-        # SETUP DEFAULT XIO ENDPOINT
-        network_uri = config.get('network', xioenvdefault.get('network') )
-        self.network = xio.network(network_uri)
+            try:
+                self.user = xio.user(id=str(id),token=str(token),key=str(private_key))
+            except:
+                self.user = xio.user()
+            assert self.user.id
+
+            # SETUP DEFAULT XIO ENDPOINT
+            network_uri = config.get('network', xioenvdefault.get('network') )
+            self.network = xio.network(network_uri)
+        except Exception as err:
+            pass
 
 context = Context()
 
@@ -55,9 +57,13 @@ try:
     if os.path.isdir(xioenvdir):
         if os.path.isfile(xioenvfilepath):
             with open(xioenvfilepath) as f:
-                context.config = json.load(f)
+                xioenvdefault = json.load(f)
+                context.config = xioenvdefault
 except Exception as err:
     pass
+
+def getDefaultEnv():
+    return xioenvdefault
 
 def setDefaultEnv(data):
     if not os.path.isdir(xioenvdir):
