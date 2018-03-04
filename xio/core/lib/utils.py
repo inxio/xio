@@ -16,7 +16,7 @@ try:
 except ImportError:
     from urlparse import urlparse
 
-
+from .data.data import  jsonld, jsonldlist
 
 if sys.version_info.major == 2:
 
