@@ -41,10 +41,6 @@ class Key:
             self.encryption = self._handler.encryption
             assert len(self.private)==64
 
-            
-
-
-
         # fix id & token => utf8
         self.address = to_string(self.address)
         self.token = to_string(self.token)
