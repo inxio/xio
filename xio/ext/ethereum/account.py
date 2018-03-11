@@ -153,7 +153,18 @@ class BitcoinEthereumHandler(_Account):
     @classmethod    
     def recoverToken(cls,token):
         nfo = token
-        nonce,sig = token.split('-')
+        if token.count('-') > 2:
+             (id,nonce,v,r,s) = token.split('-')
+             print ('WARNING - VERIFY NOT IMPLEMENTED')
+             return id
+             """
+             sig = (v,r,s)
+             from ethereum.utils import ecrecover_to_pub
+             from rlp.utils import decode_hex
+             #print ecrecover_to_pub(nonce,int(decode_hex(v[2:])),decode_hex(r[2:]),decode_hex(s[2:]))
+             """
+        else:
+            nonce,sig = token.split('-')
         address = cls.recover(nonce,sig)
         return address
 

@@ -4,6 +4,14 @@
 import requests
 import json
 
+import sys
+if sys.version_info.major == 2:
+    from Cookie import SimpleCookie
+    from urllib import unquote
+else:
+    from http.cookies import SimpleCookie
+    from urllib.parse import unquote
+
 
 __ALLOWED_METHODS__ = ['HEAD','GET','POST','PUT','DELETE','PATCH','OPTIONS','CONNECT'] 
 
@@ -196,7 +204,8 @@ class Cookie:
         self._req.response.headers['Set-Cookie'] = valuecookie
 
     def get(self,key):
-        return self._data.get(key)
+        value = self._data.get(key)
+        return unquote( value ) if value else None
 
 
 class Auth:
@@ -207,7 +216,12 @@ class Auth:
     def __init__(self,client):
         self.req = client.req
 
-        authorization = self.req.headers.get('Authorization',self.req.headers.get('authorization', client.context.get('authorization')) ) 
+        authorization = self.req.headers.get('Authorization',self.req.headers.get('authorization') ) 
+        if not authorization and client.context:
+            authorization = client.context.get('authorization')
+
+        if not authorization:
+            authorization = self.req.cookie.get('XIO-AUTH')
 
         if authorization:
             scheme,token = authorization.split(' ')
@@ -240,9 +254,11 @@ class ReqClient:
     def __init__(self,req,context=None,peer=None):
         self.req = req
         self.id = None
+        self.peer = None
         self._peer = peer # warning originale peer for testcase (correct id require token based raccount ecover)
         self.context = context
         self.auth = Auth(self)
+
         # if not peer we create a keyless user from token 
         if self.auth.token:
             import xio

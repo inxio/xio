@@ -68,6 +68,12 @@ class Connector:
     def getBalance(self,address):
         return self.web3.eth.getBalance(address)
 
+    def transactions(self,address=None,filter=None):
+        if self.OLDWEB3VERSION:
+            filter = {'fromBlock': 'earliest', 'toBlock': 'latest', 'address': address} #,'address': self.address
+            return self.web3.eth.filter(filter).get(only_changes=False)
+            #return []
+
     def about(self):
         about = {
             'network': self.web3.version.network,

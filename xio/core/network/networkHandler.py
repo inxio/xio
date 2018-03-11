@@ -24,10 +24,13 @@ class NetworkHandler:
 
     def __init__(self,address=None,abi=None):
         from xio.ext.ethereum.connector import Connector
+        from xio import log
+
+        self.log = log
         self.ethereum = Connector()
         self._about = {}
 
-        if not abi:
+        if address and not abi:
             # fetch about network
             tmpcontract = self.ethereum.contract(address=address,abi=BASEABI)
             ipfshash = tmpcontract.request('about') 
@@ -53,6 +56,8 @@ class NetworkHandler:
 
     def __call__(self,req):
 
+        self.log.info('==== XIO NETWORK REQUEST =====', req )
+
         # require ethereum account based authentication
         req.client.auth.require('scheme', 'xio/ethereum')
 
@@ -61,9 +66,16 @@ class NetworkHandler:
     
         pprint(req._debug())
 
-        # check for contract method
+        # check for method handler
         method = req.xmethod or req.method
-        if method.lower() in self.contract.api:
+
+
+        if hasattr(self,method.lower()):
+            
+            h = getattr(self,method.lower())
+            return h(req)
+
+        elif method.lower() in self.contract.api:
             # check for transaction 
             api = self.contract.api.get(method.lower())
             # get real name (case sensitive)
@@ -93,7 +105,22 @@ class NetworkHandler:
                 signature = req.client.auth.require('signature', 'xio/ethereum',transaction.data)
                 tx = self.ethereum.sendRawTransaction(signature)
                 return tx
-            
+        
+
+        # check for path handler
+        p = req.path.split('/')
+        if p and hasattr(self,p[0]):
+            name = p.pop(0)
+            h = getattr(self,name)
+            req.path = '/'.join(p)
+            return h(req)
+
+
+
+
+
+
+
 
 
 

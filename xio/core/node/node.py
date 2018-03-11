@@ -31,12 +31,24 @@ def node(*args,**kwargs):
 
 class Node(App):
 
-    def __init__(self,name=None,**kwargs):
+    def __init__(self,name=None,network=None,**kwargs):
 
         App.__init__(self,name,**kwargs)
 
         self.uid = generateuid()
+        self.network = network
         self.services = [] # list of APP services to deliver
+
+
+    @classmethod
+    def factory(cls,id=None,*args,**kwargs):
+
+        # check network instance
+        if id and callable(id):
+            node = Node(network=id)
+            return node
+                
+        return peer.Peer.factory(id,*args,_cls=cls,**kwargs)
 
 
 
@@ -56,7 +68,12 @@ class Node(App):
                 return [ peer.getInfo() for peer in self.peers.select() ]
 
             elif req.ABOUT:
-                return self._handleAbout(req)
+                about = self._handleAbout(req)
+                if self.network:
+                    about['network'] = self.network._handleAbout(req)
+                if req.client.peer:
+                    about['user'] = req.client.peer._handleAbout(req)
+                return about
 
             elif req.REGISTER:
                 endpoint = req.data.get('endpoint', req.context.get('REMOTE_ADDR').split(':').pop() ) #  '::ffff:127.0.0.1' 
@@ -72,10 +89,8 @@ class Node(App):
             elif req.EXPORT:
                 return self.peers.export()
 
-        assert req.path 
-               
-        # NODE DELIVERY 
 
+        """         
         p = req.path.split('/')
         peerid = p.pop(0)
         assert peerid
@@ -97,6 +112,13 @@ class Node(App):
         except Exception as err:
             traceback.print_exc()
             req.response.status = 500
+        """
+
+               
+        # NETWORK DELIVERY
+        return self.network.render(req)
+
+
 
         
 

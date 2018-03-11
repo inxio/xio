@@ -9,11 +9,23 @@ import xio
 
 from .handlers import python
 
-__HANDLERS__ =  {
-    'python': python.Database
-}
 
 __DATABASES__ = {}
+
+__HANDLERS__ =  {
+    'python': python.Database,
+}
+try:
+    from .handlers import mongo
+    __HANDLERS__['mongo'] = mongo.Database
+except:
+    pass
+try:
+    from .handlers import redis
+    __HANDLERS__['redis'] = redis.Database
+except:
+    pass
+
 
 
 
