@@ -18,7 +18,6 @@ class Database:
 
         client = MongoClient(self.uri) if self.uri else MongoClient()
 
-        print '???????MONGO', client,self.uri
         self.db = client[name] 
 
     def list(self):
@@ -41,8 +40,6 @@ class Database:
 
 
     def put(self,name):
-
-        print '????????mongoput',name
 
         collection = self.db[name]
 
@@ -84,8 +81,6 @@ class Container:
 
     def select(self,filter=None,fields=None,limit=None,start=0,sort=None,**kwargs):
    
-        #print 'mongo db select', filter, limit, start, sort
-
         query = filter2query(filter)
         
         cursor = self.collection.find(query)
@@ -102,14 +97,14 @@ class Container:
                     orient = DESCENDING
                     s = s.split(' ').pop(0)
                 mongosort.append( (s, orient) )
-            #print mongosort
+
             cursor.sort(mongosort)
 
         from bson.json_util import dumps
 
 
         #
-        # a remplacer par un iterator !!
+        # tofix : use iterator
         result = []
         for row in cursor:
             result.append(row)
@@ -147,7 +142,7 @@ class Container:
 
 
     def truncate(self):
-        print 'mongo db truncate'
+        
         return self.collection.remove({}) 
 
     def delete(self,index=None,filter=None):
@@ -189,7 +184,6 @@ def filter2query(filter):
             value = {"$in": v}
         else:
             value = v
-        print k,value
         query[k] = value    
             
     """
@@ -208,37 +202,6 @@ def filter2query(filter):
     return query
 
         
-if __name__=='__main__':
-    
-
-
-    connector = Connector(name='lab_inxio_net')
-    """
-    for c in connector.get():
-        print c,c.count()
-    """    
-    """    
-    res = connector.get('resources')
-    print '***', res.name, res.count()
-
-    for row in res.get():
-        print row.data
-    """
-
-    from lab.core.resource import resource
-    res = resource(connector)
-
-    users = res.get('users')          # doit renvoyer un obj resource !
-
-    print '***', users
-    print users.get('')               # pouvoir avoir la liste (la meme resource peux gere plusierur get get(filter=filter1) get(filter=filter2) )
-    print res.get('users').count()  # 
-    
-    #print res.get('')               # doit renvoyer une liste
-
-    #print res.get('users/.about')
-
-
 
 
 

@@ -16,8 +16,10 @@ if sys.version_info.major == 2:
     from cgi import parse_qs, escape
     import httplib
     import urllib
+    from httplib import responses as http_responses
     from Cookie import SimpleCookie
 else:
+    from http.client import responses as http_responses
     import http.client
     from http.cookies import SimpleCookie
     import urllib.error 
@@ -185,7 +187,7 @@ class HttpService:
                 response.headers['Content-Length'] = len(response.content)
 
             # send response
-            status = '%s %s' % (response.status, httplib.responses.get(response.status))
+            status = '%s %s' % (response.status, http_responses.get(response.status))
           
             response.headers['Content-Type'] = response.content_type
             wsgi_response_headers = [ (str(k),str(v)) for k,v in list(response.headers.items()) ]
@@ -222,7 +224,7 @@ class HttpService:
 
         except Exception as err:
             print(traceback.format_exc())    
-            status = '%s %s' % (500, httplib.responses.get(500))
+            status = '%s %s' % (500, http_responses.get(500))
             
             res = str(traceback.format_exc()).replace('\n','<br>').replace('\t','    ')
             

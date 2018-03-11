@@ -95,7 +95,7 @@ class NetworkHandler:
             else:
                 # prepare transaction
 
-                print req.content_type
+                #print req.content_type
                 print ('=====TRANS',method,args)
                 
                 transaction = self.contract.transaction(req.client.id,method,args)
