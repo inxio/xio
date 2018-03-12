@@ -89,30 +89,34 @@ class Node(App):
             elif req.EXPORT:
                 return self.peers.export()
 
+            # forwrd request to network
+            #else:
+            #    #raise Exception(405) # method not allowed
+        
+        else:
+               
+            p = req.path.split('/')
+            peerid = p.pop(0)
+            assert peerid
 
-        """         
-        p = req.path.split('/')
-        peerid = p.pop(0)
-        assert peerid
-        
-        peer = self.peers.get(peerid)
-        assert peer,404
-        
-        log.info('==== DELIVERY REQUEST =====', req.method, req.xmethod )
-        log.info('==== DELIVERY FROM =====', req.client.id )
-        log.info('==== DELIVERY TO   =====', peerid) 
-        try:
-            req.path = '/'.join(p)
-            resp = peer.request(req)
-            req.response.status = resp.status
-            req.response.headers = resp.headers  # pb si header transferé tel quel ->
-            req.response.content_type = resp.content_type
-            #req.response.ttl = resp.ttl
-            return resp.content      
-        except Exception as err:
-            traceback.print_exc()
-            req.response.status = 500
-        """
+            
+            peer = self.peers.get(peerid)
+            assert peer,404
+            
+            log.info('==== DELIVERY REQUEST =====', req.method, req.xmethod )
+            log.info('==== DELIVERY FROM =====', req.client.id )
+            log.info('==== DELIVERY TO   =====', peerid) 
+            try:
+                req.path = '/'.join(p)
+                resp = peer.request(req)
+                req.response.status = resp.status
+                req.response.headers = resp.headers  # pb si header transferé tel quel ->
+                req.response.content_type = resp.content_type
+                #req.response.ttl = resp.ttl
+                return resp.content      
+            except Exception as err:
+                traceback.print_exc()
+                req.response.status = 500
 
                
         # NETWORK DELIVERY
