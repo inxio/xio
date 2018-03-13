@@ -154,7 +154,7 @@ class App(peer.Peer):
     def init(self):
 
         # scheduler
-        from .services.cron import SchedulerService
+        from .lib.cron import SchedulerService
         self.put('services/cron', SchedulerService(self) )
 
         # build resources
@@ -256,8 +256,8 @@ class App(peer.Peer):
             if not isinstance(conf,dict):
                 servicehandler = conf
             else:
-                from .services import websocket
-                from .services import http
+                from .lib import websocket
+                from .lib import http
 
                 port = conf.get('port')
                 scheme = conf.get('scheme', name)
@@ -289,10 +289,10 @@ class App(peer.Peer):
 
         if not self.wsgi_http:
         
-            from .services import http
+            from .lib import http
             self.wsgi_http = http.HttpService(app=self,context=environ)
 
-            from .services import websocket
+            from .lib import websocket
             self.wsgi_ws = websocket.WebsocketService(app=self,context=environ)
 
             import gevent
