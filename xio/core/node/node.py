@@ -2,7 +2,7 @@
 #-*- coding: utf-8 -*--
  
 from xio.core import resource
-from xio.core.lib.request import Request,Response
+from xio.core.request import Request,Response
 
 from xio.core.app.app import App
 
@@ -47,14 +47,16 @@ class Node(App):
         if id and callable(id):
             node = Node(network=id)
             return node
-                
-        return peer.Peer.factory(id,*args,_cls=cls,**kwargs)
-
+            
+        kwargs.setdefault('_cls',cls)    
+        return App.factory(id,*args,**kwargs)
 
 
     def render(self,req):
+
         
         req.path = self.path +'/'+ req.path if self.path else req.path
+
         self.log.info('NODE.RENDER',req) 
 
         if req.OPTIONS:

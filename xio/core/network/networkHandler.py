@@ -59,7 +59,7 @@ class NetworkHandler:
         self.log.info('==== XIO NETWORK REQUEST =====', req )
 
         # require ethereum account based authentication
-        req.client.auth.require('scheme', 'xio/ethereum')
+        req.require('auth', 'xio/ethereum')
 
         if req.ABOUT:
             return self.about()

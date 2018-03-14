@@ -17,8 +17,7 @@ import requests
 from pprint import pprint
 
 from .handlers import *
-
-from xio.core.lib.request import Request, Response
+from .request import Request, Response
 
 from xio.core.lib import utils
 from xio.core.lib import env
@@ -133,6 +132,62 @@ def handleAuth(func):
         return resp
 
     return _
+
+
+
+def handleCache(func):
+
+    @wraps(func)
+    def _(res,req):
+        # quickfix 
+
+        if req.GET and req.path and req.path.startswith('www') and res.get('services/cache'):
+            
+            cacheservice = res.get('services/cache') 
+            if cacheservice:
+
+                import base64
+                import inspect
+
+                query = req.input
+                xio_skip_cache = query.pop('xio_skip_cache',None)
+
+                uid = '%s-%s' % (req.fullpath,req.input)
+                uid = base64.urlsafe_b64encode(uid).strip('=')
+
+                if xio_skip_cache:
+                    print(cacheservice.delete(uid))
+                assert uid
+                cached = cacheservice.get(uid,{})
+                
+                if cached and xio_skip_cache==None and cached.status==200 and cached.content:
+
+                    info = cached.content 
+
+                    print('found cache !!!', info)
+                    response = Response(200)
+                    response.content_type = info.get('content_type')
+                    response.headers = info.get('meta').get('headers')
+                    response.headers['xio_cache_ttl'] = info.get('meta').get('ttl') 
+                    response.content = info.get('content')
+                    return response
+                else:
+                    result = func(res,req)
+                    response = req.response
+                    
+                    ttl = req.response.ttl
+                    cache_allowed = ttl and bool(response) and response.status==200 and not inspect.isgenerator(response.content)
+                    if cache_allowed:
+                        print('write cache !!!', uid,ttl)
+                        meta = {'headers': dict(response.headers) }
+                        cacheservice.put(uid,data={'content':response.content,'ttl':int(ttl),'meta':meta})
+                    else:
+                        print('no cachable !!!', ttl, bool(response), response.status)
+                    return result
+
+        return func(res,req)
+    return _
+
 
 def handleRequest(func):
     """
@@ -405,8 +460,9 @@ class Resource(object):
         return res
 
 
-    @handleAuth    
+    @handleAuth
     @handleRequest
+    @handleCache
     @handleDelegate
     def request(self,req):
 

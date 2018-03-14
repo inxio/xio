@@ -3,7 +3,7 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-from xio.core.lib.request import Request,Response
+from .request import Request,Response
 from xio.core.lib.utils import is_string, urlparse
 
 import os

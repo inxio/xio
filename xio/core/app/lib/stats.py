@@ -3,11 +3,13 @@
 
 import xio
 
+from xio.core.lib.utils import md5
+
 import json
 
 from pprint import pprint
 import copy
-
+import datetime
 
 """
     def check(self,req):
@@ -52,21 +54,47 @@ import copy
 
 
 
-class StatsManager:
+class StatsHandler:
 
     def __init__(self):
         self.db = xio.db(__name__).container('stats')
 
 
-    def inc(self,index,value):
-        self.db.put(index,value)
-        
+    def putStat(self,path,userid):
 
-    def get(self,filter=None):
-        keys = app.redis.keys('xio:peers:%s:stats:%s:*' % (peerid,date))
-        return [ ( key, app.redis.hgetall(key) ) for key in keys ] 
+        dt1 = datetime.datetime.now().strftime('%y%m%d%H') # hourly
+        #dt2 = datetime.datetime.now().strftime('%y%m%d') # daily
+        #dt2 = datetime.datetime.now().strftime('%y%m') # monthly        
+        index1 = md5( path,userid )
+        print 'putStat???', repr(path),userid,index1
+        #index2 = (userid,path,dt2)
+        #index3 = (userid,path,dt3)
 
-        
+        stats = self.db.get(index1) or {'count': 0, 'path': path, 'userid': userid}
+        stats['count'] += 1
+        self.db.put(index1,stats)
+        return stats['count']
+
+
+    def countStat(self,path,userid):
+
+        index = md5( path,userid )
+        print 'countStat???', repr(path),userid,index
+        stats = self.db.get(index)
+        print index
+        print list( self.db.select() )
+        print(stats)
+        return stats.get('count')
+
+
+    def __call__(self,req):
+
+
+        if req.COUNT:
+            return self.countStat(req.data.get('path'),req.data.get('userid'))
+
+        elif req.POST:
+            return self.putStat(req.data.get('path'),req.data.get('userid'))
 
 
 if __name__=='__main__':
@@ -75,7 +103,7 @@ if __name__=='__main__':
     import unittest
 
 
-    manager = StatsManager()
+    stats = StatsHandler()
 
     class Tests(unittest.TestCase):
 

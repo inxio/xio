@@ -5,8 +5,8 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 
 from xio.core.resource import resource,Resource, handleRequest
+from xio.core.request import Request,Response
 
-from xio.core.lib.request import Request,Response
 from xio.core.lib.logs import log
 
 from xio.core.lib.utils import is_string, urlparse, md5

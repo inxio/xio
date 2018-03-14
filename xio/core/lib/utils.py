@@ -76,6 +76,8 @@ def to_string(value):
             value = value.decode()
         else:
             value = str(value)
+    else: 
+        value = ''
     return value
 
 def to_bytes(value):
@@ -102,10 +104,11 @@ def generateuid():
     return uuid.uuid4().hex
     
 
-def md5(txt):
-    assert txt
-    txt = to_bytes(txt)
-    return hashlib.md5(txt).hexdigest()
+def md5(*args):
+    assert args
+    parts = [ to_string(txt) for txt in args ]
+    txt = ''.join(parts)
+    return hashlib.md5( to_bytes(txt) ).hexdigest() 
 
 
 def coroutine(func):

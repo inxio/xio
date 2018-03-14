@@ -6,7 +6,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 from xio.core import resource 
 from xio.core import peer
 
-from xio.core.lib.request import Request, Response
+from xio.core.request import Request, Response
 from xio.core.lib.logs import log
 from xio.core.lib.utils import is_string, urlparse
 
@@ -22,6 +22,8 @@ import importlib
 import yaml
 
 import collections
+
+from functools import wraps
 
 import requests
 import json
@@ -39,6 +41,22 @@ from pprint import pprint
 # to fix etx xio
 _extdir = os.path.dirname( os.path.realpath(__file__) )+'/ext'
 path.append(_extdir)
+
+
+def handleStats(func):
+
+    @wraps(func)
+    def _(self,req):
+        service = self.get('services/stats')
+        print ('handleStats', service)
+        service.post({
+            'userid': req.client.id,
+            'path': req.path,
+        })
+        return func(self,req)
+    return _
+
+
 
 
 def getAppsFromDirectory(path):
@@ -96,6 +114,8 @@ class App(peer.Peer):
 
         self.init()
 
+
+
     @classmethod
     def factory(cls,id=None,*args,**kwargs):
 
@@ -104,7 +124,9 @@ class App(peer.Peer):
             if module:
                 return cls(module=module,**kwargs)
                 
-        return peer.Peer.factory(id,*args,_cls=cls,**kwargs)
+        kwargs.setdefault('_cls',cls)        
+        return peer.Peer.factory(id,*args,**kwargs)
+
 
     def load(self):
         module = self.module
@@ -153,9 +175,19 @@ class App(peer.Peer):
 
     def init(self):
 
+
         # scheduler
         from .lib.cron import SchedulerService
         self.put('services/cron', SchedulerService(self) )
+
+        # stats/quota 
+        from .lib.stats import StatsHandler
+        self.put('services/stats', StatsHandler() )
+
+        # cached
+        from .lib.cache import CacheHandler
+        self.put('services/cache', CacheHandler() )
+
 
         # build resources
         if self._about:
@@ -219,12 +251,14 @@ class App(peer.Peer):
             return _wrapper
 
 
+
+
     def render(self,req):
         self.log.info('APP RENDER',req.xmethod or req.method, repr(req.path),'by',self)
         res = self.request(req)
         return res
-       
 
+       
 
     def run(self,loop=True,port=8080,debug=False,websocket=None):
 
