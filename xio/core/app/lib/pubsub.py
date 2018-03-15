@@ -16,7 +16,6 @@ class PythonHandler:
         self._topics = {}
 
     def publish(self,topic,message):
-        print 'PUBLISH !',topic,message, self._topics
         for subscriber in self._topics.get(topic,[]):
             try:
                 subscriber(message)   

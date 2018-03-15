@@ -20,7 +20,7 @@ class CacheHandler:
         content = data.get('content')
         ttl = data.get('ttl')
         meta = meta or {}
-        print '>> CacheManager PUT',index, data
+        #print '>> CacheManager PUT',index, data
 
         if isinstance(content,dict) or isinstance(content,list):
             content_type = 'application/json'
@@ -65,28 +65,6 @@ class CacheHandler:
 
             elif req.DELETE:
                 return self.delete(req.path)
-
-
-        
-
-
-if __name__=='__main__':
-
-
-    import unittest
-
-
-    manager = CacheHandler()
-
-    class Tests(unittest.TestCase):
-
-            
-        def test(self):
-            print manager.put('someindex',{'title': 'sometitle'})
-            print manager.get('someindex')
-
-    unittest.main()
-
 
 
 

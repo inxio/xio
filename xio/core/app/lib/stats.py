@@ -66,7 +66,7 @@ class StatsService:
         #dt2 = datetime.datetime.now().strftime('%y%m%d') # daily
         #dt2 = datetime.datetime.now().strftime('%y%m') # monthly        
         index1 = md5( path,userid )
-        print 'putStat???', repr(path),userid,index1
+        #print 'putStat???', repr(path),userid,index1
         #index2 = (userid,path,dt2)
         #index3 = (userid,path,dt3)
 
@@ -79,11 +79,7 @@ class StatsService:
     def count(self,path,userid):
 
         index = md5( path,userid )
-        print 'countStat???', repr(path),userid,index
         stats = self.db.get(index)
-        print index
-        print list( self.db.select() )
-        print(stats)
         return stats.get('count') if stats else None
 
 
@@ -94,24 +90,6 @@ class StatsService:
 
         elif req.POST:
             return self.put(req.data.get('path'),req.data.get('userid'))
-
-
-if __name__=='__main__':
-
-
-    import unittest
-
-
-    stats = StatsHandler()
-
-    class Tests(unittest.TestCase):
-
-            
-        def test(self):
-            print manager.inc('someindex')
-            print manager.get('someindex')
-
-    unittest.main()
 
 
 

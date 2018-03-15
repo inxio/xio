@@ -29,7 +29,7 @@ class TasksService:
         self.app.schedule(int(heartbeat), self.run)
 
     def run(self):
-        print 'TasksService running ...'
+        #print 'TasksService running ...'
         data = self.pull()
         if data:
             task = Task(data=data,broker=self)
@@ -41,14 +41,14 @@ class TasksService:
         return Task(data=data,broker=self) if not isinstance(data,Task) else data
 
     def get(self,id):
-        print 'TasksService.get >> ',id
+        #print 'TasksService.get >> ',id
         # gestion des taches comme resource xio
         return self._tasks[id] if id in self._tasks else self.db.get(id).content
 
 
     def put(self,id,handler):
         # gestion des taches comme resource xio
-        print 'TasksService.put >> ',id,handler
+        #print 'TasksService.put >> ',id,handler
         self._tasks[id] = Task( broker=self, data={'_id': id,'handler': handler})
         return self._tasks[id] 
 

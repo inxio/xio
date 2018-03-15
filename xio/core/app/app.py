@@ -98,7 +98,7 @@ def handleCache(func):
     def _(res,req):
         # need explicit configuration => about.ttl
 
-        if req.GET and req.path:
+        if req.GET and req.path and req.path.startswith('www'):
             
             cacheservice = res.get('services/cache') 
             if cacheservice:
