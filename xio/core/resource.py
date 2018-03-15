@@ -174,7 +174,6 @@ def handleRequest(func):
             client = self.context.get('client')     
             req = Request(method,path,data=data,query=query,client_context=self._handler_context,client=client,**kwargs)
         else:
-            
             req = method
             req._stack.append(self)
 
@@ -190,31 +189,22 @@ def handleRequest(func):
         
         if kwargs.get('skiphandler'):
             req.context['skiphandler'] = kwargs.get('skiphandler')
-
-        dbglevel = len(req._stack)    
+   
         try:
-            if req.debug:
-                print('...' * dbglevel,req)
             resp = func(self,req)
-            if req.debug:
-                print('...' * dbglevel,resp)
         except Exception as err:
             args = err.args[0].args if err.args and isinstance(err.args[0],Exception) else err.args
-            #print('*******',args[0], isinstance(args[0],int) )
             if args and isinstance(args[0],int):
                 req.response.status = args[0]
                 resp = args[1] if len(args)>1 else None
-                #resp = ' '.join( str(v) for v in args ) # to remove, we need raise Exception(402,content)
             else:
                 traceback.print_exc() 
                 req.response.status = 500
                 resp = None
-            if req.debug:
-                print('...' * dbglevel,'ERR',resp)
-            #print('*******',req.response.status, resp)      
+   
         if not isinstance(resp, Resource):
             req.path = ori_path
-            resp = self._toResource(req,resp) # ,
+            resp = self._toResource(req,resp)
 
         assert isinstance(resp, Resource)
         assert not isinstance(resp.content, Resource)
