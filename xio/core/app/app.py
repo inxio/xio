@@ -43,22 +43,6 @@ _extdir = os.path.dirname( os.path.realpath(__file__) )+'/ext'
 path.append(_extdir)
 
 
-def handleStats(func):
-
-    @wraps(func)
-    def _(self,req):
-        service = self.get('services/stats')
-        print ('handleStats', service)
-        service.post({
-            'userid': req.client.id,
-            'path': req.path,
-        })
-        return func(self,req)
-    return _
-
-
-
-
 def getAppsFromDirectory(path):
 
     syspath = path

@@ -170,7 +170,8 @@ class Request(object):
             if server:
                 statsservice = server.get('services/stats')
                 if statsservice:
-                    stat = statsservice.count(path=self.path,userid=self.client.id).content
+                    #stat = statsservice.count(path=self.path,userid=self.client.id).content
+                    stat = statsservice.post(data={'path':self.path,'userid':self.client.id}).content
                     current = stat #.get('hourly')
                     if current>value:
                         raise Exception(429,'QUOTA EXCEEDED')

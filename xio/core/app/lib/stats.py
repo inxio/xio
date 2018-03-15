@@ -60,7 +60,7 @@ class StatsHandler:
         self.db = xio.db(__name__).container('stats')
 
 
-    def putStat(self,path,userid):
+    def put(self,path,userid):
 
         dt1 = datetime.datetime.now().strftime('%y%m%d%H') # hourly
         #dt2 = datetime.datetime.now().strftime('%y%m%d') # daily
@@ -76,7 +76,7 @@ class StatsHandler:
         return stats['count']
 
 
-    def countStat(self,path,userid):
+    def count(self,path,userid):
 
         index = md5( path,userid )
         print 'countStat???', repr(path),userid,index
@@ -84,17 +84,16 @@ class StatsHandler:
         print index
         print list( self.db.select() )
         print(stats)
-        return stats.get('count')
+        return stats.get('count') if stats else None
 
 
     def __call__(self,req):
 
-
         if req.COUNT:
-            return self.countStat(req.data.get('path'),req.data.get('userid'))
+            return self.count(req.data.get('path'),req.data.get('userid'))
 
         elif req.POST:
-            return self.putStat(req.data.get('path'),req.data.get('userid'))
+            return self.put(req.data.get('path'),req.data.get('userid'))
 
 
 if __name__=='__main__':

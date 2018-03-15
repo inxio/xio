@@ -135,13 +135,31 @@ def handleAuth(func):
 
 
 
+def handleStats(func):
+
+    @wraps(func)
+    def _(self,req):
+        # need explicit configuration => about.quota or about.stats
+        """
+        statservice = self.get('services/stats')
+        statservice.post({
+            'userid': req.client.id,
+            'path': req.path,
+        })
+        """
+        return func(self,req)
+    return _
+
+
+
+
 def handleCache(func):
 
     @wraps(func)
     def _(res,req):
-        # quickfix 
+        # need explicit configuration => about.ttl
 
-        if req.GET and req.path and req.path.startswith('www') and res.get('services/cache'):
+        if req.GET and req.path and req.path.startswith('www'):
             
             cacheservice = res.get('services/cache') 
             if cacheservice:
@@ -167,8 +185,7 @@ def handleCache(func):
                     print('found cache !!!', info)
                     response = Response(200)
                     response.content_type = info.get('content_type')
-                    response.headers = info.get('meta').get('headers')
-                    response.headers['xio_cache_ttl'] = info.get('meta').get('ttl') 
+                    response.headers = info.get('headers',{})
                     response.content = info.get('content')
                     return response
                 else:
@@ -179,8 +196,8 @@ def handleCache(func):
                     cache_allowed = ttl and bool(response) and response.status==200 and not inspect.isgenerator(response.content)
                     if cache_allowed:
                         print('write cache !!!', uid,ttl)
-                        meta = {'headers': dict(response.headers) }
-                        cacheservice.put(uid,data={'content':response.content,'ttl':int(ttl),'meta':meta})
+                        headers = dict(response.headers)
+                        cacheservice.put(uid,data={'content':response.content,'ttl':int(ttl),'headers':headers})
                     else:
                         print('no cachable !!!', ttl, bool(response), response.status)
                     return result
@@ -463,6 +480,7 @@ class Resource(object):
     @handleAuth
     @handleRequest
     @handleCache
+    @handleStats
     @handleDelegate
     def request(self,req):
 

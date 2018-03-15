@@ -261,16 +261,20 @@ class TestCases(unittest.TestCase):
     def test_service_stats(self):
 
         # default stats 
+        """
         app = xio.app()
         for i in range(1,10):
             app.get('www/somepath')
             assert app.get('services/stats').count(path='somepath').content == i
+        """
 
         # on-demand stats : stat request only if request handler require quota (perf safe)
         app = xio.app()
         app.put('www', lambda req: req.require('quota',2) )
         assert app.get('www').status == 200
+        assert app.get('www').status == 200
         assert app.get('www').status == 429
+
 
     def test_service_cache(self):
         """
