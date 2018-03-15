@@ -674,6 +674,29 @@ class Resource(object):
 
         return _
 
+                
+    def publish(self,topic,*args,**kwargs): 
+        # to fix,  pb loopback with pubsubservice.publish
+        # 1/ self.get('services/pubsub') must be in App
+        # 2/ default/fallback handler for these methode must forward to self.server
+        pubsubservice = self.get('services/pubsub')
+        if pubsubservice:
+            return pubsubservice._handler.publish(topic,*args,**kwargs) 
+
+    def subscribe(self,*args):
+        pubsubservice = self.get('services/pubsub')
+        if pubsubservice:
+            if len(args)>1:
+                topic,callback = args
+                return self.get('services/pubsub')._handler.subscribe(topic,callback) 
+            else: 
+                def _wrapper(callback):
+                    topic = args[0]
+                    return self.get('services/pubsub')._handler.subscribe(topic,callback) 
+                return _wrapper
+
+
+
 
     def _handleAbout(self,req):
 
