@@ -10,13 +10,18 @@
 import xio
 
 
-class EventsService:
+class PythonHandler:
     
-    def __init__(self,app,config=None):
+    def __init__(self):
         self._topics = {}
 
     def publish(self,topic,message):
-        print 'PUBLISH !',topic,message
+        print 'PUBLISH !',topic,message, self._topics
+        for subscriber in self._topics.get(topic,[]):
+            try:
+                subscriber(message)   
+            except:
+                pass 
 
 
     def subscribe(self,topic,callback):
@@ -24,17 +29,41 @@ class EventsService:
         self._topics[topic].append(callback)
 
 
+__HANDLERS__ =  {
+    'python': PythonHandler,
+}
+
+
+class PubSubService:
+    
+    def __init__(self,app,handler='python'):
+        cls = __HANDLERS__.get(handler)
+        self.handler = cls()
+
+    def publish(self,topic,message):
+        return self.handler.publish(topic,message)
+
+
+    def subscribe(self,topic,callback):
+        return self.handler.subscribe(topic,callback)
+
+
 
 ######################## dev REDIS
 
+
+
+
+
+### old version
+
+"""
 
 import redis
 
 import json
 
 
-
-##################### gestion pubsub
 import threading
 class Listener(threading.Thread):
     def __init__(self, r, topic):
@@ -58,8 +87,7 @@ class Listener(threading.Thread):
                     callback(data)
 
 
-### old version
-"""
+
 class PubsubHandler:        
 
     def __init__(self):
@@ -80,7 +108,6 @@ class PubsubHandler:
             listener.start()
             self._listeners[topic] = listener
         self._listeners[topic].callbacks.append(callback)
-"""
 
 
 
@@ -127,6 +154,9 @@ class PubSubServiceHandlerZeroMq:
         while True:
             string = socket.recv()  
             print '>>', host,'listener received !!!', string
+
+
+"""
 
         
 

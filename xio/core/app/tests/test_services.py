@@ -8,16 +8,26 @@ import sys
 
 from pprint import pprint
 
+app = xio.app(lambda req:'ok' )
+app.debug()
+
+print app.get('www/hello')
+
+sys.exit()
+
 class TestCases(unittest.TestCase):
 
 
     def test_service_pubsub(self):
 
-        results = dict()
+        results = []
 
         app = xio.app()
-        app.subscribe('topic1',lambda x: results.update('topic1',True) )
-        #app.publish('topic1','some message')
+        app.subscribe('topic1',lambda x: results.append(x) )
+        app.publish('topic1','some message')
+        app.publish('topic1','some message2')
+        
+        assert len(results)==2
         
 
     def test_service_quota(self):
@@ -42,7 +52,6 @@ class TestCases(unittest.TestCase):
         """
         pb with cache on 'www'
         """
-
 
         # default stats 
         app = xio.app()

@@ -54,9 +54,9 @@ import datetime
 
 
 
-class StatsHandler:
+class StatsService:
 
-    def __init__(self):
+    def __init__(self,app):
         self.db = xio.db(__name__).container('stats')
 
 
