@@ -8,12 +8,14 @@ import sys
 
 from pprint import pprint
 
+"""
 app = xio.app(lambda req:'ok' )
 app.debug()
 
 print app.get('www/hello')
 
 sys.exit()
+"""
 
 class TestCases(unittest.TestCase):
 

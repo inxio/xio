@@ -80,11 +80,12 @@ def handleStats(func):
     def _(self,req):
         # need explicit configuration => about.quota or about.stats
         """
-        statservice = self.get('services/stats')
-        statservice.post({
-            'userid': req.client.id,
-            'path': req.path,
-        })
+        if req.path.startswith('www/'):
+            statservice = self.get('services/stats')
+            statservice.post({
+                'userid': req.client.id,
+                'path': req.path,
+            })
         """
         return func(self,req)
     return _
@@ -98,7 +99,7 @@ def handleCache(func):
     def _(res,req):
         # need explicit configuration => about.ttl
 
-        if req.GET and req.path and req.path.startswith('www'):
+        if req.GET and req.path and req.path.startswith('www/'):
             
             cacheservice = res.get('services/cache') 
             if cacheservice:
@@ -138,7 +139,7 @@ def handleCache(func):
                         headers = dict(response.headers)
                         cacheservice.put(uid,data={'content':response.content,'ttl':int(ttl),'headers':headers})
                     else:
-                        print('no cachable !!!', ttl, bool(response), response.status)
+                        print('not cachable !!!', ttl, bool(response), response.status)
                     return result
 
         return func(res,req)
