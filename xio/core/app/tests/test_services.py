@@ -8,7 +8,7 @@ import sys
 
 from pprint import pprint
 
-
+"""
 app = xio.app(lambda req:'ok' )
 app.debug()
 
@@ -16,7 +16,7 @@ print app.get('www/hello')
 print app.render('GET','hello')
 
 sys.exit()
-
+"""
 
 class TestCases(unittest.TestCase):
 
@@ -84,8 +84,8 @@ class TestCases(unittest.TestCase):
             req.response.ttl = 2
             return random.random() 
         
-        r1 = app.get('www/test1').content
-        r2 = app.get('www/test1').content
+        r1 = app.render('test1').content
+        r2 = app.render('test1').content
         assert r1==r2
 
 
