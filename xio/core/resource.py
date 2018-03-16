@@ -54,19 +54,21 @@ def resource(handler=None,context=None,about=None,**kwargs):
 
 
 def extractAbout(h):
-    import yaml
-    about = {}
-    docstring = h.__doc__ if h and not is_string(h) and isinstance(h, collections.Callable) else h
-    if docstring and is_string(docstring): # warning if h is open file !
-        try:
-            about = yaml.load(docstring) 
-            assert isinstance(about,dict)
-            version = about.get('version')
-            if not version:
-                print('DEPRECIATED ABOUT')
-                assert 'type' in about or 'implement' in about or 'methods' in about or 'options' in about or 'resources' in about or 'description' or 'cache' in about# a virer !
-        except Exception as err:   
-            about = {}    
+    about = h if isinstance(h,dict) else {}
+    if not about:
+        import yaml
+        about = {}
+        docstring = h.__doc__ if h and not is_string(h) and isinstance(h, collections.Callable) else h
+        if docstring and is_string(docstring): # warning if h is open file !
+            try:
+                about = yaml.load(docstring) 
+                assert isinstance(about,dict)
+                version = about.get('version')
+                if not version:
+                    print('DEPRECIATED ABOUT')
+                    assert 'type' in about or 'implement' in about or 'methods' in about or 'options' in about or 'resources' in about or 'description' or 'cache' in about# a virer !
+            except Exception as err:   
+                about = {}    
 
     # fix methods
     about.setdefault('methods',{})
@@ -248,6 +250,7 @@ class Resource(object):
     __XMETHODS__ = True
     _skip_handler_allowed = True
     _tests = None
+    _about = None
 
     def __init__(self,content=None,path='',status=0,headers=None,parent=None,root=None,handler=None,handler_path=None,handler_context=None,about=None,**context):
 
@@ -265,7 +268,12 @@ class Resource(object):
         self._parent = parent
         self._root = root or (parent._root if parent else self)
         self._children =  collections.OrderedDict()
-        self._about = extractAbout(about or self._handler or self.content)
+
+
+        if not self._about:
+            # prevent overwrite for inherence (about set before resource.construct eg node/app/resource)
+            self._about = extractAbout(about or self._handler or self.content)
+
         self.context = context
 
 

@@ -53,14 +53,49 @@ import datetime
 """
 
 
+class PythonHandler:
+    
+    def __init__(self):
+        self.data = {}
+
+    def incr(self,index):
+        self.data.setdefault(index,0)
+        self.data[index]+=1
+        return self.data[index]
+
+
+class RedisHandler:
+    
+    def __init__(self):
+        import redis
+        self.redis = redis.Redis()
+
+    def incr(self,index):
+        key = 'xio:stats:%s' % (':'.join(index))
+        counter = self.redis.get(key) or 0
+        print counter
+        self.redis.incr(key) 
+        return counter
+
+
+__HANDLERS__ =  {
+    'python': PythonHandler,
+    'redis': RedisHandler,
+}
+
 
 class StatsService:
 
-    def __init__(self,app):
-        self.db = xio.db(__name__).container('stats')
+    def __init__(self,app,type='python'):
+        self.type = type
+        self.handler = __HANDLERS__.get(type)()
 
 
-    def put(self,path,userid):
+    def incr(self,path,userid):
+        dt1 = datetime.datetime.now().strftime('%y%m%d%H') # hourly
+        index1 = (dt1,userid,path)
+        return self.handler.incr(index1)
+        """
 
         dt1 = datetime.datetime.now().strftime('%y%m%d%H') # hourly
         #dt2 = datetime.datetime.now().strftime('%y%m%d') # daily
@@ -74,22 +109,14 @@ class StatsService:
         stats['count'] += 1
         self.db.put(index1,stats)
         return stats['count']
+        """
 
-
-    def count(self,path,userid):
-
-        index = md5( path,userid )
-        stats = self.db.get(index)
-        return stats.get('count') if stats else None
 
 
     def __call__(self,req):
 
-        if req.COUNT:
-            return self.count(req.data.get('path'),req.data.get('userid'))
-
-        elif req.POST:
-            return self.put(req.data.get('path'),req.data.get('userid'))
+        if req.POST:
+            return self.incr(req.data.get('path'),req.data.get('userid'))
 
 
 

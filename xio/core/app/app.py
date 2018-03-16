@@ -169,8 +169,6 @@ class App(peer.Peer):
 
         peer.Peer.__init__(self,**kwargs) 
 
-        #self.bind('www', self.render ) ##### TO FIX
-        
         if module:
             self.module = module
             self.directory = os.path.realpath( os.path.dirname( self.module.__file__ )) if self.module else None
@@ -194,7 +192,7 @@ class App(peer.Peer):
                 return cls(module=module,**kwargs)
 
         if callable(id) and inspect.isfunction(id):
-            app = cls()
+            app = cls(*args,**kwargs)
             app.bind('www', id)
             return app
 
@@ -216,10 +214,11 @@ class App(peer.Peer):
 
 
         # loading about.yml
-        self._about = {}
-        if os.path.isfile(self.directory+'/about.yml'):
-            with open(self.directory+'/about.yml') as f:
-                self._about = yaml.load(f)
+        if not self._about:
+            self._about = {}
+            if os.path.isfile(self.directory+'/about.yml'):
+                with open(self.directory+'/about.yml') as f:
+                    self._about = yaml.load(f)
 
         self.name = self._about.get('name')
         if 'id' in self._about:
@@ -283,15 +282,15 @@ class App(peer.Peer):
                     rhandler = client.app(handler_class,handler_params) 
                     rhandler.basepath = handler_path
                     rhandler.profile = handler_params # tofix
-                    app.put(path, rhandler )
+                    self.bind(path, rhandler )
 
         # build services
         services = self._about.get('services')
         if services:
             log.info('=== LOADING SERVICES ===')
-            for service in services:
+            for name,service in services.items():
                 log.info('=== LOADING SERVICE ', service)
-                name = service.pop('name')
+                #name = service.pop('name')
                 handler_class = service.get('handler',None) 
                 handler_params = service.get('params',{}) 
 
@@ -313,7 +312,7 @@ class App(peer.Peer):
                         handler_class = getattr(module,classname)
                         servicehandler = handler_class(app=self,**handler_params)
 
-                    self.put('services/%s' % name, servicehandler)
+                    self.bind('services/%s' % name, servicehandler)
 
 
 
@@ -333,7 +332,7 @@ class App(peer.Peer):
     @handleCache
     @handleStats
     def render(self,req):
-        #self.log.info('APP RENDER',req.xmethod or req.method, repr(req.path),'by',self)
+        self.log.info('APP RENDER',req.xmethod or req.method, repr(req.path),'by',self)
         req.path = 'www/'+req.path if req.path else 'www'
         return self.request(req)
 

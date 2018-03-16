@@ -4,7 +4,12 @@
 from xio.core import resource
 from xio.core.request import Request,Response
 
-from xio.core.app.app import App
+from xio.core.app.app import (
+    App,
+    handleRequest,
+    handleCache,
+    handleStats,
+)
 
 from xio.core.lib.logs import log
 from xio.core.lib.utils import is_string, urlparse, generateuid
@@ -31,6 +36,20 @@ def node(*args,**kwargs):
 
 class Node(App):
 
+    @classmethod
+    def factory(cls,id=None,*args,**kwargs):
+
+        # check network instance
+        if id and callable(id):
+            # create instance, send args,kwars for config
+            about = args[0] if args else None
+            node = Node(network=id,about=about) 
+            return node
+            
+        kwargs.setdefault('_cls',cls)    
+        return App.factory(id,*args,**kwargs)
+        
+
     def __init__(self,name=None,network=None,**kwargs):
 
         App.__init__(self,name,**kwargs)
@@ -39,23 +58,14 @@ class Node(App):
         self.network = network
         self.services = [] # list of APP services to deliver
 
-
-    @classmethod
-    def factory(cls,id=None,*args,**kwargs):
-
-        # check network instance
-        if id and callable(id):
-            node = Node(network=id)
-            return node
-            
-        kwargs.setdefault('_cls',cls)    
-        return App.factory(id,*args,**kwargs)
-
-
-    def render(self,req):
-
+        self.bind('www', self.renderWww)   
         
-        req.path = self.path +'/'+ req.path if self.path else req.path
+        
+    
+    def renderWww(self,req):
+
+        # why this line ?
+        #req.path = self.path +'/'+ req.path if self.path else req.path
 
         self.log.info('NODE.RENDER',req) 
 
@@ -91,9 +101,6 @@ class Node(App):
             elif req.EXPORT:
                 return self.peers.export()
 
-            # forwrd request to network
-            #else:
-            #    #raise Exception(405) # method not allowed
         
         else:
                
