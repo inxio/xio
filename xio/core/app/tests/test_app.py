@@ -187,6 +187,18 @@ class TestCases(unittest.TestCase):
         assert app.request('PUT','www/1234').content=='PUT 1234'
         assert app.request('PUT','www/1234/5678').content=='PUT 1234 5678'
 
+        # by render
+        assert app.render('GET','').content=='GET'
+        assert app.render('GET','1234').content=='GET 1234'
+        assert app.render('GET','1234/5678').content=='GET 1234 5678'
+        assert app.render('POST','').content=='POST'
+        assert app.render('POST','1234').content=='POST 1234'
+        assert app.render('POST','1234/5678').content=='POST 1234 5678'
+        assert app.render('PUT','').content=='PUT'
+        assert app.render('PUT','1234').content=='PUT 1234'
+        assert app.render('PUT','1234/5678').content=='PUT 1234 5678'
+
+
         # by client
         client = xio.app(app)
 

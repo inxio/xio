@@ -74,6 +74,15 @@ def app(*args,**kwargs):
 
 
 
+def handleRequest(func):
+
+        
+    return resource.handleRequest(func)
+
+
+
+
+
 def handleStats(func):
 
     @wraps(func)
@@ -320,21 +329,14 @@ class App(peer.Peer):
                 return scheduler.schedule(c,func,*args[1:],**kwargs)
             return _wrapper
 
-
-
-    @resource.handleRequest
+    @handleRequest
     @handleCache
     @handleStats
-    def request(self,req):
-        return peer.Peer.request(self,req)
-
-
-    """
     def render(self,req):
-        self.log.info('APP RENDER',req.xmethod or req.method, repr(req.path),'by',self)
-        res = self.request(req)
-        return res
-    """
+        #self.log.info('APP RENDER',req.xmethod or req.method, repr(req.path),'by',self)
+        req.path = 'www/'+req.path if req.path else 'www'
+        return self.request(req)
+
        
 
     def run(self,loop=True,port=8080,debug=False,websocket=None):

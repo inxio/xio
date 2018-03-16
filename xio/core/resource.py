@@ -396,7 +396,7 @@ class Resource(object):
         return res
 
 
-    @handleAuth
+    @handleAuth # handling automatic authenticate response for client
     @handleRequest
     @handleDelegate
     def request(self,req):
@@ -416,6 +416,15 @@ class Resource(object):
             handler_path = None
 
         return resp if isinstance(resp,Resource) else self._toResource(req,resp,handler_path) # put handler_path in response metadata ?
+
+
+    
+    def render(self,req):
+        """ 
+        generic methode for server side public resource delivery 
+        for app this method add 'www' path prefix + add common feature
+        """
+        return self.request(req)
 
 
 

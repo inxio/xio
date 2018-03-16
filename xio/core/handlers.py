@@ -91,6 +91,7 @@ class pythonResourceHandler:
     def __call__(self,req):
         from . import resource
 
+        """
         from .app.app import App
 
         if isinstance(self.handler,App):
@@ -98,7 +99,10 @@ class pythonResourceHandler:
 
         req.context['skipjsonencode'] = True
         res = self.handler.request(req)
-
+        """
+        req.context['skipjsonencode'] = True
+        res = self.handler.render(req)
+        
         req.response.status = res.status
         req.response.headers = res.headers
         return res.content

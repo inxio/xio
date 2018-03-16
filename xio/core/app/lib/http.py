@@ -149,12 +149,12 @@ class HttpService:
             pathinfo = environ.get('PATH_INFO')
             
             path = self.path+path if self.path else path
-            path = 'www'+path if path else 'www'   
+            #path = 'www'+path if path else 'www'   
 
             import xio
             request = xio.request(method,path,headers=headers,query=query,data=post_data,context=context)
 
-            response = self.app.request(request)
+            response = self.app.render(request)
 
             import inspect
             import json
