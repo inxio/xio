@@ -160,7 +160,7 @@ class App(peer.Peer):
 
         peer.Peer.__init__(self,**kwargs) 
 
-        self.bind('www', self.render ) 
+        #self.bind('www', self.render ) ##### TO FIX
         
         if module:
             self.module = module
@@ -322,19 +322,20 @@ class App(peer.Peer):
 
 
 
-
+    """
     @resource.handleRequest
     @handleCache
     @handleStats
     def request(self,req):
         return peer.Peer.request(self,req)
+    """
 
-
+    """
     def render(self,req):
         self.log.info('APP RENDER',req.xmethod or req.method, repr(req.path),'by',self)
         res = self.request(req)
         return res
-
+    """
        
 
     def run(self,loop=True,port=8080,debug=False,websocket=None):
@@ -429,8 +430,11 @@ class App(peer.Peer):
         # to fix,  pb loopback with pubsubservice.publish
         # 1/ self.get('services/pubsub') must be in App
         # 2/ default/fallback handler for these methode must forward to self.server
-        pubsubservice = self.get('services/pubsub')
+
+        
+        pubsubservice = self.get('services/pubsub').content # why content and not handler ? + conflict res.publish and res.content.publish
         if pubsubservice:
+            print ('...app.publish', topic)
             return pubsubservice.publish(topic,*args,**kwargs) 
 
     def subscribe(self,*args):

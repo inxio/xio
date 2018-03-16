@@ -591,7 +591,12 @@ class Resource(object):
 
         return _
 
-         
+    def publish(self,message):
+        # merge/clarify/fix req.fullpath, req.path, res.realpath, res.path
+        print (self.path,self._handler_path)
+        #basepath = self._handler_path or ''
+        #realpath = basepath+'/'+self.path if self.path else basepath
+        self._root.publish(self.path,message)
 
 
     def _handleAbout(self,req):

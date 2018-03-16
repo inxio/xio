@@ -30,7 +30,27 @@ class TestCases(unittest.TestCase):
         app.publish('topic1','some message2')
         
         assert len(results)==2
+
+
+    def test_service_pubsub2(self):
+
+        results = []
+
+        app = xio.app()
+        @app.bind('www/path/subpath')
+        def _(req):
+            # warning req.context.get('resource').path est faux !!! manque www/
+            req.context.get('resource').publish('respond request %s' % req.method)
+            return 'ok'
+
+        app.debug()
+            
+        app.subscribe('www/path/subpath',lambda x: results.append(x) )
         
+        app.get('www/path/subpath')
+        app.get('www/path/subpath')
+                
+        assert len(results)==2
 
     def test_service_quota(self):
 
