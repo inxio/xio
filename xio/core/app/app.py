@@ -322,13 +322,12 @@ class App(peer.Peer):
 
 
 
-    """
     @resource.handleRequest
     @handleCache
     @handleStats
     def request(self,req):
         return peer.Peer.request(self,req)
-    """
+
 
     """
     def render(self,req):
