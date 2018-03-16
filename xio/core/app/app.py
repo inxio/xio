@@ -288,9 +288,9 @@ class App(peer.Peer):
         services = self._about.get('services')
         if services:
             log.info('=== LOADING SERVICES ===')
-            for name,service in services.items():
+            for service in services:
                 log.info('=== LOADING SERVICE ', service)
-                #name = service.pop('name')
+                name = service.pop('name')
                 handler_class = service.get('handler',None) 
                 handler_params = service.get('params',{}) 
 
