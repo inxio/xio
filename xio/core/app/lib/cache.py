@@ -7,21 +7,80 @@ import json
 
 from pprint import pprint
 import copy
+import time
 
+class PythonHandler:
+    
+    def __init__(self):
+        self.data = {}
 
-class CacheHandler:
+    def put(self,index,data,content,ttl):
+        data['_created'] = int(time.time())
+        data['_expire'] = data['_created'] + ttl    
+        data['content'] = content
+        self.data[index] = data
+
+    def get(self,index):
+        print self.data
+        data = self.data.get(index)
+        if data:
+            expire = data.get('_expire')
+            data['ttl'] = expire - int(time.time()) 
+            return data
+
+class RedisHandler:
 
     def __init__(self):
-        self.db = xio.db(__name__).container('cache')
+        import redis
+        self.redis = redis.Redis()
+    
+    def put(self,index,meta,content,ttl):
+        index = 'xio:cache:%s' % index
+        print(index,ttl)
+        self.redis.hset(index,'meta', json.dumps(meta,default=str) )
+        self.redis.hset(index,'content',content)
+        self.redis.expire(index,ttl)
+
+    def get(self,index):
+        index = 'xio:cache:%s' % index
+        cached = self.redis.hgetall(index)
+        if cached:
+            content_type = cached.get('content_type')
+            content = cached.get('content')
+            content = json.loads( content ) if content_type=='application/json' else content
+            data = json.loads( cached.get('meta') ) 
+            data['ttl'] = self.redis.ttl(index)
+            data['content'] = content
+            return data
+
+
+__HANDLERS__ =  {
+    'python': PythonHandler,
+    'redis': RedisHandler,
+}
+
+
+
+
+class CacheService:
+
+
+    def __init__(self,app=None,type='auto'):
+
+        if type=='auto':
+            type = 'redis' if app.redis else 'python'
+
+        self.handler = __HANDLERS__.get(type)()
 
 
     def put(self,index,data):
-        meta = data.get('meta')
-        content = data.get('content')
-        ttl = data.get('ttl')
-        meta = meta or {}
-        #print '>> CacheManager PUT',index, data
 
+        print ('put cache')
+
+        content = data.pop('content')
+        content_type = data.get('content_type')
+        ttl = data.get('ttl')
+        
         if isinstance(content,dict) or isinstance(content,list):
             content_type = 'application/json'
             storedcontent = json.dumps(content,indent=4,default=str)
@@ -33,21 +92,20 @@ class CacheHandler:
             content_type = 'text'
             storedcontent = content
 
-        data = {
+        meta = {
             'content_type': content_type,
-            'content': content,
         }
-        self.db.put(index,data,ttl=ttl)
+        self.handler.put(index,meta,storedcontent,ttl)
         
 
     def delete(self,index):
-        return self.db.delete(index)
+        return self.handler.delete(index)
 
 
     def get(self,index):
         
         print ('>> CacheManager GET', index)
-        data = self.db.get(index)
+        data = self.handler.get(index)
         if data:
             print ('>>> FOUND CACHE !',data)
             return data
@@ -67,6 +125,18 @@ class CacheHandler:
                 return self.delete(req.path)
 
 
+
+
+if __name__ == '__main__':
+
+    cache = CacheService(type='redis')
+    cache.put('test',{
+        'content': 'ok',
+        'ttl': 3600
+    })
+    print cache.get('test')
+    time.sleep(3)
+    print cache.get('test')
 
 
             

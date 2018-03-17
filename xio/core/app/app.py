@@ -108,23 +108,19 @@ def handleCache(func):
     def _(res,req):
         # need explicit configuration => about.ttl
 
-        if req.GET and req.path and req.path.startswith('www/'):
-            
+        if req.GET and req.path:
             cacheservice = res.get('services/cache') 
             if cacheservice:
 
-                import base64
                 import inspect
 
-                query = req.input
-                xio_skip_cache = query.pop('xio_skip_cache',None)
+                xio_skip_cache = req.query.pop('xio_skip_cache',None)
 
-                uid = '%s-%s' % (req.fullpath,req.input)
-                uid = base64.urlsafe_b64encode(uid).strip('=')
+                uid = req.uid()
 
                 if xio_skip_cache:
                     print(cacheservice.delete(uid))
-                assert uid
+
                 cached = cacheservice.get(uid,{})
                 
                 if cached and xio_skip_cache==None and cached.status==200 and cached.content:
@@ -249,6 +245,12 @@ class App(peer.Peer):
 
     def init(self):
 
+        try:
+            import xio
+            import redis
+            self.redis = redis.Redis() if xio.env('redis') else None
+        except:
+            self.redis = False
 
         # scheduler
         from .lib.cron import SchedulerService
@@ -263,8 +265,8 @@ class App(peer.Peer):
         self.put('services/stats', StatsService(self) )
 
         # cache
-        from .lib.cache import CacheHandler
-        self.put('services/cache', CacheHandler() )
+        from .lib.cache import CacheService
+        self.put('services/cache', CacheService(self) )
 
 
         # build resources
@@ -315,25 +317,19 @@ class App(peer.Peer):
                     self.bind('services/%s' % name, servicehandler)
 
 
-
-    def schedule(self,*args,**kwargs):
-
-        scheduler = self.get('services/cron')
-
-        if len(args)>1:
-            scheduler.schedule(*args,**kwargs)
-        else:
-            def _wrapper(func):
-                c = args[0]
-                return scheduler.schedule(c,func,*args[1:],**kwargs)
-            return _wrapper
-
     @handleRequest
     @handleCache
     @handleStats
     def render(self,req):
         self.log.info('APP RENDER',req.xmethod or req.method, repr(req.path),'by',self)
+
+        # fix ABOUT if no handler for www ... create defaut handler ?
+        if not req.path and req.ABOUT:
+            return self._handleAbout(req)
+
+        
         req.path = 'www/'+req.path if req.path else 'www'
+        
         return self.request(req)
 
        
@@ -424,6 +420,21 @@ class App(peer.Peer):
             traceback.print_exc()
             start_response('500 ERROR',[('Content-Type','text')])
             return [ str(traceback.format_exc()) ]
+
+
+      
+    def schedule(self,*args,**kwargs):
+
+        scheduler = self.get('services/cron')
+
+        if len(args)>1:
+            scheduler.schedule(*args,**kwargs)
+        else:
+            def _wrapper(func):
+                c = args[0]
+                return scheduler.schedule(c,func,*args[1:],**kwargs)
+            return _wrapper
+
 
 
     def publish(self,topic,*args,**kwargs): 

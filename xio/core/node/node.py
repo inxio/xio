@@ -108,7 +108,6 @@ class Node(App):
             peerid = p.pop(0)
             assert peerid
 
-            
             peer = self.peers.get(peerid)
             assert peer,404
             
@@ -121,7 +120,7 @@ class Node(App):
                 req.response.status = resp.status
                 req.response.headers = resp.headers  # pb si header transferé tel quel ->
                 req.response.content_type = resp.content_type
-                #req.response.ttl = resp.ttl
+                req.response.ttl = resp.ttl
                 return resp.content      
             except Exception as err:
                 traceback.print_exc()

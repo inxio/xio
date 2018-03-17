@@ -369,9 +369,7 @@ class TestCases(unittest.TestCase):
         
 
 
-
     def test_handler_instance(self):
-
         instance = xio.app()
         cli = xio.resource( instance )
         assert cli.about().content['id']==instance.id

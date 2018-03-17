@@ -89,18 +89,10 @@ class pythonResourceHandler:
         self.client = self.context.get('client')
 
     def __call__(self,req):
-        from . import resource
-
-        """
-        from .app.app import App
-
-        if isinstance(self.handler,App):
-            req.path = 'www/'+req.path if req.path else 'www'
-
+        
         req.context['skipjsonencode'] = True
-        res = self.handler.request(req)
-        """
-        req.context['skipjsonencode'] = True
+
+        # as client we force to request public resource (www for App)
         res = self.handler.render(req)
         
         req.response.status = res.status

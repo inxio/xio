@@ -87,9 +87,10 @@ class TestCases(unittest.TestCase):
 
     def test_ethereum(self):
         key = Key(seed=TEST_SEED)
-        if key.ethereum:
-            assert key.ethereum.private == TEST_ETHEREUM_PRIVATE
-            assert key.ethereum.address == TEST_ETHEREUM_ADDRESS
+        ethereumaccount = key.account('ethereum')
+        if ethereumaccount:
+            assert ethereumaccount.private.lower() == TEST_ETHEREUM_PRIVATE
+            assert ethereumaccount.address.lower() == TEST_ETHEREUM_ADDRESS
 
 
 if __name__ == '__main__':

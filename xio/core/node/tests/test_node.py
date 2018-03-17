@@ -8,6 +8,17 @@ import sys
 from pprint import pprint
 
 
+"""
+app = xio.app()
+node = xio.node()
+node.register( app )
+print node.about('www/'+app.id).content
+
+cli = xio.client(node)
+print cli.about(app.id).content
+sys.exit()
+"""
+
 class TestCases(unittest.TestCase):
 
 

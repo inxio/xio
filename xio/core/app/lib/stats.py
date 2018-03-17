@@ -58,6 +58,9 @@ class PythonHandler:
     def __init__(self):
         self.data = {}
 
+    def get(self,index):
+        return self.data.get(index,0)
+
     def incr(self,index):
         self.data.setdefault(index,0)
         self.data[index]+=1
@@ -69,6 +72,11 @@ class RedisHandler:
     def __init__(self):
         import redis
         self.redis = redis.Redis()
+
+    def get(self,index):
+        key = 'xio:stats:%s' % (':'.join(index))
+        counter = self.redis.get(key) 
+        return counter or 0
 
     def incr(self,index):
         key = 'xio:stats:%s' % (':'.join(index))
@@ -86,14 +94,21 @@ __HANDLERS__ =  {
 
 class StatsService:
 
-    def __init__(self,app,type='python'):
-        self.type = type
+    def __init__(self,app,type='auto'):
+
+        if type=='auto':
+            type = 'redis' if app.redis else 'python'
+
         self.handler = __HANDLERS__.get(type)()
 
-
-    def incr(self,path,userid):
+    def get(self,uid):
         dt1 = datetime.datetime.now().strftime('%y%m%d%H') # hourly
-        index1 = (dt1,userid,path)
+        index1 = (dt1,uid)
+        return self.handler.get(index1)
+
+    def incr(self,uid):
+        dt1 = datetime.datetime.now().strftime('%y%m%d%H') # hourly
+        index1 = (dt1,uid)
         return self.handler.incr(index1)
         """
 
@@ -114,6 +129,14 @@ class StatsService:
 
 
     def __call__(self,req):
+
+        uid = req.path
+
+        if req.GET:
+            return self.get(uid)
+
+        if req.INCR:
+            return self.incr(uid)
 
         if req.POST:
             return self.incr(req.data.get('path'),req.data.get('userid'))

@@ -105,9 +105,9 @@ class Request(object):
         self.cookie = Cookie( self)
         self.response = Response(200)
 
-
+        self._uid = None
         self._stack = [] # debug only
-        
+        self.stat = None
 
         self.client = ReqClient(self,client_context,peer=client)
 
@@ -116,10 +116,6 @@ class Request(object):
         # pb2: resource and/or root seem to be added AFTER init ! 
         self.server = self.context.get('root', self.context.get('resource',None ) ) 
         #assert self.server ?   
-
-
-    def __getattr__(self, name):
-        return self.__dict__[name] if name in self.__dict__ else None
 
 
     def __repr__(self):
@@ -165,17 +161,64 @@ class Request(object):
                 raise Exception(402,content)
             return signature
         elif key=='quota':
+
+            stat = self.getStat()
+            if stat:
+                current = int(stat.content or 0) #.get('hourly')
+                if current>value:
+                    raise Exception(429,'QUOTA EXCEEDED')
+                stat.incr()
+
             
+
+
+    def uid(self):
+        """
+        generate uniq identifier for stats, cache, ...
+        warning about 
+        - userid and/or profile for cache 
+        - qurey sting key orders 
+        """
+        if not self._uid:
+            import hashlib
+            import json
+
+            struid = '%s-%s' % (self.fullpath, json.dumps(self.input, sort_keys=True) )
+            print(struid)
+
+            uid = hashlib.sha1( struid ).hexdigest()
+            print(uid)
+            self._uid = uid
+        return self._uid
+
+
+    def getStat(self):
+        """
+        generate uniq identifier for stats, cache, ...
+        warning about 
+        - userid and/or profile for cache 
+        - qurey sting key orders 
+        """
+        if not self.stat:
             server = self.context.get('root', self.context.get('resource',None ) ) 
             if server:
                 statsservice = server.get('services/stats')
                 if statsservice:
+                    uid = self.uid()
+                    stat = statsservice.get(uid)
+                    print ('---->',stat)
                     #stat = statsservice.count(path=self.path,userid=self.client.id).content
-                    stat = statsservice.post(data={'path':self.path,'userid':self.client.id}).content
-                    current = int(stat) #.get('hourly')
-                    if current>value:
-                        raise Exception(429,'QUOTA EXCEEDED')
-                    return stat
+                    #stat = statsservice.post(data={'path':self.path,'userid':self.client.id}).content
+
+                    self.stat = stat
+
+        return self.stat
+
+
+    def __getattr__(self, name):
+        return self.__dict__[name] if name in self.__dict__ else None
+
+
 
 
 class Response:

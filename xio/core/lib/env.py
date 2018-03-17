@@ -75,7 +75,6 @@ def setDefaultEnv(data):
 
 
 def env(key,val=None):
-    assert key in ('node','user','network','id','token','log','env') or key.startswith('app_') or key.startswith('node_')
     envkey = 'XIO_%s' % key.upper()
     if val==None:
         return context.get(envkey, os.environ.get(envkey) ) or xioenvdefault.get('xio.'+key)
