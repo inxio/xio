@@ -215,6 +215,29 @@ def handleRequest(func):
     return _
 
 
+def handleHooks(func):
+
+    @wraps(func)
+    def _(self,req):
+
+        if not self._hooks:
+            return func(self,req)
+
+        flow = copy.copy( self._hooks )
+        flow.append( lambda req: func(self,req) )
+
+        def _():
+            h = flow.pop(0)
+            return h(req)
+
+        setattr(req,'execute',_)
+        
+        return req.execute()
+
+    return _
+
+
+
 def handleDelegate(func):
 
     @wraps(func)
@@ -268,6 +291,7 @@ class Resource(object):
         self._parent = parent
         self._root = root or (parent._root if parent else self)
         self._children =  collections.OrderedDict()
+        self._hooks = []
 
 
         if not self._about:
@@ -406,6 +430,7 @@ class Resource(object):
 
     @handleAuth # handling automatic authenticate response for client
     @handleRequest
+    @handleHooks
     @handleDelegate
     def request(self,req):
 
@@ -589,7 +614,18 @@ class Resource(object):
             return _wrapper
 
 
+
     def hook(self,path,*args,**kwargs):
+
+        def _(func):
+            target = self.resource(path) 
+            target._hooks.insert(0,func)
+            print('add hooks',target._hooks)
+            return target
+
+        return _
+
+    def oldhook(self,path,*args,**kwargs):
 
         class _hookwrapper:
 
