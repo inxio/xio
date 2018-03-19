@@ -100,7 +100,6 @@ class TestCases(unittest.TestCase):
         peers = Peers()
         app = xio.app()
         peer = peers.register(app)
-
         check = peer.check()
         assert check['status'] == 200
         #assert check['time'] > 0

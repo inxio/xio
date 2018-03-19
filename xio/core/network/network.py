@@ -39,8 +39,4 @@ class Network(peer.Peer):
                 
         return peer.Peer.factory(id,*args,_cls=cls,**kwargs)
 
-   
-    def render(self,req):
 
-        self.log.info('NETWORK.RENDER',req) 
-        return self._handler(req)

@@ -14,6 +14,8 @@ from xio.core.app.app import (
 from xio.core.lib.logs import log
 from xio.core.lib.utils import is_string, urlparse, generateuid
 
+from .containers import Containers
+
 import traceback
 from pprint import pprint
 import datetime
@@ -56,10 +58,24 @@ class Node(App):
 
         self.uid = generateuid()
         self.network = network
-        self.services = [] # list of APP services to deliver
+
 
         self.bind('www', self.renderWww)   
-        
+
+        # service docker
+        from .lib.docker.service import DockerService
+        self.put('services/docker', DockerService(self) )
+
+        # service docker
+        from xio.ext.ipfs.service import IpfsService
+        self.put('services/ipfs', IpfsService(self) )
+
+        # service db
+        import xio
+        self.put('services/db', xio.db() )
+
+        # init container (require loaded services)
+        self.containers = Containers(self)
         
     
     def renderWww(self,req):
@@ -142,6 +158,12 @@ class Node(App):
 
         for endpoint in endpoints:
             return self.peers.register(endpoint)
+
+
+
+    def deliver(self,uri):
+        return self.containers.deliver(uri)
+
 
 
 

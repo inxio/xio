@@ -323,9 +323,14 @@ class App(peer.Peer):
     def render(self,req):
         self.log.info('APP RENDER',req.xmethod or req.method, repr(req.path),'by',self)
 
-        # fix ABOUT if no handler for www ... create defaut handler ?
-        if not req.path and req.ABOUT:
-            return self._handleAbout(req)
+        # fix ABOUT, HEAD, OPTIONS => if no handler for www ... create defaut handler ?
+        if not req.path:
+            if req.HEAD:
+                return ''
+            if req.OPTIONS:
+                return ''
+            if req.ABOUT:
+                return self._handleAbout(req)
 
         
         req.path = 'www/'+req.path if req.path else 'www'
@@ -422,6 +427,14 @@ class App(peer.Peer):
             return [ str(traceback.format_exc()) ]
 
 
+    def service(self,name,config=None):
+        if config==None:
+            #service = self.resource('services/%s' % name) ###### BUG ! return node
+            service = self.get('services/%s' % name)
+            return service
+        else:
+            service = self.put('services/%s' % name, config)
+        return service
       
     def schedule(self,*args,**kwargs):
 

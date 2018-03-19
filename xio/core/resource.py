@@ -581,7 +581,8 @@ class Resource(object):
     def __getattr__(self, name):
     
         if name[0]!='_':
-        
+
+            # handling content access (used with app.services and/or not callable wrapped instance) .. what about handler ?
             if self.content and  hasattr(self.content,name):
                 return getattr(self.content,name)
 
