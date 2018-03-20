@@ -10,6 +10,8 @@ import traceback
 import json
 import sys
 
+
+
 from cgi import parse_qs, escape
 
 if sys.version_info.major == 2:
@@ -18,12 +20,18 @@ if sys.version_info.major == 2:
     import urllib
     from httplib import responses as http_responses
     from Cookie import SimpleCookie
+
+    def _send(content):
+        return content
 else:
     from http.client import responses as http_responses
     import http.client
     from http.cookies import SimpleCookie
     import urllib.error 
 
+    from xio.core.lib.utils import to_bytes
+    def _send(content):
+        return to_bytes(content)
     
 
 def is_string(s):
@@ -129,7 +137,6 @@ class HttpService:
 
                     post_data = post_params
 
-
             context = environ
 
 
@@ -152,9 +159,11 @@ class HttpService:
             #path = 'www'+path if path else 'www'   
 
             import xio
+
             request = xio.request(method,path,headers=headers,query=query,data=post_data,context=context)
 
             response = self.app.render(request)
+
 
             import inspect
             import json
@@ -220,7 +229,7 @@ class HttpService:
 
             print ('http content', type(content))     
 
-            return [ content.encode('utf8') ] # any iterable/yield ?
+            return [ _send( content.encode('utf8') ) ] # any iterable/yield ?
 
         except Exception as err:
             print(traceback.format_exc())    
@@ -230,7 +239,7 @@ class HttpService:
             
             res = """<html><body><h1>%s</h1><h2>%s</h2><p>%s</p></body></html>""" % (status,err,res)
             start_response(status,[('Content-Type','text/html')])
-            return [ res ]
+            return [ _send(res) ]
 
 
 class Httpds(Httpd):

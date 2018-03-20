@@ -12,6 +12,11 @@ import time
 
 from .naclHandler import NaclHandler
 
+try:
+    # warning => segmentation fault if this import is in Key.account() !!!!!
+    from xio.ext.ethereum.account import Account as ethereum_handler
+except:
+    ethereum_handler = None
 
 def key(*args,**kwargs):
     return Key(*args,**kwargs)
@@ -25,6 +30,7 @@ class Key:
         self._accounts = {}
 
         if token:
+            
             self._handler = handler_cls # no instance, only static method allowed
             #self.ethereum = ethereum_handler
             self.private = None
@@ -48,10 +54,6 @@ class Key:
 
     def account(self,network):
         if not network in self._accounts:
-            try:
-                from xio.ext.ethereum.account import Account as ethereum_handler
-            except:
-                ethereum_handler = None
             account = ethereum_handler(seed=self.private) if ethereum_handler else None
             self._accounts[network] = account
         return self._accounts.get(network)
@@ -80,6 +82,7 @@ class Key:
         if isinstance(token,tuple):
             scheme,token = token
             scheme = scheme.split('/').pop()
+
         h = self._handler if not scheme else self.account(scheme)
         return h.recoverToken(token)
 

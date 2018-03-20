@@ -54,25 +54,41 @@ class Containers:
         from pprint import pprint
         for row in self.db.select():
             try:
-
+                uri = row.get('uri')
+                container = self.get(uri)
+            
                 index = row.get('_id')
                 builded = row.get('builded')
-
+                started = row.get('started')
                 if not builded: 
-                    uri = row.get('uri')
-                    container = self.get(uri)
-                    container.build()
-                    #print 'build ok'
-                    self.db.update(index,{
-                        'builded': int(time.time()),
-                        'error': None,
-                        'iname': container.iname,
-                    })
-            except Exception as err:
-                self.db.update(index,{
-                    'error': err,
-                })
+                    print('... building', index)
+                    try:
 
+                        container.build()
+                        #print 'build ok'
+                        self.db.update(index,{
+                            'builded': int(time.time()),
+                            'error': None,
+                            'iname': container.iname,
+                            'cname': container.cname,
+                        })
+                    except Exception as err:
+                        self.db.update(index,{
+                            'error': err,
+                        })
+                elif not started:
+                    print('... starting', index)
+                    container.run()
+                    if container.endpoint:
+                        self.db.update(index,{
+                            'started': int(time.time()),
+                        })
+
+                        self.node.register(container.endpoint)
+            except Exception as err:
+                print (err)
+
+        """
         pprint(list( self.db.select() ))
         return
         
@@ -85,7 +101,7 @@ class Containers:
 
         if container.endpoint:
             self.node.register(container.endpoint)
-
+        """
 
     def oldsync(self):
 

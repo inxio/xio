@@ -311,7 +311,7 @@ class ReqClient:
         self._peer = peer # warning originale peer for testcase (correct id require token based raccount ecover)
         self.context = context
         self.auth = Auth(self)
-
+        
         # if not peer we create a keyless user from token 
         if self.auth.token:
             import xio
@@ -330,6 +330,7 @@ class ReqClient:
                 account = xio.user(token=token)
                 self.id = account.id    
         """
+
         self._feedback = req.context.get('feedback')
         self._wsendpoint = req.context.get('wsendpoint')
         self.send = self._send if self._feedback else None

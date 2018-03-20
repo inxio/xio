@@ -117,7 +117,7 @@ class Docker:
         for image in images:
             if id and image.id==id:
                 return image
-            print (name,image.name)
+            #print (name,image.name)
             if name and image.name==name:
                 return image
 

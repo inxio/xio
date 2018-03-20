@@ -27,7 +27,6 @@ class _Account:
 
     def __init__(self,*args,**kwargs):
         self.ethereum = kwargs.get('ethereum')
-
         try: 
             self.address = to_string(self.address)
             import web3
@@ -105,14 +104,17 @@ class BitcoinEthereumHandler(_Account):
         assert len(priv)==64
 
         # public
-        pub = bitcoin.privtopub(decode_hex(priv))
+        pub = bitcoin.privtopub(decode_hex(priv)) ########## BUG SEGMENTATION FAULT PYTHON3
         pub = pub[1:]
+
         assert pub
         assert len(pub)==64
 
         # address
         self.private = priv
         self.public = encode_hex(pub)
+
+        
         self.address = self.pub2EthereumAddress(self.public)
         assert len(self.address)==42
 
