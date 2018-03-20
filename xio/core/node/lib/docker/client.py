@@ -60,7 +60,7 @@ class Docker:
         for line in cli.build(**kwargs): # squash=True ??? "squash is only supported with experimental mode
             print( line.get('stream','').strip() )
         
-        return self.image(name)
+        return self.image(name=name)
 
     def run(self,image,**info):
         # https://docker-py.readthedocs.io/en/stable/containers.html#
@@ -117,7 +117,7 @@ class Docker:
         for image in images:
             if id and image.id==id:
                 return image
-
+            print (name,image.name)
             if name and image.name==name:
                 return image
 
@@ -152,7 +152,7 @@ class Image:
         self.id = image.attrs.get('Id')
 
         repo = image.attrs.get('RepoTags')
-        self.name,self.version = repo[0].split(':') if repo else ('','')
+        self.name,self.version = repo[-1].split(':') if repo else ('','')
         self.name = self.name.strip()
 
         self.size = int(image.attrs.get('Size')/1000000)

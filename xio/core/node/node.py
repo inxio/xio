@@ -72,7 +72,12 @@ class Node(App):
 
         # service db
         import xio
-        self.put('services/db', xio.db() )
+        if self.redis:
+            memdb = xio.db(name='xio',type='redis')
+        else:
+            memdb = xio.db()
+            
+        self.put('services/db', memdb )
 
         # init container (require loaded services)
         self.containers = Containers(self)

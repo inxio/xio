@@ -6,6 +6,7 @@ import os
 from pprint import pprint
 import datetime
 import yaml
+import time
 
 import xio 
 
@@ -24,8 +25,8 @@ class Containers:
         self.docker = node.service('docker').content  # skip resource wrapper
         self.ipfs = node.service('ipfs')
         
-        #self.db = node.service('db')
-        self.db = xio.db('xio:node:%s' % self.node.id).container('containers')
+        self.db = node.service('db').container('peers')
+
         
     def get(self,uri):
 
@@ -42,10 +43,39 @@ class Containers:
     def deliver(self,uri):
 
         index = md5(uri)
-        self.db.put(index,{
-            'uri': uri
-        })
+        data = self.db.get(index)
+        if not data:
+            self.db.put(index,{
+                'uri': uri,
+            })
 
+
+    def sync(self):
+        from pprint import pprint
+        for row in self.db.select():
+            try:
+
+                index = row.get('_id')
+                builded = row.get('builded')
+
+                if not builded: 
+                    uri = row.get('uri')
+                    container = self.get(uri)
+                    container.build()
+                    #print 'build ok'
+                    self.db.update(index,{
+                        'builded': int(time.time()),
+                        'error': None,
+                        'iname': container.iname,
+                    })
+            except Exception as err:
+                self.db.update(index,{
+                    'error': err,
+                })
+
+        pprint(list( self.db.select() ))
+        return
+        
         from pprint import pprint
         pprint( list(self.db.select()) )
         
@@ -57,7 +87,7 @@ class Containers:
             self.node.register(container.endpoint)
 
 
-    def sync(self):
+    def oldsync(self):
 
         running_endpoints = []
         for container in self.docker.containers():
@@ -186,13 +216,15 @@ class Container:
         #self.image.build()
         dockerfile = self.directory+'/Dockerfile'
         if not os.path.isfile(dockerfile):
-            dockerfile = "from xio/app"
-        print('build '+dockerfile)
+            dockerfile = "from inxio/app"
+        print('build '+self.iname+': '+dockerfile)
         self.docker.build(name=self.iname,directory=self.directory,dockerfile=dockerfile)
+        
+        self.docker.build(name=self.iname,directory=self.directory,dockerfile=dockerfile)
+
         self.image = self.docker.image(name=self.iname)
         assert self.image
-        pprint(self.image.about())
-        
+        return self.image
 
     def run(self):
 
