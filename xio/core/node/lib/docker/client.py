@@ -43,11 +43,17 @@ class Docker:
             decode=True
         )
 
-        if not dockerfile.startswith('/'):
+        # 
+        filepath = None
+        if not "\n" in dockerfile and not " " in dockerfile:
+            filepath = directory+'/'+dockerfile if not dockerfile.startswith('/') else dockerfile
+            print ('>>>>', filepath)
+        if filepath and os.path.isfile(filepath):
+            kwargs['dockerfile'] = filepath
+        else:
             f = BytesIO(dockerfile.encode('utf-8'))
             kwargs['fileobj'] = f
-        else:
-            kwargs['dockerfile'] = dockerfile
+
 
 
         # bug IOError: Can not access file in context => https://github.com/docker/docker-py/issues/1841

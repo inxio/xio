@@ -9,32 +9,48 @@ import yaml
 
 import xio 
 
+from xio.core.lib.utils import md5
 
 
 
 class Containers:
 
     def __init__(self,node):
+    
         self.node = node
+
+        # warning, services may be unavalable yet (required full app/init or app/start)
+        
         self.docker = node.service('docker').content  # skip resource wrapper
         self.ipfs = node.service('ipfs')
-        self.db = node.service('db')
-
-        # warning, service may be unavalable yet (required full app/init or app/start)
-
+        
+        #self.db = node.service('db')
+        self.db = xio.db('xio:node:%s' % self.node.id).container('containers')
+        
     def get(self,uri):
 
         print ('get container', uri)
+
+        #index = md5(uri)
+        
 
         if uri.startswith('/'):
             container = Container(self,directory=uri)
             return container
 
 
-
     def deliver(self,uri):
 
+        index = md5(uri)
+        self.db.put(index,{
+            'uri': uri
+        })
+
+        from pprint import pprint
+        pprint( list(self.db.select()) )
+        
         container = self.get(uri)
+        container.build()
         container.run()
 
         if container.endpoint:
@@ -171,7 +187,7 @@ class Container:
         dockerfile = self.directory+'/Dockerfile'
         if not os.path.isfile(dockerfile):
             dockerfile = "from xio/app"
-
+        print('build '+dockerfile)
         self.docker.build(name=self.iname,directory=self.directory,dockerfile=dockerfile)
         self.image = self.docker.image(name=self.iname)
         assert self.image
@@ -190,6 +206,7 @@ class Container:
             },
             'volumes': {
                 '/apps/xio': '/apps/xio',
+                self.directory: '/apps/app',
             }
         }
         self.container = self.docker.run(**info)

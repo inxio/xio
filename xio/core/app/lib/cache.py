@@ -21,7 +21,6 @@ class PythonHandler:
         self.data[index] = data
 
     def get(self,index):
-        print self.data
         data = self.data.get(index)
         if data:
             expire = data.get('_expire')
@@ -134,9 +133,9 @@ if __name__ == '__main__':
         'content': 'ok',
         'ttl': 3600
     })
-    print cache.get('test')
+
     time.sleep(3)
-    print cache.get('test')
+
 
 
             

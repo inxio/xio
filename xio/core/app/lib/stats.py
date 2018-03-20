@@ -81,7 +81,6 @@ class RedisHandler:
     def incr(self,index):
         key = 'xio:stats:%s' % (':'.join(index))
         counter = self.redis.get(key) or 0
-        print counter
         self.redis.incr(key) 
         return counter
 
