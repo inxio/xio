@@ -4,8 +4,8 @@
 from xio.core.lib.crypto.common import *
 
 try:
-    import web3.account
-    WEB3_HANDLER = True
+    import web3
+    WEB3_HANDLER = web3.__version__.startswith('4.')
 except Exception as err:
     WEB3_HANDLER = False
 
@@ -18,7 +18,8 @@ except Exception as err:
 
 
 def account(*args,**kwargs):
-    h = BitcoinEthereumHandler if BITCOIN_HANDLER else Web3Handler
+    #h = BitcoinEthereumHandler if BITCOIN_HANDLER else Web3Handler
+    h = Web3Handler if WEB3_HANDLER else BitcoinEthereumHandler 
     return h(*args,**kwargs)
 
 Account = account
@@ -51,7 +52,7 @@ class _Account:
 class Web3Handler(_Account):
 
     def __init__(self,private=None,seed=None):
-
+        
         self._web3 = web3.Web3('')
 
         if private:
@@ -65,7 +66,7 @@ class Web3Handler(_Account):
         else:
             self._account = self._web3.eth.account.create()
             self.private = self._account.privateKey.hex()[2:]
-            
+   
         self.address = self._account.address
         self.address = self._web3.toChecksumAddress(self.address) 
 
@@ -83,6 +84,23 @@ class Web3Handler(_Account):
         return address
        
 
+    @classmethod    
+    def recoverToken(cls,token):
+        nfo = token
+        if token.count('-') > 2:
+             (id,nonce,v,r,s) = token.split('-')
+             print ('WARNING - VERIFY NOT IMPLEMENTED')
+             return id
+             """
+             sig = (v,r,s)
+             from ethereum.utils import ecrecover_to_pub
+             from rlp.utils import decode_hex
+             #print ecrecover_to_pub(nonce,int(decode_hex(v[2:])),decode_hex(r[2:]),decode_hex(s[2:]))
+             """
+        else:
+            nonce,sig = token.split('-')
+        address = cls.recover(nonce,sig)
+        return address
 
 class BitcoinEthereumHandler(_Account):
 
