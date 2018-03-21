@@ -184,12 +184,13 @@ class Containers:
 
 class Container:
 
-    def __init__(self,containers,directory=None,data=None):
+    def __init__(self,containers,directory=None,dockerfile=None,data=None):
 
         self.containers = containers
         self.docker = containers.docker # skip resource wrapper
         self.directory = directory
-
+        self.dockerfile = dockerfile
+        
         if not data:
             about_filepath = directory+'/about.yml'
             with open(about_filepath) as f:
@@ -202,7 +203,7 @@ class Container:
         nfo.pop(0)  # strip xrn:
 
         self.iname = '/'.join(nfo)
-        self.cname = '_'.join(nfo)
+        self.cname = self.iname.replace('/','-')
 
         self.image = self.docker.image(name=self.iname)
         self.container = self.docker.container(name=self.cname)
@@ -229,12 +230,8 @@ class Container:
 
     def build(self):
         #https://docker-py.readthedocs.io/en/stable/images.html
-        #self.image.build()
-        dockerfile = self.directory+'/Dockerfile'
-        if not os.path.isfile(dockerfile):
-            dockerfile = "from inxio/app"
-        print('build '+self.iname+': '+dockerfile)
-        self.docker.build(name=self.iname,directory=self.directory,dockerfile=dockerfile)
+
+        self.docker.build(name=self.iname,directory=self.directory,dockerfile=self.dockerfile)
         
         self.docker.build(name=self.iname,directory=self.directory,dockerfile=dockerfile)
 

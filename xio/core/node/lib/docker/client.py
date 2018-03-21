@@ -43,6 +43,11 @@ class Docker:
             decode=True
         )
 
+        if not dockerfile:
+            dockerfile = directory+'/Dockerfile'
+            if not os.path.isfile(dockerfile):
+                dockerfile = "from inxio/app"
+
         # 
         filepath = None
         if not "\n" in dockerfile and not " " in dockerfile:
