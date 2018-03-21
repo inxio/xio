@@ -10,7 +10,8 @@ from xio.core.lib.utils import generateuid, to_string
 
 class Peer(resource.Resource):
 
-    __XMETHODS__ = False
+    #__XMETHODS__ = False #1803 - commented for network case, why False ?
+    
     key = None
     name = None
     id = None

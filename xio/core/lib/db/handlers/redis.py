@@ -11,7 +11,7 @@ https://redis-py.readthedocs.org/en/latest/
 pubsub
 https://gist.github.com/jobliz/2596594
 """
-
+from __future__ import absolute_import
 import xio
 
 
@@ -31,11 +31,11 @@ class Database:
         self.name = name.replace('.','_') # name sera souvent le domain de l'app
         self.port = port
         self.host = host
-        self.db = redis.Redis(self.host)
+        self.db = redis.Redis(self.host) if self.host else redis.Redis()
 
     def get(self,name,**kwargs):
         name = '%s/%s' % (self.name,name)
-        return RedisDbContainer(name,self.db)
+        return Container(name,self.db)
 
 
 class Container:
@@ -46,23 +46,28 @@ class Container:
 
     def get(self,uid,**kwargs):
         key = '%s/%s' % (self.name,uid)
-        print 'redis getting ... ', key
+        print ('redis getting ... ', key)
         data = self.db.get(key)
         try:
             return json.loads(data)
-        except Exception,err:
-            print 'REDIS GET ERROR', err  
+        except Exception as err:
+            print ('REDIS GET ERROR', err )
             return {}
 
     def put(self,uid,data,**kwargs):
         key = '%s/%s' % (self.name,uid)
-        print 'redis put... ', key,' = ',data
+        print ('redis put... ', key,' = ',data)
         data['_id'] = uid
         data = json.dumps(data)
         return self.db.set(key,data)
 
     def update(self,uid,data,**kwargs):
         key = '%s/%s' % (self.name,uid)
+
+        oridata = self.get(uid)
+        oridata.update(data)
+        
+        data = oridata
         data['_id'] = uid
         data = json.dumps(data)
         return self.db.set(key,data)
@@ -92,7 +97,7 @@ class Container:
                         return False
             return True
 
-        print 'redis select ...',self.name, filter
+        print ('redis select ...',self.name, filter)
         pattern = self.name+'/*'
         data = []
         for key in self.db.keys(pattern=pattern):

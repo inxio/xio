@@ -55,10 +55,11 @@ class Db:
         chandler = self.handler.get(name)
         return Container( self, chandler) if chandler else None
 
-    def container(self,name):
+    def container(self,name,factory=None):
         container = self.get(name)
         if not container:
             container = self.put(name)
+        container._factory = factory
         return container
 
 
@@ -84,6 +85,14 @@ class Container:
         self.db = db
         self.handler = handler
         self.name = handler.name
+        self._factory = None
+
+    def new(self,id=None,**data):
+        obj = self._factory(container=self)
+        obj.id = id
+        if data:
+            obj.update(data)
+        return obj
 
     def head(self,id):
         return self.handler.exist(id)
@@ -91,7 +100,7 @@ class Container:
     def get(self,id,fields=None):
         assert id
         data = self.handler.get(id)
-        return xio.data(data,fields=fields)
+        return xio.data(data,fields=fields) if not self._factory else self._factory(data,container=self)
   
     def select(self,filter=None,fields=None,limit=None,start=0,sort=None,**kwargs):
         data = self.handler.select(filter=filter,fields=fields,limit=limit,start=start,sort=sort)
@@ -128,6 +137,85 @@ class Container:
     def count(self,**kwargs):
         return self.handler.count(**kwargs)
 
+
+
+
+
+class Item(dict):
+    """ 
+    helper class for basic Class inherance 
+
+    todo: merge with xio.data with resource-based container handling
+
+        class Item(db.Item):  
+            """ """
+
+            def incr(self):
+                self.counter += 1
+                self.save()
+
+            def check(self):
+                print '====>', self.title, self.counter, self.walou
+
+
+        db = xio.db()
+        
+        container = db.container('items',factory=Item)
+
+        item = Item(container=container)
+        item.description = 'test ok'
+        item.save()
+
+        # other method
+        item = container.new()
+        item.description = 'test ok'
+        item.save()
+    
+    """
+
+    def __init__(self,*args,**kwargs):
+
+        self._container = kwargs.get('container')
+    
+        if args and not isinstance(args[0],dict):
+            id = args[0]
+            self._data = self._container.get(id) or {'_id': id}
+        elif args and isinstance(args[0],dict):
+            self._data = args[0]
+        else:
+            self._data = dict()
+
+        dict.__init__(self,**self._data)
+        self.id = self._data.get('_id')
+        
+
+    def __getattr__(self, name):
+        return self.get(name,None)
+
+    def __setattr__(self, name, value):
+        self[name] = value
+
+    def __delattr__(self, name):
+        del self[name]
+        
+
+    def save(self):
+        
+        if not self.id:
+            import uuid
+            self.id = str(uuid.uuid4())
+
+        reqcall = False
+        for k,v in self.items():
+            if k[0]!='_' and k!='id':
+                oldvalue = self._data.get(k)
+                newvalue = v
+                reqcall = reqcall or (newvalue!=oldvalue)
+                self._data[k] = newvalue
+
+        if reqcall:
+            self._container.put(self.id,self._data)
+        
 
 
 

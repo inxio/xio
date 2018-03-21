@@ -35,6 +35,9 @@ class Container:
     def update(self,index,data):
         self.data[index].update(data)
 
+    def truncate(self):
+        self.data = {}
+
     def select(self,filter=None,**kwargs):
         
         # apply filter here

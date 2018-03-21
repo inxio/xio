@@ -12,6 +12,7 @@ import xio
 
 from xio.core.lib.utils import md5
 
+from xio.core.lib.db import db
 
 
 class Containers:
@@ -25,83 +26,40 @@ class Containers:
         self.docker = node.service('docker').content  # skip resource wrapper
         self.ipfs = node.service('ipfs')
         
-        self.db = node.service('db').container('peers')
+        self.db = node.service('db').container('peers') # , factory=Container => pb for Containers arg 
 
         
-    def get(self,uri):
-
-        print ('get container', uri)
-
-        #index = md5(uri)
-        
-
-        if uri.startswith('/'):
-            container = Container(self,directory=uri)
-            return container
+    def get(self,index):
+        container = Container(self,index,container=self.db)
+        return container
 
 
     def deliver(self,uri):
 
         index = md5(uri)
-        data = self.db.get(index)
-        if not data:
-            self.db.put(index,{
-                'uri': uri,
-            })
+        container = self.get(index)
+        if not container._created:
+            container.uri = uri    
+            container.save()
 
 
     def sync(self):
+
         from pprint import pprint
+        
+        # fetch container to provide
+        res = self.node.network.getContainersToProvide(self.node.id)
+        for row in res:
+            self.deliver(row)
+
+
+        # sync deliverable containers
         for row in self.db.select():
-            try:
-                uri = row.get('uri')
-                container = self.get(uri)
-            
-                index = row.get('_id')
-                builded = row.get('builded')
-                started = row.get('started')
-                if not builded: 
-                    print('... building', index)
-                    try:
+            container = self.get(row['_id'])
+            container.sync()
 
-                        container.build()
-                        #print 'build ok'
-                        self.db.update(index,{
-                            'builded': int(time.time()),
-                            'error': None,
-                            'iname': container.iname,
-                            'cname': container.cname,
-                        })
-                    except Exception as err:
-                        self.db.update(index,{
-                            'error': err,
-                        })
-                elif not started:
-                    print('... starting', index)
-                    container.run()
-                    if container.endpoint:
-                        self.db.update(index,{
-                            'started': int(time.time()),
-                        })
 
-                        self.node.register(container.endpoint)
-            except Exception as err:
-                print (err)
 
-        """
-        pprint(list( self.db.select() ))
-        return
-        
-        from pprint import pprint
-        pprint( list(self.db.select()) )
-        
-        container = self.get(uri)
-        container.build()
-        container.run()
-
-        if container.endpoint:
-            self.node.register(container.endpoint)
-        """
 
     def oldsync(self):
 
@@ -181,8 +139,104 @@ class Containers:
 
 
 
+class Container(db.Item):
 
-class Container:
+    def __init__(self,containers,*args,**kwargs):
+
+        self._containers = containers
+        self._docker = containers.docker # skip resource wrapper
+
+        db.Item.__init__(self,*args,**kwargs)
+
+
+    def about(self):
+        about = self.data
+        about.update({
+            'image': self.image.about() if self.image else {'name': self.iname},
+            'container': self.container.about() if self.container else {'name': self.cname},
+        })
+        return about
+
+
+    def sync(self):
+
+        # build it if not builded
+        if not self.builded:
+            self.build()
+
+        if not self.started:
+            self.start()
+            if self.started and self.endpoint:
+                self._containers.node.register(self.endpoint)
+       
+
+    def build(self):
+
+        print ('building ...', self.id)
+
+        if self.uri.startswith('/'):
+            self.directory = self.uri
+
+        about_filepath = self.directory+'/about.yml'
+        with open(about_filepath) as f:
+            data = yaml.load(f)
+
+        self.name = data.get('name')
+        nfo = self.name.split(':')
+        nfo.pop(0)  # strip xrn:
+
+        self.iname = '/'.join(nfo)
+        self.cname = self.iname.replace('/','-')
+
+        self._docker.build(name=self.iname,directory=self.directory) # ,dockerfile=self.dockerfile
+        self._dockerimage = self._docker.image(name=self.iname)
+
+        assert self._dockerimage
+
+        self.builded = int(time.time())
+        self.save()
+
+
+    def start(self):
+
+        print ('starting ...', self.id)
+
+        cport = 80
+
+        info = {
+            'name': self.cname,
+            'image': self.iname,
+            'ports': {
+                0: cport,
+            },
+            'volumes': {
+                '/apps/xio': '/apps/xio',
+                self.directory: '/apps/app',
+            }
+        }
+        self._dockercontainer = self._docker.run(**info)
+
+        assert self._dockercontainer
+
+        portmapping = self._dockercontainer.about().get('port') # receive {32776: 8080}
+        for k,v in portmapping.items():
+            if v==cport:
+                self.endpoint = 'http://127.0.0.1:%s' % k
+
+        self.started = int(time.time())
+
+
+        pprint(self)
+
+        self.save()
+
+
+
+
+
+
+
+class oldContainer:
 
     def __init__(self,containers,directory=None,dockerfile=None,data=None):
 
@@ -233,8 +287,6 @@ class Container:
 
         self.docker.build(name=self.iname,directory=self.directory,dockerfile=self.dockerfile)
         
-        self.docker.build(name=self.iname,directory=self.directory,dockerfile=dockerfile)
-
         self.image = self.docker.image(name=self.iname)
         assert self.image
         return self.image

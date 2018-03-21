@@ -11,13 +11,16 @@ import collections
 
 import requests
 import json
-import urlparse
+
 import base64
 import uuid
 
 from pprint import pprint
 
 import xio
+
+
+
 from xio.core.lib.env import getDefaultEnv, setDefaultEnv
 
 if __name__ == '__main__':
@@ -47,10 +50,10 @@ if __name__ == '__main__':
     id = data.get('id')
     token = data.get('token')
 
-    print '\n\n===================',' '.join(sys.argv),'\n'
-    print '\t id', data.get('id')
-    print '\t network', endpoint
-    print
+    print ('\n\n===================',' '.join(sys.argv),'\n')
+    print ('\t id', data.get('id'))
+    print ('\t network', endpoint)
+    print ()
 
     if action=='init':
 
@@ -84,7 +87,6 @@ if __name__ == '__main__':
         cryptedkey = data.get('key')
         from xio.core.common.crypto import decrypt
         key = decrypt(cryptedkey, password)
-        print key
         user = xio.user(key=key)
         data['token'] = user.token
         xio.setDefaultEnv(data)
@@ -105,22 +107,22 @@ if __name__ == '__main__':
             path = '/'+path if path and path[0]!='/' else path
             resp = client.request(method,path or '')
 
-            print '\n>>> %s %s ' % (method,repr(param1))
-            print '\tstatus:', resp.status
-            print '\tcontent_type:', resp.content_type
+            print ('\n>>> %s %s ' % (method,repr(param1)))
+            print ('\tstatus:', resp.status)
+            print ('\tcontent_type:', resp.content_type)
             print 
             if resp.content_type=='application/json':
                 pprint(resp.content)
             else:
-                print '\n', resp.content
+                print ('\n', resp.content)
     else:
-        print 'commands : '
-        print '\t init          : initialize un compte'
-        print '\t about         : retreive information about current network'
-        print '\t test          : run all xio tests'
-        print '\n'        
+        print ('commands : ')
+        print ('\t init          : initialize account')
+        print ('\t about         : retreive information about current network')
+        print ('\t test          : run all xio tests')
+        print ('\n')        
 
-    print '\n'
+    print ('\n')
 
     
 

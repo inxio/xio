@@ -108,6 +108,10 @@ def handleAuth(func):
 
         resp = func(self,method,*args,**kwargs)
 
+        if resp.status==401: # debug info
+            print ('401 recevied by', self)
+            print (self.context)
+
         peer = self.context.get('client')
         if hasattr(peer,'key') and hasattr(peer.key,'private'):
 

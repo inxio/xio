@@ -57,7 +57,10 @@ class Node(App):
         App.__init__(self,name,**kwargs)
 
         self.uid = generateuid()
-        self.network = network
+
+        # if network defined we have to connect to it for AUTH handling    
+        self.network = self.connect(network) if network else None
+        
 
 
         self.bind('www', self.renderWww)   

@@ -18,10 +18,6 @@ class TasksService:
         self.app = app
         self._db = self.app.get(db)
 
-        #print '=======', db 
-        #print '=======', self._db 
-        #assert self._db.content
-
         self.db = self._db.get('tasks')
         self.userid = 'DEFAULT'
         self._tasks = {}
@@ -29,7 +25,6 @@ class TasksService:
         self.app.schedule(int(heartbeat), self.run)
 
     def run(self):
-        #print 'TasksService running ...'
         data = self.pull()
         if data:
             task = Task(data=data,broker=self)
@@ -41,14 +36,10 @@ class TasksService:
         return Task(data=data,broker=self) if not isinstance(data,Task) else data
 
     def get(self,id):
-        #print 'TasksService.get >> ',id
-        # gestion des taches comme resource xio
         return self._tasks[id] if id in self._tasks else self.db.get(id).content
 
 
     def put(self,id,handler):
-        # gestion des taches comme resource xio
-        #print 'TasksService.put >> ',id,handler
         self._tasks[id] = Task( broker=self, data={'_id': id,'handler': handler})
         return self._tasks[id] 
 
@@ -132,7 +123,7 @@ class Task:
             if callable(self.handler): 
                 import yaml
                 config = yaml.load(self.handler.__doc__)
-                print 'config.......', config
+
                 configflow = config.get('flow')
                 if configflow:
                     # gestion flow: STEP1,STEP2,STEP3
@@ -149,7 +140,7 @@ class Task:
                                     'handler': self.handler
                                 }
                             configflow.append(step)
-                    #print '......', configflow
+
                     for row in configflow:
                         self.flow.append(row)      
             else:
@@ -246,9 +237,7 @@ class Task:
         for row in rows:
             status = row.get('status')
             alldone.append( status!=Task.TODO )
-            
-        #print alldone
-
+         
         if all( alldone ):
             reduced = []
             for row in self._jobs:
@@ -262,7 +251,6 @@ class Task:
             self.status = Task.SUCCESS
             self.output = result
         else:
-            print 'SET TASK STEP', self.step+1
             self.status = Task.TODO
             self.input = result
             self.step = self.step+1
@@ -271,7 +259,7 @@ class Task:
 
     def save(self):
         self.DONE = self.status in (self.SUCCESS,self.ERROR)
-        print 'SAVING', self.status, self.step, self.input, self.output
+
         self.broker.update(self.id,
         {
             '_lock': None,
@@ -349,7 +337,7 @@ class Task:
 
         context = {}
 
-        print self,'>> RUNNING',handler, self.input
+        #print self,'>> RUNNING',handler, self.input
 
         if self.retry>10:
             self.status = Task.ERROR
@@ -362,9 +350,9 @@ class Task:
 
         payload = self.input 
 
-        print self,'>>> CALL HANDLER REQUEST', method, handler, payload
+        #print self,'>>> CALL HANDLER REQUEST', method, handler, payload
         res = handler.request(method,'',data=payload)
-        print self,'>>> CALL HANDLER RESPONSE', res
+        #print self,'>>> CALL HANDLER RESPONSE', res
 
         # cas d'un batch
 
@@ -372,7 +360,6 @@ class Task:
         if res.status==200:
             self.nextStep(res.content)
         elif res.status==201:
-            print 'SET TASK RUNNING', res.content
             self.status = Task.RUNNING
             self.input = res.content
             self.save()
@@ -380,7 +367,6 @@ class Task:
             self.input = res.content
             self.save()
         elif res.status==500:
-            print '?????', self.retry
             self.status = Task.ERROR
             self.save()
         return self
@@ -401,14 +387,14 @@ class Flow:
         
 
     def debug(self):
-        #print self._flow
+
         for i,step in enumerate(self._flow):
-            #print '????????', step
+
             if isinstance(step,Flow):
                 step.debug()
             else:
                 prefix = '\t' if self._parent else''
-                print prefix,'STEP',i+1, step
+
 
     def __len__(self):
         return len(self._flow)
@@ -468,7 +454,7 @@ if __name__=='__main__':
     task.run( {} )
 
     while True:
-        print 'waiting tasks ...'
+        print ('waiting tasks ...')
         time.sleep(1)
 
 

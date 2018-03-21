@@ -45,6 +45,13 @@ class NetworkHandler:
 
         self.contract = self.ethereum.contract(address=address,abi=abi)
 
+        self._handler_api = {}
+        for m in dir(self):
+            if m[0]!='_':
+                h = getattr(self,m)
+                if callable(h):
+                    self._handler_api[m.lower()] = h
+
     def about(self):
         about = self._about
         about.update({
@@ -69,12 +76,10 @@ class NetworkHandler:
         # check for method handler
         method = req.xmethod or req.method
 
-
-        if hasattr(self,method.lower()):
-            
-            h = getattr(self,method.lower())
+        h = self._handler_api.get(method.lower())
+        print(self._handler_api)
+        if h:
             return h(req)
-
         elif method.lower() in self.contract.api:
             # check for transaction 
             api = self.contract.api.get(method.lower())
