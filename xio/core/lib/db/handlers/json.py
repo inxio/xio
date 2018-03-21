@@ -1,10 +1,14 @@
 #!/usr/bin/env python
 #-*- coding: utf-8 -*--
 
+from __future__ import absolute_import
+
 from .python import Database as PythonDatabase
 from .python import Container as PythonContainer
 
 import os.path
+
+import json
 
 
 class Database(PythonDatabase):
@@ -25,10 +29,38 @@ class Database(PythonDatabase):
 class Container(PythonContainer):
 
     def __init__(self,db,name):
+        self.name = name
         self.filepath = db.directory+'/%s.json' % name
         if not os.path.isfile(self.filepath):
             with open(self.filepath,'w') as f:
-                f.write('ok')
-        self.name = name
-        self.data = {}
+                json.dump(dict(),f)
+                
+        with open(self.filepath) as f:
+            self.data = json.load(f)
+               
+    def put(self,*args,**kwargs):
+        PythonContainer.put(self,*args,**kwargs)
+        self.commit()
+
+    def update(self,*args,**kwargs):
+        PythonContainer.update(self,*args,**kwargs)
+        self.commit()
+
+    def truncate(self,*args,**kwargs):
+        PythonContainer.truncate(self,*args,**kwargs)
+        self.commit()
+        
+    def delete(self,*args,**kwargs):
+        PythonContainer.delete(self,*args,**kwargs)
+        self.commit()
+
+    def commit(self):
+        with open(self.filepath,'w') as f:
+            json.dump(self.data,f)
+
+
+        
+
+
+
 
