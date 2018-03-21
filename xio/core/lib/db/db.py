@@ -8,12 +8,13 @@ import time
 import xio
 
 from .handlers import python
-
+from .handlers import json
 
 __DATABASES__ = {}
 
 __HANDLERS__ =  {
     'python': python.Database,
+    'json': json.Database
 }
 try:
     from .handlers import mongo
@@ -148,7 +149,6 @@ class Item(dict):
     todo: merge with xio.data with resource-based container handling
 
         class Item(db.Item):  
-            """ """
 
             def incr(self):
                 self.counter += 1
