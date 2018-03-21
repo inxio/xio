@@ -56,7 +56,7 @@ class Container(PythonContainer):
 
     def commit(self):
         with open(self.filepath,'w') as f:
-            json.dump(self.data,f)
+            json.dump(self.data,f, sort_keys=True,indent=4)
 
 
         
