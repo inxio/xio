@@ -23,7 +23,7 @@ BASEABI = [{
 class NetworkHandler:
 
     def __init__(self,address=None,abi=None):
-        from xio.ext.ethereum.connector import Connector
+        from xio.core.network.ext.ethereum.connector import Connector
         from xio import log
 
         self.log = log
@@ -35,7 +35,7 @@ class NetworkHandler:
             tmpcontract = self.ethereum.contract(address=address,abi=BASEABI)
             ipfshash = tmpcontract.request('about') 
             assert ipfshash
-            from xio.ext.ipfs.connector import Connector
+            from xio.core.network.ext.ipfs.connector import Connector
             ipfs = Connector()
             about = ipfs.get(ipfshash)
             import json

@@ -69,11 +69,15 @@ class Node(App):
         from .lib.docker.service import DockerService
         self.put('services/docker', DockerService(self) )
 
-        # service docker
-        from xio.ext.ipfs.service import IpfsService
+        # service ipfs
+        from xio.core.network.ext.ipfs.service import IpfsService
         self.put('services/ipfs', IpfsService(self) )
 
-        # service db
+        # service dht
+        from xio.core.network.ext.dht.service import DhtService
+        self.put('services/dht', DhtService(self) )
+
+        # service memdb
         import xio
         if self.redis:
             memdb = xio.db(name='xio',type='redis')

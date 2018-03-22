@@ -14,7 +14,7 @@ from .naclHandler import NaclHandler
 
 try:
     # warning => segmentation fault if this import is in Key.account() !!!!!
-    from xio.ext.ethereum.account import Account as ethereum_handler
+    from xio.core.network.ext.ethereum.account import Account as ethereum_handler
 except:
     ethereum_handler = None
 
