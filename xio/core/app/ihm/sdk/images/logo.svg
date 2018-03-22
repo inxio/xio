@@ -1,0 +1,40 @@
+<svg width="500" height="200" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg">
+ <!-- Created with SVG-edit - http://svg-edit.googlecode.com/ -->
+ <defs>
+  <style type="text/css">@import url(&#x27;https://fonts.googleapis.com/css?family=Raleway:200,400,700'); 
+
+      .inxio {
+        font-size: 90px;
+        font-family: &quot;Raleway&quot;;
+      }
+      .inxionet {
+        font-size: 60px;
+        font-family: &quot;Raleway&quot;
+        font-weight: 400;
+      }
+      .subinxio {
+        font-size: 30px;
+        font-family: &quot;Raleway&quot;;
+        font-weight: 200;
+      }
+      .bold {
+        font-weight: 700;
+      }
+      .light {
+        font-weight: 200;
+      }</style>
+  <pattern height="100" width="100" y="0" x="0" patternUnits="userSpaceOnUse" id="gridpattern">
+   <image height="100" width="100" y="0" x="0" id="svg_1"/>
+  </pattern>
+ </defs>
+ <g stroke="null" stroke-width="0px">
+  <title>Layer 1</title>
+  <rect id="svg_10" height="0" width="4" y="426" x="1520" stroke-linecap="null" stroke-linejoin="null" stroke-dasharray="null" stroke-width="null" stroke="#191970" fill="#191970"/>
+  <text stroke="#191970" class="inxio bold" font-weight="bold" xml:space="preserve" font-family="Raleway" font-size="40" id="svg_6" y="105.60019" x="151.8889" stroke-linecap="null" stroke-linejoin="null" stroke-dasharray="null" stroke-width="0" fill="#191970">inxio</text>
+  <text stroke="#191970" class="inxionet " font-weight="bold" xml:space="preserve" font-family="Raleway" font-size="40" id="svg_69" y="103.37796" x="353.55556" stroke-linecap="null" stroke-linejoin="null" stroke-dasharray="null" stroke-width="0" fill="#191970">.net</text>
+  <text stroke="#191970" class="subinxio" font-weight="bold" xml:space="preserve" text-anchor="middle" font-family="Raleway" font-size="40" id="svg_68" y="130.60018" x="309.33334" stroke-linecap="null" stroke-linejoin="null" stroke-dasharray="null" stroke-width="0" fill="#191970">microservices provider</text>
+  <circle stroke="null" id="svg_31" r="50" cy="85.04937" cx="88.21606" stroke-linecap="null" stroke-linejoin="null" stroke-dasharray="null" stroke-width="null" fill="#191970"/>
+  <circle stroke="#ffffff" id="svg_45" r="35" cy="75.23151" cx="75.87971" fill-opacity="0" stroke-linecap="null" stroke-linejoin="null" stroke-dasharray="null" stroke-width="10" fill="#191970"/>
+  <circle id="svg_4" stroke="#ffffff" r="20" cy="64" cx="65.00001" fill-opacity="0" stroke-linecap="null" stroke-linejoin="null" stroke-dasharray="null" stroke-width="10" fill="#191970"/>
+ </g>
+</svg>

@@ -230,12 +230,11 @@ class App(peer.Peer):
                 log.warning('TEST LOADING FAILED',err)
                 self._tests = 'error' 
 
-        # loading www
-        """
-        wwwdir = self.directory+'/www'
-        if os.path.isdir(wwwdir):
-            self.bind('www', resource.DirectoryHandler(wwwdir)  )
-        """
+
+        # www/xio
+        sdkdir = os.path.dirname( os.path.realpath(__file__) )+'/ihm'
+        self.bind('www/xio', resource.DirectoryHandler(sdkdir) )
+
 
         wwwstaticdir = self.directory+'/www/static'
         if os.path.isdir(wwwstaticdir):

@@ -1,0 +1,17 @@
+<svg width="72" height="72" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs>
+  <path id="squircle" d="m36,-0.00003c-30.85714,0 -36,5.14286 -36,36.00007c0,30.8572 5.14286,36 36,36c30.85714,0 36,-5.1428 36,-36c0,-30.85721 -5.14286,-36.00007 -36,-36.00007z"/>
+ </defs>
+ <g>
+  <title>Layer 1</title>
+  <use xlink:href="#squircle" fill="#000000" id="svg_1"/>
+ </g>
+ <g>
+  <title>Layer 1</title>
+  <use xlink:href="#squircle" fill="#FFFFFF" id="svg_1" transform="matrix(0.4857964852287889,0,0,0.7418534061337859,-5.93729592668099,-1.5637316904449778) " x="72.04387" y="12.93091"/>
+  <circle r="7.34" id="svg_2" cy="49.5" cx="15.75" fill="#ffffff" transform="rotate(-8.746162414550781 15.750000000000046,49.50000381469725) "/>
+  <use xlink:href="#squircle" fill="#000000" transform="matrix(0.36634047258082864,0,0,0.11128736821987105,-4.0632571820149,-1.5313455578709354) " x="101.53176" y="156.41308" id="svg_4"/>
+  <use xlink:href="#squircle" fill="#000000" transform="matrix(0.36634047258082864,0,0,0.11128736821987105,-4.0632571820149,-1.5313455578709354) " x="101.68137" y="292.26139" id="svg_9"/>
+  <use xlink:href="#squircle" fill="#000000" transform="matrix(0.36634047258082864,0,0,0.11128736821987105,-4.0632571820149,-1.5313455578709354) " x="103.72865" y="422.5547" id="svg_10"/>
+ </g>
+</svg>

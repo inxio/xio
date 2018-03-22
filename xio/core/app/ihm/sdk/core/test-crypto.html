@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="fr">
+    <head>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/tweetnacl/1.0.0/nacl.min.js"></script>
+                <script src="https://cdn.jsdelivr.net/npm/tweetnacl-util@0.15.0/nacl-util.min.js"></script>
+<script src="/apps/inxio/cdn/sdk/ext/ethereum/lib/web3.min.js"></script>
+
+                
+    </head>
+
+<body>
+<script>
+
+// https://tweetnacl.js.org/#/
+// https://tweetnacl.js.org/app.js
+
+// https://github.com/dchest/tweetnacl-js/blob/master/README.md#documentation
+
+// https://github.com/dchest/tweetnacl-util-js
+
+// https://github.com/emn178/js-sha3 ... 9kb test ok
+
+TEST_SEED       = 'very weak seed' // KO BAD SEED SIZE
+TEST_PRIVATE    = '37b75e9adbf125f93fb14b41cb4fe530e6dd6e4a9c854ab1b33c513cc561e05b'
+TEST_PUBLIC     = '2f8527d027626f176a31b1818bdba6c51d0d0aa6f3b54d715c18c3ce1d5fc77f'
+
+var web3 = new Web3();
+
+seed = web3.utils.sha3(TEST_SEED)
+console.log('seed', TEST_SEED)
+console.log('seed', seed, seed.length)
+seed = web3.utils.hexToBytes(seed)
+
+console.log('seed', seed, seed.length)
+seed = Uint8Array.from( seed )
+console.log('seed', seed, seed.length)
+keys = nacl.sign.keyPair.fromSeed( seed )
+
+console.log(keys)
+k = keys.secretKey
+p = keys.publicKey
+alert( web3.utils.bytesToHex(k) )
+alert( web3.utils.bytesToHex(p) )
+
+function assert(condition, message) {
+    if (!condition) {
+        message = message || "Assertion failed";
+        if (typeof Error !== "undefined") {
+            throw new Error(message);
+        }
+        throw message; // Fallback
+    }
+}
+
+assert(web3.utils.bytesToHex(k)==TEST_PRIVATE) // just pb du 0X
+
+// The library enforces a strict distinction between strings and binary data. Binary data is represented using instances of Uint8Array.
+
+//var keys = nacl.sign.keyPair.fromSeed( nacl.util.decodeUTF8(TEST_SEED) ) // decode2bytes
+//var keys = nacl.sign.keyPair.fromSecretKey( nacl.util.decodeUTF8(TEST_PRIVATE) );
+var keys = nacl.sign.keyPair.fromSecretKey( TEST_PRIVATE )
+
+function toHex(s) {
+    // utf8 to latin1
+    var s = unescape(encodeURIComponent(s))
+    var h = ''
+    for (var i = 0; i < s.length; i++) {
+        h += s.charCodeAt(i).toString(16)
+    }
+    return h
+}
+
+function fromHex(h) {
+    var s = ''
+    for (var i = 0; i < h.length; i+=2) {
+        s += String.fromCharCode(parseInt(h.substr(i, 2), 16))
+    }
+    return decodeURIComponent(escape(s))
+}
+    alert( toHex( keys.secretKey ) );
+console.log(keys)
+//alert( Buffer.from(keys.secretKey).toString('hex') );
+//alert( toHex( keys.secretKey ) );
+//alert( keys.publicKey );
+//keys.publicKey);
+</script>
+
+</body>
+</html>
