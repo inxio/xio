@@ -19,7 +19,7 @@ class Docker:
         import xio
         self.host = xio.env('app_host') or '127.0.0.1'
         
-    def build(self,name=None,directory=None,dockerfile=None,**kwargs):
+    def build(self,image=None,directory=None,dockerfile=None,**kwargs):
         """
         # https://docker-py.readthedocs.io/en/stable/images.html
         # https://github.com/docker/docker-py/issues/1400
@@ -39,7 +39,7 @@ class Docker:
         kwargs = dict(
             path=directory,
             rm=True, 
-            tag=name, 
+            tag=image, 
             decode=True
         )
 
@@ -65,17 +65,19 @@ class Docker:
         for line in cli.build(**kwargs): # squash=True ??? "squash is only supported with experimental mode
             print( line.get('stream','').strip() )
         
-        return self.image(name=name)
+        return self.image(name=image)
 
-    def run(self,image,**info):
+    def run(self,**info):
         # https://docker-py.readthedocs.io/en/stable/containers.html#
-        assert image
-        print ('run', image,info)
-        iname = image
+        
+        iname = info.get('image')
         cname = info.get('name',iname.replace('/','-'))
+
+        assert iname and cname
+        
         ports = {}
         for key,val in info.get('ports',{}).items():
-            ports[val] = key
+            ports[key] = val
         
         """
         volumes (dict or list) –
@@ -101,7 +103,7 @@ class Docker:
             c.remove()
 
         kwargs = dict(name=cname,detach=True,ports=ports,volumes=volumes)
-        print ('... RUN iname', kwargs)
+        print ('... RUN', iname,cname, kwargs)
         c = self.docker.containers.run(iname,**kwargs)
         cid = c.attrs.get('Id')
         return self.container(id=cid)

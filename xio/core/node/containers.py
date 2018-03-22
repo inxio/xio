@@ -25,7 +25,7 @@ class Containers:
         
         self.docker = node.service('docker').content  # skip resource wrapper
         self.ipfs = node.service('ipfs')
-        
+
         self.db = node.service('db').container('peers') # , factory=Container => pb for Containers arg 
 
         
@@ -131,14 +131,13 @@ class Container(db.Item):
     def start(self):
 
         print ('starting ...', self.id)
-
         cport = 80
-
         info = {
             'name': self.cname,
             'image': self.iname,
             'ports': {
-                0: cport,
+                cport: 0,
+                8080: 0, # test/debug
             },
             'volumes': {
                 '/apps/xio': '/apps/xio',
