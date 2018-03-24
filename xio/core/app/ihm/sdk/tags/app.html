@@ -1,0 +1,168 @@
+
+<template>
+
+  <nav id="header" class="navbar navbar-toggleable-md fixed-top">
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#containerNavbarCenter" aria-controls="containerNavbarCenter" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+  </button>
+
+    <div class="collapse navbar-collapse ">
+
+      <a class="navbar-brand" link="/">
+          <img src="sdk/images/icon.png" height="36" class="d-inline-block align-top" alt="" > {{app.about.name}} 
+      </a>
+
+      <ul class="nav nav-pills mr-auto ">
+          {{#app.nav.sitemap}}
+            <li class="nav-item"><a class="nav-link" link="{{path}}" data-toggle="pill">{{label}}</a> </li> 
+          {{/app.nav.sitemap}}
+      </ul>
+              
+      <ul class="nav float-xs-right">
+
+
+        <form id="search" action="#">
+
+            <div class="input-group">
+                        <input name="keyword" type="text"  /> 
+                <button id="searchbtn" class="btn btn-primary " type="button">
+                    <span class="fa fa-search" > </span> 
+                </button>
+                 
+            </div>
+        </form>
+
+
+
+      
+
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" data-toggle="dropdown" data-nx-binded="app.user.id">{{app.user.id}}</a>
+            <div class="dropdown-menu" >
+                <a ng-repeat="item in app.user.nav" class="dropdown-item" href="#{{item.path}}">{{item.title}}</a>
+            </div>
+          </li>
+
+      </ul>
+      
+
+    </div>
+
+  </nav>
+
+
+
+  
+
+
+  <div style="padding-top: 100px" class="container">  
+
+
+
+
+
+
+    <section id="landing" >landing
+    </section>
+
+    <section id="login">
+        login
+        <form id="onboarding">
+
+            <div class="signin">  
+                
+                <div class="form-group">
+                    <input type="text" name="seed" label="Your seed" class="form-control" placeholder="Enter seed"/>
+		        </div>
+                <div class="form-group">
+                    <input type="submit" class="btn btn-primary" value="Connect"></input>
+                </div>
+            </div>   
+
+          </form> 
+    </section>
+
+    <section id="admin">admin
+
+        <xio-resource uri="{{app.server.http._endpoint}}">
+aa
+        </xio-resource>
+
+    
+    </section>
+        
+  
+
+  <slot>
+  </slot>
+
+    </div>
+
+
+
+    <footer>
+        <nav id="footer" class="navbar navbar-toggleable-md  fixed-bottom">
+        
+          <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon" ></span>
+          </button>
+
+          <div class="collapse navbar-collapse container">
+
+            <div style="display: inline-block;vertical-align: middle; text-align: center; display: none" data-xio-if="app.status.loading">
+              <i class="fa fa-refresh fa-spin"  style="vertical-align: middle; opacity: 0.5">
+              </i> LOADING ...
+            </div> 
+
+            <span class="navbar-text mr-auto text-muted">
+              xio - v1.0.0 - {{app.server.http._endpoint}} 
+            </span>
+           
+            
+           
+            </ul>
+            <ul class="nav nav-pills float-xs-right">
+                <li class="nav-item"><a class="nav-link" href="#landing">landing</a> </li> 
+                <li class="nav-item"><a class="nav-link" href="#login">login</a> </li> 
+                <li class="nav-item"><a class="nav-link" href="#admin">admin</a> </li> 
+            </ul>
+          </div>
+        </nav>
+    </footer>
+
+
+
+</template>
+
+
+<script>
+  (function() {
+    var doc = document.currentScript.ownerDocument;
+    var template = doc.querySelector('template');
+
+    window.customElements.define('xio-app', class extends HTMLElement {
+        constructor() {
+            super();
+        }
+        connectedCallback() {
+            this.render()
+        }
+        render() {
+            var $html = $('<div/>').append( $(template).render({'app':app}) )
+            
+            //$html.find('slot').html( this.innerHTML ); // bug slot with multiple $('xio-app').render
+
+            $(this).html( $html.html() );
+
+            $(this).find('section').hide()
+
+            var self = this
+            app.subscribe('user.loggedin',function() {
+              $(self).find('*[data-nx-binded="app.user.id"]').html(app.user.id)
+            })
+        }
+    })
+  })();
+</script>
+
+

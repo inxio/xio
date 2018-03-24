@@ -1,0 +1,197 @@
+
+<script>
+    var doc = document.currentScript.ownerDocument;
+    window.customElements.define('nx-isotope', class extends HTMLElement {
+        constructor() {
+            super();
+
+        }
+        connectedCallback() {
+            this.selectable = $(this).attr('select')
+            this.selection_type = 'filter'
+
+            var self = this
+            $(this).children().addClass('item').unbind('click').click(function(e) {
+                self.select(e)
+            })
+            $(this).iso({
+                'itemSelector': '.item', //this.itemselector,
+                'masonry': {
+                    'gutter': 5,
+                    //'columnWidth': '.grid-sizer'
+                },
+            })
+        }
+
+        select(event) {
+            var item = $(event.target).closest('.item')
+            //alert(this.iso)
+
+            if (item.hasClass('selected')) {
+                console.log('unselect',item)
+                item.removeClass('selected')
+                if (this.selection_type!='focus') {
+                    this.iso.filter()
+                } else {
+                    this.iso.refresh()
+                }
+                this.selected = null
+                //this.selection.path = null
+            } else {
+                console.log('select',item)
+                item.addClass('selected').siblings().removeClass('selected')
+
+                if (this.selection_type!='focus') {
+                    //alert('..')
+                    this.iso.filter('.selected')
+                } else {
+                    this.iso.refresh()
+                }
+                this.selected = item
+                //alert('ok')
+                //this.selection.index = $(item).data('index')
+                //var data = this.data[this.selection.index]
+                //this.selection.path = this.path+'/'+data['@id']
+            }
+            //this.iso.iso.shuffle()
+        } 
+
+        shuffle() {
+            var form = $(this).find('form');
+            var seed = form.find("input[name='seed']").val();
+            var password = form.find("input[name='password']").val();
+            app.login(seed,password)
+        }
+
+       
+       
+    })
+
+</script>
+<!--
+
+
+app.angular.directive('isotope', function($timeout) {
+    return {
+        restrict: 'E',
+        scope: true,
+        controller: ['$scope','$element','$q',function ($scope,$element,$q) {   
+            
+            this.iso = null
+            this.test = 123
+            this.itemselector = '.item' //'isotope > *'
+            this.selectable = $element.attr('select')
+            this.selection_type = 'filter'
+            var self = this
+            this.init = function() {
+                //alert($element.html())
+                $element.children().addClass('item').unbind('click').click(function(e) {
+                    self.select(e)
+                })
+                this.iso = $( $element ).iso({
+                    'itemSelector': '.item', //this.itemselector,
+                    'masonry': {
+                        'gutter': 5,
+                        //'columnWidth': '.grid-sizer'
+                    },
+                })
+                console.log(this.iso)
+                console.log($element.children())
+
+                //alert(this.iso)
+            }
+            this.select = function(event) {
+                var item = $(event.target).closest('.item')
+                //alert(this.iso)
+
+                if (item.hasClass('selected')) {
+                    console.log('unselect',item)
+                    item.removeClass('selected')
+                    if (this.selection_type!='focus') {
+                        this.iso.filter()
+                    } else {
+                        this.iso.refresh()
+                    }
+                    this.selected = null
+                    //this.selection.path = null
+                } else {
+                    console.log('select',item)
+                    item.addClass('selected').siblings().removeClass('selected')
+  
+                    if (this.selection_type!='focus') {
+                        //alert('..')
+                        this.iso.filter('.selected')
+                    } else {
+                        this.iso.refresh()
+                    }
+                    this.selected = item
+                    //alert('ok')
+                    //this.selection.index = $(item).data('index')
+                    //var data = this.data[this.selection.index]
+                    //this.selection.path = this.path+'/'+data['@id']
+                }
+                //this.iso.iso.shuffle()
+            } 
+            this.debug = function() {
+                console.log(this.iso)
+                this.iso.iso.shuffle()
+                alert('??4')
+            } 
+        }],
+       
+        link: function(scope, element, attrs, ctrl,transclude) {
+            element.addClass('isotope')
+            if (attrs.watch) {
+                scope.$watch(attrs.watch, function() {
+                    //ctrl.iso.filter('.toto')
+                    $timeout(function() {
+                        ctrl.init()
+                        //ctrl.iso.filter()
+                        //alert(element.html())
+                    },300);
+                });
+            } else {
+                $timeout(function() {
+                    ctrl.init()
+                });
+            }
+
+
+
+
+            /*
+            trscluded = transclude(scope, function (clone) {
+                console.log('transclude')
+                //clone.each().addClass('item')
+                element.append( clone );
+
+            });
+            */
+            /*
+            $timeout(function() {
+                ctrl.init()
+            });
+            */
+
+            /*
+            var observer = new MutationObserver(function(mutations) {
+                console.log('isotope nedd refresh !!!')
+                if (ctrl.iso)
+                    ctrl.iso.refresh()
+                else
+                    ctrl.init()
+            });
+            observer.observe(element[0], {
+                childList: true,
+                subtree: true
+            });
+            */
+
+
+        },
+        controllerAs: 'isotope',
+        //template: '<div class="isotope" ng-transclude></div>',
+    }
+});  
+
+-->

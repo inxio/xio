@@ -1,0 +1,10 @@
+{
+    "name": "isotope",
+    "version": "1.0.0", 
+    "requirements": [
+        "lib/isotope.pkgd.js",
+        "iso.js",
+        "tags/isotope.html"
+    ]
+}
+        

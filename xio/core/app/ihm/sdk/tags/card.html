@@ -1,0 +1,72 @@
+<!--
+
+app.tags.bind('item', {
+  restrict: 'E',
+  transclude: true,
+  link: function ($scope, $element, $attrs, $ctrl) {
+    //$element.addClass('item2')
+    $scope.background = $attrs['logo']
+    if ($attrs['logo']) {
+      $element.find('div').addClass('background') 
+      $element.find('div').css( "background-image","url(img/logos/"+$attrs['logo']+".png")
+    }
+  },
+  template: `
+    <div class="item" ng-transclude>
+    </div>
+  `
+});
+
+-->
+<style>
+.card, .cover {
+    width: 200px;
+    height: 200px !important;
+    border: solid 1px #F80;
+}
+
+
+.cover {
+    text-align: center;
+    vertical-align: middle;
+    background-repeat: no-repeat;
+    background-size: contain;
+    background-position: center center;
+    background-clip: border-box;
+}
+
+</style>
+<template>
+    <div class="card">
+        <section class="cover">
+        </section>    
+    </div>
+</template>
+
+
+<script>
+    var doc = document.currentScript.ownerDocument;
+    window.customElements.define('nx-card', class extends HTMLElement {
+        constructor() {
+            super();
+            this.template = doc.querySelector('template');
+        }
+        connectedCallback() {
+            var self = this
+
+            var html = $(this.template).render()
+            var $html = $(html)
+
+            var about = $(this).attr('about');
+            
+            var $card = $html.find('.cover')
+
+            $card.html( this.innerHTML );
+            $card.css( "background-image","url(img/logos/"+about+".png")
+            
+            $(this).append( $html)
+        }
+        
+    })
+
+</script>
