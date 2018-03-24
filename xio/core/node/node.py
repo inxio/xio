@@ -75,7 +75,7 @@ class Node(App):
 
         # service dht
         from xio.core.network.ext.dht.service import DhtService
-        self.put('services/dht', DhtService(self) )
+        self.put('etc/services/dht', DhtService(self) )
 
         # service memdb
         import xio

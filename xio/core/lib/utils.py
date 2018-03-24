@@ -111,6 +111,12 @@ def md5(*args):
     return hashlib.md5( to_bytes(txt) ).hexdigest() 
 
 
+def sha1(*args):
+    assert args
+    parts = [ to_string(txt) for txt in args ]
+    txt = ''.join(parts)
+    return hashlib.sha1( to_bytes(txt) ).hexdigest() 
+
 def coroutine(func):
 
     def _(*args,**kwargs):

@@ -230,18 +230,6 @@ class App(peer.Peer):
                 log.warning('TEST LOADING FAILED',err)
                 self._tests = 'error' 
 
-
-        # www/xio
-        sdkdir = os.path.dirname( os.path.realpath(__file__) )+'/ihm'
-        self.bind('www/xio', resource.DirectoryHandler(sdkdir) )
-
-
-        wwwstaticdir = self.directory+'/www/static'
-        if os.path.isdir(wwwstaticdir):
-            self.bind('www/static', resource.DirectoryHandler(wwwstaticdir)  )
-
-
-
     def init(self):
 
         try:
@@ -316,6 +304,21 @@ class App(peer.Peer):
                     self.bind('services/%s' % name, servicehandler)
 
 
+
+        # www/xio
+        sdkdir = os.path.dirname( os.path.realpath(__file__) )+'/ihm'
+        self.bind('www/xio', resource.DirectoryHandler(sdkdir) )
+        
+
+        if self.directory:
+            wwwstaticdir = self.directory+'/www/static'
+            if os.path.isdir(wwwstaticdir):
+                self.bind('www/static', resource.DirectoryHandler(wwwstaticdir)  )
+
+
+
+
+
     @handleRequest
     @handleCache
     @handleStats
@@ -386,7 +389,7 @@ class App(peer.Peer):
                 servicehandler.start()
                 self.put('run/services/%s' % name, servicehandler)
 
-
+        self.debug()
 
 
     def __call__(self,environ,start_response=None): 

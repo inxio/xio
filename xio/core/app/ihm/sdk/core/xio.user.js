@@ -121,8 +121,69 @@
         this.token = this.account.generateToken()
         return this
     }
-    
-   
+    /* static */
+    XioUser.fromSession = function() {
+        session = JSON.parse( localStorage.getItem('xio.user.session') || '{}')
+        if (session.private) {
+            var user = new XioUser(session.private)
+            user.id = session.id
+            user.token = session.token
+            user.scheme = session.scheme
+
+            var xioauth = encodeURIComponent(user.scheme+' '+user.token)
+            document.cookie = "XIO-AUTH="+xioauth+";path=/";
+            return user;
+        }
+        return {}
+    }
+
+
+    XioUser.login = function(private,seed,password) {
+        /* generate xio keystore */
+        var user = new XioUser(null,seed)
+        user.saveSession()
+        return Promise.resolve(user)
+    }
+
+    /* instances */
+
+
+    XioUser.prototype.connect = function(peer) {
+        /* generate token and identity for this endpoint */
+        
+        // tofix => fetch auth 
+        var ethaccount = this.account.account('ethereum')
+
+        this.token = ethaccount.generateToken()
+        this.id = ethaccount.address
+
+        this.saveSession()
+        console.log(this)
+
+        peer._token = this.token
+    }
+
+
+    XioUser.prototype.saveSession = function() {
+        localStorage.setItem('xio.user.session',JSON.stringify({
+            'id': this.id,
+            'private': this.account.private,
+            'scheme': this.scheme,
+            'token': this.token
+        }))
+    }
+    XioUser.prototype.logout = function() {
+        this.id = null
+        this.name = null
+        this.token = null
+        this.address = null
+        this.account = null
+        localStorage.removeItem('xio.user.session')
+        document.cookie.split(";").forEach(function(c) { document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); });
+    }
+
+
+
 
 })();
 

@@ -13,6 +13,7 @@ try:
     assert sys.version_info.major > 2
                
     import asyncio
+    
     from kademlia.network import Server
 
     
@@ -29,13 +30,22 @@ class DhtService:
         self.port = 7501 if port==None else port
         self.bootstrap = bootstrap or ('127.0.0.1', 7501)
         self.dhtd = Dhtd(self,self.port,self.bootstrap)
-
+        self.loop = asyncio.new_event_loop()
+        
     def start(self):
         self.dhtd.start()
 
     def stop(self):
         self.dhtd.stop()
 
+    def getKey(self,key):
+       
+        result = self.loop.run_until_complete( self.dhtd.server.get(key) )
+        return result
+
+    def setKey(self,key,value):
+
+        return self.loop.run_until_complete( self.dhtd.server.set(key, value) )
 
 
 class Dhtd(threading.Thread):
@@ -79,8 +89,8 @@ class Dhtd(threading.Thread):
         self.loop.run_until_complete(
             self.server.bootstrap([self.bootstrap])
         )
-        #loop.run_until_complete(server2.set('mykey', 'myval'))
-
+        self.loop.run_until_complete(self.server.set('mykey', 'myval'))
+        #print (loop.run_until_complete(self.server.get('mykey')))
         try:
             self.loop.run_forever()
         except KeyboardInterrupt:

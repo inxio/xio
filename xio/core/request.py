@@ -4,6 +4,8 @@
 import requests
 import json
 
+from xio.core.lib.utils import sha1
+
 import sys
 if sys.version_info.major == 2:
     from Cookie import SimpleCookie
@@ -186,7 +188,7 @@ class Request(object):
             struid = '%s-%s' % (self.fullpath, json.dumps(self.input, sort_keys=True) )
             print(struid)
 
-            uid = hashlib.sha1( struid ).hexdigest()
+            uid = sha1( struid )
             print(uid)
             self._uid = uid
         return self._uid

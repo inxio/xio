@@ -4,8 +4,7 @@
     "requirements": [
         "lib/tether.min.js",
         "lib/bootstrap.min.js",
-        "lib/bootstrap.min.css",
-        "ext.js"
+        "lib/bootstrap.min.css"
     ]
 }
 

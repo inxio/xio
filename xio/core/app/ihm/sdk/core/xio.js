@@ -274,7 +274,7 @@
         }
     }
 
-	Resource = function(app,path,method,method_params) {
+	XioResource = function(app,path,method,method_params) {
         //console.log('CREATE RESOURCE FROM ...',method,path)
         this._app = app
         this._method = method
@@ -291,7 +291,7 @@
         }
         return this
     }
-	Resource.prototype = {
+	XioResource.prototype = {
         get: function(path,query) { return this.then('GET',path,query) },
         put: function(path,data) { return this.then('PUT',path,data) },
         post: function(path,data) { return this.then('POST',path,data) },
@@ -345,7 +345,7 @@
 
 
 
-            var r = new Resource(this._app,path,method,query)
+            var r = new XioResource(this._app,path,method,query)
 
             if (this._status==200 || this._status==201) {
                 // do it
@@ -418,7 +418,7 @@
         this._endpoint = endpoint
         this._basepath =  '/'+nfo.slice(3).join('/')
         this._profile = params
-        this._root = new Resource(this,'')
+        this._root = new XioResource(this,'')
 
         this._token = params['token']
         if (endpoint.substring(0, 7) == "http://" || endpoint.substring(0, 8) == "https://" ) {
