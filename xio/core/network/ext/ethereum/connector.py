@@ -47,9 +47,13 @@ class Connector:
 
         self.endpoint = endpoint
         self.web3 = Web3(HTTPProvider(self.endpoint))
-        self.network = self.web3.version.network
-        self.gasprice = self.web3.eth.gasPrice
-        self.blockNumber = self.web3.eth.gasPrice
+        try:
+            # tofix : prevent no endpoint availbale
+            self.network = self.web3.version.network
+            self.gasprice = self.web3.eth.gasPrice
+            self.blockNumber = self.web3.eth.gasPrice
+        except:
+            pass
         self._defaultaccount = self.account(user) if user else None
         
         

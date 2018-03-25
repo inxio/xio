@@ -75,6 +75,9 @@ class Docker:
 
         assert iname and cname
         
+
+        env = info.get('env',{})
+
         ports = {}
         for key,val in info.get('ports',{}).items():
             ports[key] = val
@@ -102,7 +105,7 @@ class Docker:
             c.stop()
             c.remove()
 
-        kwargs = dict(name=cname,detach=True,ports=ports,volumes=volumes)
+        kwargs = dict(name=cname,detach=True,ports=ports,volumes=volumes,environment=env)
         print ('... RUN', iname,cname, kwargs)
         c = self.docker.containers.run(iname,**kwargs)
         cid = c.attrs.get('Id')
@@ -143,7 +146,6 @@ class Docker:
         for container in containers:
             if id and container.id==id:
                 return container
-            print ('...', name, container.name)
             if name and container.name==name:
                 return container
 

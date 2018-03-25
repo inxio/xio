@@ -27,8 +27,8 @@ class DhtService:
 
     def __init__(self,app=None,port=None,bootstrap=None,**kwargs):
         self.app = app
-        self.port = 7501 if port==None else port
-        self.bootstrap = bootstrap or ('127.0.0.1', 7501)
+        self.port = 7500 if port==None else port
+        self.bootstrap = (bootstrap,7500) if bootstrap else ('127.0.0.1', 7500)
         self.dhtd = Dhtd(self,self.port,self.bootstrap)
         self.loop = asyncio.new_event_loop()
         

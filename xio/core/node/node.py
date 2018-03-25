@@ -74,8 +74,11 @@ class Node(App):
         self.put('services/ipfs', IpfsService(self) )
 
         # service dht
+
         from xio.core.network.ext.dht.service import DhtService
-        self.put('etc/services/dht', DhtService(self) )
+        import xio
+        bootstrap = xio.env('network')
+        self.put('etc/services/dht', DhtService(self,bootstrap=bootstrap) )
 
         # service memdb
         import xio
