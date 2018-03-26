@@ -3,6 +3,7 @@
 
 import os
 import os.path
+
 import json
 import sys
 from pprint import pprint
@@ -23,8 +24,8 @@ try:
 except socket.error:
     ETHEREUM_ENDPOINT = None
 
-ETH_HOST = 'localhost'
-ETH_PORT = 8545
+
+ETH_DEFAULT_ENDPOINT = os.environ.get('XIO_ETHEREUM') or 'http://localhost:8545'
 
 
 class Connector:
@@ -37,13 +38,13 @@ class Connector:
         from web3 import Web3, HTTPProvider
 
         if network=='testrpc':
-            endpoint = 'http://127.0.0.1:8545'
+            endpoint = ETH_DEFAULT_ENDPOINT
         elif network=='ropsten':
             endpoint = 'https://ropsten.infura.io/'
         elif network=='mainnet':
             endpoint = 'https://mainnet.infura.io/'
         else:
-            endpoint = 'http://%s:%s' % (ETH_HOST,ETH_PORT)
+            endpoint = ETH_DEFAULT_ENDPOINT
 
         self.endpoint = endpoint
         self.web3 = Web3(HTTPProvider(self.endpoint))
@@ -80,6 +81,7 @@ class Connector:
 
     def about(self):
         about = {
+            'endpoint': self.endpoint,
             'network': self.web3.version.network,
             'blockNumber': self.web3.eth.blockNumber,
             'gasPrice': self.web3.eth.gasPrice,
