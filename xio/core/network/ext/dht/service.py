@@ -47,6 +47,35 @@ class DhtService:
 
         return self.loop.run_until_complete( self.dhtd.server.set(key, value) )
 
+    def getNodes(self, key):
+
+        import random
+        import pickle
+        import asyncio
+        import logging
+
+        from kademlia.protocol import KademliaProtocol
+        from kademlia.utils import digest
+        from kademlia.storage import ForgetfulStorage
+        from kademlia.node import Node
+        from kademlia.crawling import ValueSpiderCrawl
+        from kademlia.crawling import NodeSpiderCrawl
+        from kademlia.network import log
+
+        server = self.dhtd.server
+        
+        log.info("Looking up Nodes for Key %s", key)
+        dkey = digest(key)
+
+        node = Node(dkey)
+        nearest = server.protocol.router.findNeighbors(node)
+        if len(nearest) == 0:
+            log.warning("There are no known neighbors to get key %s", key)
+            return None
+        spider = NodeSpiderCrawl(server.protocol, node, nearest,
+                                  server.ksize, server.alpha)
+        return self.loop.run_until_complete( spider.find() )        
+
 
 class Dhtd(threading.Thread):
 
@@ -90,6 +119,7 @@ class Dhtd(threading.Thread):
             self.server.bootstrap([self.bootstrap])
         )
         self.loop.run_until_complete(self.server.set('mykey', 'myval'))
+        self.loop.run_until_complete(self.server.set('mykey-%s' % self.port, 'port %s' % self.port))
         #print (loop.run_until_complete(self.server.get('mykey')))
         try:
             self.loop.run_forever()
