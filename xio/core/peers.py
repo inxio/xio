@@ -12,7 +12,7 @@ from xio.core.lib.logs import log
 from xio.core.lib.utils import is_string, urlparse, md5
 from xio.core.peer import Peer
 
-from xio import db
+import xio
 
 import traceback
 from pprint import pprint
@@ -39,9 +39,11 @@ PEER_MOD_PRIVATE = 'private'        # private use for node or other localhost ap
 
 class Peers:
 
-    def __init__(self,peer=None):
+    def __init__(self,peer=None,db=None):
         self.id = peer.id if peer else None
-        self.db = db('xio:peer:%s' % self.id).container('peers')
+        db = db or xio.db()
+        self.db = db.container('peers')
+        self.db.truncate()
 
 
     def register(self,endpoint=None,nodeid=None,type=None,uid=None,id=None,name=None):
@@ -56,8 +58,7 @@ class Peers:
         assert endpoint
 
         if not is_string(endpoint):
-        
-            
+
             assert isinstance(endpoint,Peer) or isinstance(endpoint, collections.Callable)   
             if not peertype:   
                 peertype = endpoint.__class__.__name__.lower()
@@ -87,7 +88,7 @@ class Peers:
                 return 
 
         if not uid:
-            uid = md5( '%s/%s' % (nodeid,peerid) )
+            uid = md5( nodeid, peerid )
 
 
         data = {
@@ -112,8 +113,7 @@ class Peers:
     def get(self,index,**kwargs):
 
         # lookup by uid
-        key = 'xio:peers:%s' % index
-        data = self.db.get(key)
+        data = self.db.get(index)
         if data:
             peer = PeerClient( **data ) if not isinstance(data,PeerClient) else data
             return peer 
@@ -138,12 +138,10 @@ class Peers:
         
 
     def put(self,index,peer):
-        key = 'xio:peers:%s' % index
-        self.db.put(key,peer)
+        self.db.put(index,peer)
 
     def delete(self,index):
-        key = 'xio:peers:%s' % index
-        self.db.delete(key)
+        self.db.delete(index)
 
 
     def export(self):
@@ -182,8 +180,15 @@ class Peers:
         return result
 
 
-    def check(self,maxage=60):
 
+    def sync(self):
+
+        log.info('=========== PEERS SYNCHRONIZE ...')
+
+        # check all peers
+
+        maxage = 60
+        
         for peer in self.select():
 
             t1 = time.time()
@@ -194,13 +199,14 @@ class Peers:
                 check_status = result.get('status')
                 check_time = result.get('time')
 
-                key = 'xio:peers:%s' % peer.peerid 
-                self.update(key,{
+                # be carefull with id _id uid => db use _id
+                index = peer.data['_id']
+                self.db.update(index,{
                     'status': check_status,
                     'time': check_time,
                     'checked': int(time.time()),
                 })
-
+                """
                 # keep 24h 
                 dt = datetime.datetime.now().strftime('%y:%m:%d:%H:%m')  # handle quota (daily)
                 key = 'xio:peers:%s:stats:%s' % (peer.peerid,dt)
@@ -209,11 +215,11 @@ class Peers:
                     'time': check_time,
                     '_ttl': 24*60*60,
                 })
+                """
 
 
-    def sync(self):
-
-        log.info('=========== SYNCHRONIZE ...')
+        """
+        # import peers from other node
 
         for peer in self.select(type='node'):
 
@@ -250,6 +256,7 @@ class Peers:
                 log.warning('sync node ERROR', err ) 
                 traceback.print_exc()
 
+        """
 
 class PeerClient(Resource): 
 
@@ -261,6 +268,7 @@ class PeerClient(Resource):
         self.status = data.get('status')
         self.type = data.get('type')
         self.uid = data.get('uid')
+        self.checked = int( data.get('checked',0) )
         self.conn_type = data.get('conn_type')
         Resource.__init__(self) 
         self.status = data.get('status')

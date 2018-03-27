@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import xio
+
 from pprint import pprint
 
 
@@ -23,11 +25,23 @@ BASEABI = [{
 class NetworkHandler:
 
     def __init__(self,address=None,abi=None):
-        from xio.core.network.ext.ethereum.connector import Connector
-        from xio import log
+    
+        # DHT
+        from .ext.dht.service import DhtService
+        #import xio
+        #bootstrap = xio.env('network')
+        self.dht = DhtService(bootstrap=address)
 
-        self.log = log
+        # IPFS
+        from .ext.ipfs.connector import Connector
+        ipfsendpoint = xio.env.get('ipfs')
+        self.ipfs = Connector(endpoint=ipfsendpoint)
+
+        # ETHEREUM
+        from .ext.ethereum.connector import Connector
         self.ethereum = Connector()
+
+        self.log = xio.log
         self._about = {}
 
         if address and not abi:
@@ -59,6 +73,10 @@ class NetworkHandler:
             'api': self.contract.api
         })
         return about
+
+    def start(self,app):
+        self.log.info('==== start network =====', self )
+        self.dht.start()
 
 
     def __call__(self,req):

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from .utils import urlparse,is_string
+from .lib.utils import urlparse,is_string
 
 import os.path
 import inspect
@@ -72,8 +72,28 @@ def setDefaultEnv(data):
         json.dump(data, f,  sort_keys=True,indent=4)
 
 
+class Env:
 
+    def __init__(self):
+        self._env = {}
 
+    def get(self, name, default=None):
+        envkey = 'XIO_%s' % name.upper()
+        value = context.get(envkey, os.environ.get(envkey) ) or xioenvdefault.get('xio.'+name)
+        if value==None:
+            return default
+        return value
+        
+    def set(self, name, value):
+        envkey = 'XIO_%s' % name.upper()
+        context[envkey] = value
+        #      
+        #if is_string(value):
+        #    os.environ[envkey] = value
+
+env = Env()
+
+"""
 def env(key,val=None):
     envkey = 'XIO_%s' % key.upper()
     if val==None:
@@ -82,7 +102,7 @@ def env(key,val=None):
         os.environ[envkey] = val  
     else:
         context[envkey] = val
-
+"""
 
 
 

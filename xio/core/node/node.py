@@ -56,12 +56,11 @@ class Node(App):
 
         App.__init__(self,name,**kwargs)
 
+
         self.uid = generateuid()
 
         # if network defined we have to connect to it for AUTH handling    
         self.network = self.connect(network) if network else None
-        
-
 
         self.bind('www', self.renderWww)   
 
@@ -69,19 +68,10 @@ class Node(App):
         from .lib.docker.service import DockerService
         self.put('services/docker', DockerService(self) )
 
-        # service ipfs
-        from xio.core.network.ext.ipfs.service import IpfsService
-        self.put('services/ipfs', IpfsService(self) )
-
-        # service dht
-
-        from xio.core.network.ext.dht.service import DhtService
-        import xio
-        bootstrap = xio.env('network')
-        self.put('etc/services/dht', DhtService(self,bootstrap=bootstrap) )
 
         # service memdb
         import xio
+        assert self.redis
         if self.redis:
             memdb = xio.db(name='xio',type='redis')
         else:
@@ -89,9 +79,62 @@ class Node(App):
             
         self.put('services/db', memdb )
 
-        # init container (require loaded services)
-        self.containers = Containers(self)
+
+        # fix peers (default python handler)
+        from xio.core.peers import Peers
+        self.peers = Peers( db=memdb )
         
+
+        # init container (require loaded services)
+        self.containers = Containers(self, db=memdb )
+
+        # containers sync
+        node_peers_heartbeat = xio.env.get('node_heartbeat',10)
+        self.schedule( node_peers_heartbeat, self.containers.sync)
+
+        # peers sync
+        node_containers_heartbeat = xio.env.get('node_heartbeat',10)
+        self.schedule( node_containers_heartbeat, self.peers.sync)
+    
+
+        
+
+    def start(self,**kwargs):
+        """
+        if networkhandler is object we have to start some services (eg dht)
+        network = xio.core.handlers.pythonResourceHandler
+        """    
+    
+        App.start(self,**kwargs)
+
+        try:
+            # if exist this node act as a server
+            networkhandler = self.network._handler.handler._handler
+        except:
+            # maybe remote network, this node is a client
+            networkhandler = None 
+            
+        if networkhandler:
+            networkhandler.start(self)
+        
+
+
+    def register(self,endpoints):
+        
+        if not isinstance(endpoints,list):
+            endpoints = [endpoints]
+
+        for endpoint in endpoints:
+            return self.peers.register(endpoint)
+
+
+
+    def deliver(self,uri):
+        return self.containers.deliver(uri)
+
+
+
+
     
     def renderWww(self,req):
 
@@ -164,22 +207,6 @@ class Node(App):
 
 
         
-
-
-    def register(self,endpoints):
-        
-        if not isinstance(endpoints,list):
-            endpoints = [endpoints]
-
-        for endpoint in endpoints:
-            return self.peers.register(endpoint)
-
-
-
-    def deliver(self,uri):
-        return self.containers.deliver(uri)
-
-
 
 
 

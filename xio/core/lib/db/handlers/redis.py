@@ -28,15 +28,21 @@ class Database:
     
     def __init__(self,name=None,host='localhost',port='??',app=None,**kwargs):
         name = name or app.name
-        self.name = name.replace('.','_') # name sera souvent le domain de l'app
+        self.name = name.replace('.','_') 
         self.port = port
         self.host = host
         self.db = redis.Redis(self.host) if self.host else redis.Redis()
 
     def get(self,name,**kwargs):
-        name = '%s/%s' % (self.name,name)
+        name = '%s:%s' % (self.name,name)
         return Container(name,self.db)
-
+        
+    def list(self):
+        pattern = self.name+':*'
+        data = []
+        for key in self.db.keys(pattern=pattern):
+            data.append(key)
+        return data
 
 class Container:
 
@@ -45,43 +51,54 @@ class Container:
         self.db = db
 
     def get(self,uid,**kwargs):
-        key = '%s/%s' % (self.name,uid)
+        key = '%s:%s' % (self.name,uid)
         print ('redis getting ... ', key)
         data = self.db.get(key)
-        try:
+        if data:
             return json.loads(data)
-        except Exception as err:
-            print ('REDIS GET ERROR', err )
-            return {}
+            try:
+                return json.loads(data)
+            except Exception as err:
+                print ('REDIS GET ERROR', err )
+                return {}
+                
 
     def put(self,uid,data,**kwargs):
-        key = '%s/%s' % (self.name,uid)
+        key = '%s:%s' % (self.name,uid)
         print ('redis put... ', key,' = ',data)
         data['_id'] = uid
-        data = json.dumps(data)
+        data = json.dumps(data,default=str)
         return self.db.set(key,data)
 
     def update(self,uid,data,**kwargs):
-        key = '%s/%s' % (self.name,uid)
+        print ('redis update... ', uid,' = ',data)
+        key = '%s:%s' % (self.name,uid)
 
         oridata = self.get(uid)
-        oridata.update(data)
-        
-        data = oridata
-        data['_id'] = uid
-        data = json.dumps(data)
-        return self.db.set(key,data)
+        print(key)
+        print ('?????', oridata)
+        print ('?????', self.db.get(key) )
+        print( self.db.keys(pattern='*') )
+
+        if oridata:
+            print ('redis update... ', key,' = ',data)
+            oridata.update(data)
+            
+            data = oridata
+            data['_id'] = uid
+            data = json.dumps(data,default=str)
+            return self.db.set(key,data)
 
     def delete(self,index=None,filter=None,**kwargs):
         if filter:
             for row in self.select(filter):
                 self.delete(row.get('_id'))
             return
-        key = '%s/%s' % (self.name,index)
+        key = '%s:%s' % (self.name,index)
         return self.db.delete(key)
 
     def truncate(self):
-        for key in self.db.keys(self.name+'/*'):
+        for key in self.db.keys(self.name+':*'):
             self.db.delete(key)
 
     def select(self,filter=None,limit=20,**kwargs):
@@ -98,7 +115,7 @@ class Container:
             return True
 
         print ('redis select ...',self.name, filter)
-        pattern = self.name+'/*'
+        pattern = self.name+':*'
         data = []
         for key in self.db.keys(pattern=pattern):
             row = self.db.get(key) 
@@ -107,7 +124,7 @@ class Container:
             if _check(row):
                 data.append( row )
                 
-            if len(data)>=limit:
+            if data and limit and len(data)>=limit:
                 return data
 
         return data

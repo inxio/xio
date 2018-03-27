@@ -25,7 +25,7 @@ except socket.error:
     ETHEREUM_ENDPOINT = None
 
 
-ETH_DEFAULT_ENDPOINT = os.environ.get('XIO_ETHEREUM') or 'http://localhost:8545'
+ETH_DEFAULT_ENDPOINT = os.environ.get('XIO_ETHEREUM', 'http://localhost:8545')
 
 
 class Connector:

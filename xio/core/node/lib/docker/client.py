@@ -17,7 +17,7 @@ class Docker:
         #self.docker = docker.Client(base_url='unix://var/run/docker.sock',version='auto') #1.23
         self.docker = docker.from_env()
         import xio
-        self.host = xio.env('app_host') or '127.0.0.1'
+        self.host = xio.env.get('docker', '127.0.0.1')
         
     def build(self,image=None,directory=None,dockerfile=None,**kwargs):
         """

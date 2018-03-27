@@ -13,10 +13,7 @@ try:
     assert sys.version_info.major > 2
                
     import asyncio
-    
     from kademlia.network import Server
-
-    
 except:
     print ('DHT REQUIRE PYTHON3')
     pass 
@@ -31,6 +28,13 @@ class DhtService:
         self.bootstrap = bootstrap if bootstrap else ('127.0.0.1', 7500)
         self.dhtd = Dhtd(self,self.port,self.bootstrap)
         self.loop = asyncio.new_event_loop()
+
+    def about(self):
+        return {
+            'bootstrap': self.bootstrap,
+            'server': self.dhtd.server,
+            'debug': self.dhtd.server.storage
+        }
         
     def start(self):
         self.dhtd.start()

@@ -20,7 +20,7 @@ from .handlers import *
 from .request import Request, Response
 
 from xio.core.lib import utils
-from xio.core.lib import env
+from xio.core import env
 
 is_string = utils.is_string
 

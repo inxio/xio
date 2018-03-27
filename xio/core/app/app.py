@@ -235,7 +235,8 @@ class App(peer.Peer):
         try:
             import xio
             import redis
-            self.redis = redis.Redis() if xio.env('redis') else None
+            endpoint = xio.env.get('redis')
+            self.redis = redis.Redis(endpoint) if endpoint else redis.Redis()
         except:
             self.redis = False
 
@@ -511,7 +512,7 @@ class App(peer.Peer):
         print("\tapp=",self.id)
         print('\tapp=',self.name)
         print('\tapp=',self._about)
-        print('\tnode=',xio.env('node'))
+        print('\tnode=',xio.env.get('node'))
         print()
 
         if cmd=='run':

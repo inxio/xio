@@ -47,8 +47,25 @@ class Handler:
 
 class Connector:
 
-    def __init__(self):
-        self.conn = ipfsApi.Client(IPFS_HOST,IPFS_PORT)
+    def __init__(self,endpoint=None):
+        if endpoint:
+            info = endpoint.split(':')
+            host = info.pop(0)
+            port = int(info.pop(0)) if info else IPFS_PORT
+        else:
+            host = IPFS_HOST
+            port = IPFS_PORT
+        self.host = host
+        self.port = port
+        self.conn = ipfsApi.Client(self.host,self.port)
+
+
+    def about(self):
+        return {
+            'conn': self.conn,
+            'endpoint': (self.host,self.port),
+            'gateways': IPFS_GATEWAYS
+        }  
 
     def handler(self,uri):
         return Handler(uri)

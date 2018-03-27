@@ -6,7 +6,8 @@ from gevent import monkey; monkey.patch_all() ##############@ TO FIX ! pb segmen
 
 __version__ = "0.0.4"
 
-from .core.lib.env import env, context, __PATH__ as path
+from .core.env import env, context, __PATH__ as path
+
 from .core.lib.crypto.crypto import key
 from .core.lib.logs import log
 from .core.lib.data.data import data

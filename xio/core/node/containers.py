@@ -17,16 +17,18 @@ from xio.core.lib.db import db
 
 class Containers:
 
-    def __init__(self,node):
+    def __init__(self,node,db=None):
     
         self.node = node
 
         # warning, services may be unavalable yet (required full app/init or app/start)
         
         self.docker = node.service('docker').content  # skip resource wrapper
-        self.ipfs = node.service('ipfs')
 
-        self.db = node.service('db').container('peers') # , factory=Container => pb for Containers arg 
+        
+        self.ipfs = node.service('ipfs') # pb ipfs is under network.ipfs (not a os.service)
+        db = db or xio.db()
+        self.db = db.container('containers') # , factory=Container => pb for Containers arg 
 
         
     def get(self,index):
@@ -48,9 +50,13 @@ class Containers:
         from pprint import pprint
         
         # fetch container to provide
-        res = self.node.network.getContainersToProvide(self.node.id)
-        for row in res:
-            self.deliver(row)
+        try:
+            res = self.node.network.getContainersToProvide(self.node.id)
+            if res.content:
+                for row in res.content:
+                    self.deliver(row)
+        except Exception as err:
+            self.node.log.error('unable to fetch containers to provide',err)
 
 
         # sync deliverable containers
@@ -60,7 +66,7 @@ class Containers:
 
 
     def select(self):
-        return self.docker.containers('xio')   
+        return self.db.select()  
         
 
     def images(self):
