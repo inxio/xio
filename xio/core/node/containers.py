@@ -48,7 +48,26 @@ class Containers:
     def sync(self):
 
         from pprint import pprint
-        
+
+        # sync docker containers
+        print ('*** register docker container')
+        running_endpoints = []
+        for container in self.docker.containers():
+            name = container.name
+            # find port 8080
+            for k,v in container.ports.items():
+                if v == 8080:
+                    # look like deliverable container
+                    http_endpoint = 'http://127.0.0.1:%s' % k
+                    try:
+                        print('REGISTER',http_endpoint) 
+                        self.node.register( http_endpoint )
+                    except Exception as err:
+                        #import traceback
+                        #traceback.print_exc()
+                        print ('dockersync error',err) 
+          
+
         # fetch container to provide
         try:
             res = self.node.network.getContainersToProvide(self.node.id)
@@ -63,6 +82,8 @@ class Containers:
         for row in self.db.select():
             container = self.get(row['_id'])
             container.sync()
+
+
 
 
     def select(self):

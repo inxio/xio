@@ -42,13 +42,20 @@ class DhtService:
     def stop(self):
         self.dhtd.stop()
 
+    def get(self,*args,**kwargs):
+        return self.getKey(*args,**kwargs)
+
     def getKey(self,key):
-       
+        # to remove -> use get
         result = self.loop.run_until_complete( self.dhtd.server.get(key) )
         return result
 
+    def put(self,*args,**kwargs):
+        return self.setKey(*args,**kwargs)
+        
     def setKey(self,key,value):
-
+        print('DHT PUT',key,value)
+        # to remove -> use put and/or append
         return self.loop.run_until_complete( self.dhtd.server.set(key, value) )
 
     def getNodes(self, key):

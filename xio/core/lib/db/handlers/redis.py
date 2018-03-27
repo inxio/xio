@@ -56,11 +56,6 @@ class Container:
         data = self.db.get(key)
         if data:
             return json.loads(data)
-            try:
-                return json.loads(data)
-            except Exception as err:
-                print ('REDIS GET ERROR', err )
-                return {}
                 
 
     def put(self,uid,data,**kwargs):
@@ -75,11 +70,6 @@ class Container:
         key = '%s:%s' % (self.name,uid)
 
         oridata = self.get(uid)
-        print(key)
-        print ('?????', oridata)
-        print ('?????', self.db.get(key) )
-        print( self.db.keys(pattern='*') )
-
         if oridata:
             print ('redis update... ', key,' = ',data)
             oridata.update(data)

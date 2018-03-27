@@ -61,6 +61,12 @@ class Node(App):
 
         # if network defined we have to connect to it for AUTH handling    
         self.network = self.connect(network) if network else None
+        
+        # SERVER NODE ONLY - this node need to publish stuff to network (dht mainly)
+        # networkhandler sync ===> server context only
+        networkhandler = self.network._handler.handler._handler
+        self.dht = networkhandler.dht
+        
 
         self.bind('www', self.renderWww)   
 
@@ -83,19 +89,21 @@ class Node(App):
         # fix peers (default python handler)
         from xio.core.peers import Peers
         self.peers = Peers( db=memdb )
-        
 
         # init container (require loaded services)
         self.containers = Containers(self, db=memdb )
 
         # containers sync
-        node_peers_heartbeat = xio.env.get('node_heartbeat',10)
+        node_peers_heartbeat = xio.env.get('node_peers_heartbeat',100)
         self.schedule( node_peers_heartbeat, self.containers.sync)
 
         # peers sync
-        node_containers_heartbeat = xio.env.get('node_heartbeat',10)
+        node_containers_heartbeat = xio.env.get('node_containers_heartbeat',300)
         self.schedule( node_containers_heartbeat, self.peers.sync)
-    
+
+        # dht sync
+        node_dht_heartbeat = xio.env.get('node_dht_heartbeat',30)
+        self.schedule( node_dht_heartbeat, self.syncDht )
 
         
 
@@ -116,8 +124,8 @@ class Node(App):
             
         if networkhandler:
             networkhandler.start(self)
+            
         
-
 
     def register(self,endpoints):
         
@@ -128,13 +136,20 @@ class Node(App):
             return self.peers.register(endpoint)
 
 
-
     def deliver(self,uri):
         return self.containers.deliver(uri)
 
 
+    def syncDht(self):
+        print ('=============> SYNC DHT',self.dht)
 
-
+        # declare node 
+        self.dht.put('xrn:xio:node', self.id)
+        
+        # declare apps 
+        for peer in self.peers.select(type='app'):
+            print (peer)
+            self.dht.put(peer.id, self.id)
     
     def renderWww(self,req):
 
