@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+
 from xio.core.lib.crypto.common import *
 
 try:
@@ -54,7 +55,8 @@ class Web3Handler(_Account):
     def __init__(self,private=None,seed=None):
         
         self._web3 = web3.Web3('')
-
+        self._web3.eth.enable_unaudited_features()
+        
         if private:
             self._account = self._web3.eth.account.privateKeyToAccount(private)
             self.private = private

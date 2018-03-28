@@ -48,6 +48,7 @@ class Connector:
 
         self.endpoint = endpoint
         self.web3 = Web3(HTTPProvider(self.endpoint))
+        self.web3.eth.enable_unaudited_features()
         try:
             # tofix : prevent no endpoint availbale
             self.network = self.web3.version.network
