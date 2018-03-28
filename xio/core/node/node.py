@@ -94,7 +94,7 @@ class Node(App):
         self.containers = Containers(self, db=memdb )
 
         # containers sync
-        node_peers_heartbeat = xio.env.get('node_peers_heartbeat',100)
+        node_peers_heartbeat = xio.env.get('node_peers_heartbeat',300)
         self.schedule( node_peers_heartbeat, self.containers.sync)
 
         # peers sync
@@ -102,7 +102,7 @@ class Node(App):
         self.schedule( node_containers_heartbeat, self.peers.sync)
 
         # dht sync
-        node_dht_heartbeat = xio.env.get('node_dht_heartbeat',30)
+        node_dht_heartbeat = xio.env.get('node_dht_heartbeat',300)
         self.schedule( node_dht_heartbeat, self.syncDht )
 
         
