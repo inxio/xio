@@ -10,6 +10,8 @@ import uuid
 
 from threading import Thread, current_thread
 
+from xio.core.lib.utils import thread
+from xio.core.lib.utils import generateuid
 import gevent
 
 from gevent.event import Event
@@ -57,8 +59,9 @@ class WebsocketService:
         self.context = context
         self._wssockets = {}
        
-
+    @thread
     def start(self):
+
         # mod TEST ONLY
         from gevent import monkey; monkey.patch_all()
         from ws4py.server.geventserver import WSGIServer
@@ -69,7 +72,9 @@ class WebsocketService:
 
             def __init__(self,wsservice,*args,**kwargs):
                 WebSocket.__init__(self,*args,**kwargs)
-                uid = base64.urlsafe_b64encode(uuid.uuid4().bytes).strip("=")
+
+                uid = generateuid()
+                
                 self.wsservice = wsservice
                 self.ws = WebsocketSession(uid,wsservice.app,{}) 
                 self.ws._send = self.send_message
@@ -84,6 +89,7 @@ class WebsocketService:
                 self.send(msg)
 
             def received_message(self,msg):
+                print ('..received_message',msg)
                 self.ws.onreceive(msg)
 
         def _createsession(*args,**kwargs):
@@ -111,7 +117,7 @@ class WebsocketService:
         uwsgi.websocket_handshake(environ['HTTP_SEC_WEBSOCKET_KEY'], environ.get('HTTP_ORIGIN', ''))
 
         # setup session
-        uid = base64.urlsafe_b64encode(uuid.uuid4().bytes).strip("=")
+        uid = generateuid()
         session = WebsocketSession(uid,self.app,environ) 
 
         # setup wshandler
@@ -188,7 +194,7 @@ class WebsocketSession:
     def __init__(self,uid,app,context):
         self.uid = uid
         self.app = app
-        self.handler = app
+        self.handler = app.render # bind  handler for create responses
         self.context = context
         self.context['websocket'] = self
         self._awaiting_requests = {}
@@ -334,9 +340,15 @@ class WebsocketSession:
 
             if method=='POST' and headers.get('xio_method')=='SUBSCRIBE':
                 data = _onpubsubreceive
+
+
                 
             import xio
             req = xio.request(method,path,query=query,data=data,headers=headers,context=context)
+
+            print ('WebsocketSession',req)
+            print (self.handler)
+            
             result = self.handler(req)
             response = req.response
             response.content = result

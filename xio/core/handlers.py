@@ -18,6 +18,7 @@ import copy
 import json
 import requests
 import inspect
+import time
 
 from pprint import pprint
 
@@ -449,8 +450,8 @@ bindScheme('xrn',XrnHandler)
 bindScheme('file',FsHandler)
 bindScheme('http',HttpHandler)
 bindScheme('https',HttpHandler)
-#bindScheme('ws',WebsocketHandler)
-#bindScheme('wss',WebsocketHandler)
+bindScheme('ws',WebsocketHandler)
+bindScheme('wss',WebsocketHandler)
 #bindScheme('ipc',IpcHandler)
 
 
