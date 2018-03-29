@@ -9,7 +9,7 @@ from pprint import pprint
 import sys
 
 
-from xio.lib.docker.cli import Docker
+from .client import Docker
 
 class Tests(unittest.TestCase):
 

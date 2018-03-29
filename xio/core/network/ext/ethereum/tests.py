@@ -3,8 +3,8 @@
 
 import unittest
 
-from connector import Connector
-from account import Account
+from .connector import Connector
+from .account import Account
 
 import xio
 

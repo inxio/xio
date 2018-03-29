@@ -64,8 +64,11 @@ class Node(App):
         
         # SERVER NODE ONLY - this node need to publish stuff to network (dht mainly)
         # networkhandler sync ===> server context only
-        networkhandler = self.network._handler.handler._handler
-        self.dht = networkhandler.dht
+        try:
+            networkhandler = self.network._handler.handler._handler
+            self.dht = networkhandler.dht
+        except:
+            pass
         
 
         self.bind('www', self.renderWww)   

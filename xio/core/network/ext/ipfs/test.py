@@ -3,7 +3,7 @@
 
 import unittest
 
-from connector import Connector as Ipfs
+from .connector import Connector as Ipfs
 
 class TestCases(unittest.TestCase):
 
