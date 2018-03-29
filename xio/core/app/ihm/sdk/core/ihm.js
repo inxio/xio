@@ -546,6 +546,8 @@
         var endpoint = document.location.origin
         this.server.http = xio.app(endpoint)
 
+        var wsendpoint = 'ws://'+location.hostname+':8484'
+        this.server.ws = xio.app(wsendpoint)
         // init client
         this.user = XioUser.fromSession()
 
