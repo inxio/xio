@@ -66,10 +66,10 @@ class Node(App):
         # networkhandler sync ===> server context only
         try:
             networkhandler = self.network._handler.handler._handler
-            self.dht = networkhandler.dht
+            #self.dht = networkhandler.dht
         except:
             pass
-        
+        self.dht = None
 
         self.bind('www', self.renderWww)   
 
@@ -80,7 +80,8 @@ class Node(App):
 
         # service memdb
         import xio
-        assert self.redis
+        print ('create node db', self.redis)
+        self.redis = False
         if self.redis:
             memdb = xio.db(name='xio',type='redis')
         else:
@@ -144,15 +145,17 @@ class Node(App):
 
 
     def syncDht(self):
-        print ('=============> SYNC DHT',self.dht)
 
-        # declare node 
-        self.dht.put('xrn:xio:node', self.id)
-        
-        # declare apps 
-        for peer in self.peers.select(type='app'):
-            print (peer)
-            self.dht.put(peer.id, self.id)
+        if self.dht:
+            print ('=============> SYNC DHT',self.dht)
+
+            # declare node 
+            self.dht.put('xrn:xio:node', self.id)
+            
+            # declare apps 
+            for peer in self.peers.select(type='app'):
+                print (peer)
+                self.dht.put(peer.id, self.id)
     
     def renderWww(self,req):
 

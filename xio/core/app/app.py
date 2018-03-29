@@ -386,7 +386,7 @@ class App(peer.Peer):
                 elif scheme == 'https':
                     servicehandler = http.HttpsService(app=self,path=path,port=port,**options)
 
-            if servicehandler:
+            if servicehandler and hasattr(servicehandler,'start'):
                 servicehandler.start()
                 self.put('run/services/%s' % name, servicehandler)
 
@@ -394,6 +394,8 @@ class App(peer.Peer):
 
 
     def __call__(self,environ,start_response=None): 
+
+        print('...wsgi call')
 
         # handle app as handler
         if isinstance(environ,Request):
@@ -411,9 +413,9 @@ class App(peer.Peer):
             from .lib import websocket
             self.wsgi_ws = websocket.WebsocketService(app=self,context=environ)
 
-            import gevent
-            gevent.spawn(self.start,use_wsgi=True)
-            
+            #import gevent
+            #gevent.spawn(self.start,use_wsgi=True)
+            self.start(use_wsgi=True)
 
         # select handler
         handler = self.wsgi_http

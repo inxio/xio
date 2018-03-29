@@ -27,10 +27,10 @@ class NetworkHandler:
     def __init__(self,address=None,abi=None):
     
         # DHT
-        from .ext.dht.service import DhtService
+        #from .ext.dht.service import DhtService
         #import xio
         #bootstrap = xio.env('network')
-        self.dht = DhtService(bootstrap=address)
+        self.dht = None #DhtService(bootstrap=address)
 
         # IPFS
         from .ext.ipfs.connector import Connector
@@ -76,7 +76,8 @@ class NetworkHandler:
 
     def start(self,app):
         self.log.info('==== start network =====', self )
-        self.dht.start()
+        if self.dht:
+            self.dht.start()
 
 
     def __call__(self,req):
