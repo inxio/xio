@@ -420,9 +420,9 @@ class App(peer.Peer):
             # need to start app but run.sh already do it (so servers started twice)
             # so we just init http/ws handlers
 
-            #self.run(loop=False)
+            self.run(loop=False)
             #self.start(use_wsgi=True)
-            self.start()
+            #self.start()
             
             #import gevent
             #from gevent import monkey; monkey.patch_all()
