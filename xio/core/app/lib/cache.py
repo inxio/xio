@@ -29,9 +29,8 @@ class PythonHandler:
 
 class RedisHandler:
 
-    def __init__(self):
-        import redis
-        self.redis = redis.Redis()
+    def __init__(self,redis):
+        self.redis = redis
     
     def put(self,index,meta,content,ttl):
         index = 'xio:cache:%s' % index
@@ -69,7 +68,12 @@ class CacheService:
         if type=='auto':
             type = 'redis' if app.redis else 'python'
 
-        self.handler = __HANDLERS__.get(type)()
+        handlercls =  __HANDLERS__.get(type)
+        if type=='redis': # need to pass redis global instance => to fix use params of service and/or use /services/dbmem
+            print (app.redis)
+            self.handler = handlercls(app.redis)
+        else:
+            self.handler = handlercls()
 
 
     def put(self,index,data):

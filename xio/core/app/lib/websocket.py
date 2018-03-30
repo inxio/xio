@@ -109,11 +109,12 @@ class WebsocketService:
         self.app.delete('run/websockets/%s' % ws.uid)
         
 
-
     def __call__(self,environ,start_response=None):
-
+        """
+        handle websocket session
+        """
         import uwsgi
-
+        
         uwsgi.websocket_handshake(environ['HTTP_SEC_WEBSOCKET_KEY'], environ.get('HTTP_ORIGIN', ''))
 
         # setup session
@@ -146,7 +147,7 @@ class WebsocketService:
         listening = gevent.spawn(listener, ws)
 
         while True:
-
+            print ('..wsloop')
             gevent.wait([send_event,recv_event], None, 1)
 
             if not ws.connected:
@@ -192,6 +193,9 @@ class WebsocketService:
 class WebsocketSession:
     
     def __init__(self,uid,app,context):
+
+        print ('create websocket session',uid,app)
+    
         self.uid = uid
         self.app = app
         self.handler = app.render # bind  handler for create responses

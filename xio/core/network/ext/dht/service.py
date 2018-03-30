@@ -101,8 +101,9 @@ class Dhtd(threading.Thread):
         self.server = None
         
     def start(self):
-        threading.Thread.start(self) # RuntimeError: There is no current event loop in thread 'Thread-1'.
-        #self.run()
+        if not self.is_alive(): # threads can only be started once
+            threading.Thread.start(self) # RuntimeError: There is no current event loop in thread 'Thread-1'.
+            #self.run()
 
 
     def run(self):

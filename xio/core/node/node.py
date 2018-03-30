@@ -66,7 +66,7 @@ class Node(App):
         # networkhandler sync ===> server context only
         try:
             networkhandler = self.network._handler.handler._handler
-            #self.dht = networkhandler.dht
+            self.dht = networkhandler.dht
         except:
             pass
         self.dht = None

@@ -171,8 +171,7 @@ class App(peer.Peer):
             self.load()
 
         self.endpoint = None
-        self.wsgi_http = None
-        self.wsgi_ws = None
+        self._started = None
         self.log = log
 
         self.init()
@@ -231,14 +230,16 @@ class App(peer.Peer):
                 self._tests = 'error' 
 
     def init(self):
-
+        self.redis = False
         try:
             import xio
             import redis
             endpoint = xio.env.get('redis')
-            self.redis = redis.Redis(endpoint) if endpoint else redis.Redis()
+            if endpoint:
+                self.redis = redis.Redis(endpoint) #if endpoint else redis.Redis()
+                self.put('services/redis', SchedulerService(self) )
         except:
-            self.redis = False
+            pass
 
         # scheduler
         from .lib.cron import SchedulerService
@@ -359,77 +360,110 @@ class App(peer.Peer):
 
 
     def start(self,use_wsgi=False):
-
+    
+        self._started = time.time()
+        
         for name,res in list(self.get('etc/services')._children.items()):
-            servicehandler = None
-            if use_wsgi and name in ['http','https','ws','wss']:
-                continue
 
-            conf = copy.copy(res.content) # need to kepp the original config for debug/map
+            try:
+                servicehandler = None
+                if use_wsgi and name not in ['http','https','ws','wss']:
+                    continue
 
-            self.log.info('STARTING SERVICE %s (%s)' % (name,conf))
-            
-            if not isinstance(conf,dict):
-                servicehandler = conf
-            else:
-                from .lib import websocket
-                from .lib import http
+                conf = copy.copy(res.content) # need to kepp the original config for debug/map
 
-                port = conf.get('port')
-                scheme = conf.get('scheme', name)
-                options = {}
-                path = conf.get('path') 
-                if scheme == 'ws':
-                    servicehandler = websocket.WebsocketService(app=self,port=port,**options)  
-                elif scheme == 'http':
-                    servicehandler = http.HttpService(app=self,path=path,port=port,**options)
-                elif scheme == 'https':
-                    servicehandler = http.HttpsService(app=self,path=path,port=port,**options)
+                self.log.info('STARTING SERVICE %s (%s)' % (name,conf))
+                
+                if not isinstance(conf,dict):
+                    servicehandler = conf
+                else:
+                    from .lib import websocket
+                    from .lib import http
 
-            if servicehandler and hasattr(servicehandler,'start'):
-                servicehandler.start()
-                self.put('run/services/%s' % name, servicehandler)
+                    port = conf.get('port')
+                    scheme = conf.get('scheme', name)
+                    options = {}
+                    path = conf.get('path') 
+                    if scheme == 'ws':
+                        servicehandler = websocket.WebsocketService(app=self,port=port,**options)  
+                    elif scheme == 'http':
+                        servicehandler = http.HttpService(app=self,path=path,port=port,**options)
+                    elif scheme == 'https':
+                        servicehandler = http.HttpsService(app=self,path=path,port=port,**options)
 
+                if servicehandler and hasattr(servicehandler,'start'):
+                    servicehandler.start()
+                    self.put('run/services/%s' % name, servicehandler)
+            except Exception as err:
+                self.log.error('STARTING SERVICE %s FAIL' % (name,err)) 
+
+        
         self.debug()
 
 
     def __call__(self,environ,start_response=None): 
+        """
+        this method can be used as WSGI callable as well as xio.app handler 
 
-        print('...wsgi call')
+        for wsgi in uwsgi context we have to start the app if not already do 
+        """
 
         # handle app as handler
         if isinstance(environ,Request):
             req = environ
             return self.request(req)
 
+        print('...wsgi call')
+        if not self._started:
+            
+            # pb because app was not started (uwsgi case) for this process
+            # need to start app but run.sh already do it (so servers started twice)
+            # so we just init http/ws handlers
 
-        # init wsgi handler(s)
-
-        if not self.wsgi_http:
-        
+            #self.run(loop=False)
+            #self.start(use_wsgi=True)
+            self.start()
+            
+            #import gevent
+            #from gevent import monkey; monkey.patch_all()
+            #gevent.spawn(self.start,use_wsgi=True)
+            
+            """
             from .lib import http
             self.wsgi_http = http.HttpService(app=self,context=environ)
 
             from .lib import websocket
             self.wsgi_ws = websocket.WebsocketService(app=self,context=environ)
-
+            """
+            
+            """
             #import gevent
             #gevent.spawn(self.start,use_wsgi=True)
             self.start(use_wsgi=True)
+            self.wsgi_http = self.get('run/services/http')._handler
+            assert self.wsgi_http 
+            """
+
 
         # select handler
-        handler = self.wsgi_http
+
         if environ.get('HTTP_CONNECTION')=='Upgrade' and environ.get('HTTP_UPGRADE')=='websocket' and environ.get('HTTP_SEC_WEBSOCKET_KEY'):
-            handler = self.wsgi_ws
-        
+            handler = self.get('run/services/ws')._handler
+        else:
+            handler = self.get('run/services/http')._handler
+            
+        print('...wsgi call handling',handler)
+
         # handle
         try:
-            return handler(environ,start_response)
+            result = handler(environ,start_response)
         except Exception as err:
             import traceback
             traceback.print_exc()
             start_response('500 ERROR',[('Content-Type','text')])
-            return [ str(traceback.format_exc()) ]
+            result = [ str(traceback.format_exc()) ]
+        print('...wsgi call stop')
+        return result
 
 
     def service(self,name,config=None):

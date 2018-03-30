@@ -74,8 +74,6 @@ def setDefaultEnv(data):
 
 class Env:
 
-    def __init__(self):
-        self._env = {}
 
     def get(self, name, default=None):
         envkey = 'XIO_%s' % name.upper()

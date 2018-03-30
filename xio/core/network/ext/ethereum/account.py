@@ -102,6 +102,7 @@ class Web3Handler(_Account):
              #print ecrecover_to_pub(nonce,int(decode_hex(v[2:])),decode_hex(r[2:]),decode_hex(s[2:]))
              """
         else:
+            print( token )
             nonce,sig = token.split('-')
         address = cls.recover(nonce,sig)
         return address

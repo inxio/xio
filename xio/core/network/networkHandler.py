@@ -27,11 +27,15 @@ class NetworkHandler:
     def __init__(self,address=None,abi=None):
     
         # DHT
-        #from .ext.dht.service import DhtService
+        from .ext.dht.service import DhtService
         #import xio
         #bootstrap = xio.env('network')
-        self.dht = None #DhtService(bootstrap=address)
-
+        try:
+            # dht require python3
+            if xio.env('dht'):
+                self.dht = DhtService(bootstrap=address)
+        except:
+            self.dht = None
         # IPFS
         from .ext.ipfs.connector import Connector
         ipfsendpoint = xio.env.get('ipfs')
