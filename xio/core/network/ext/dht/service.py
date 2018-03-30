@@ -18,14 +18,19 @@ except:
     print ('DHT REQUIRE PYTHON3')
     pass 
 
-
+DEFAULT_PORT = 7500
 
 class DhtService:
 
     def __init__(self,app=None,port=None,bootstrap=None,**kwargs):
         self.app = app
-        self.port = 7500 if port==None else port
-        self.bootstrap = bootstrap if bootstrap else ('127.0.0.1', 7500)
+        self.port = DEFAULT_PORT if port==None else port
+        if bootstrap:
+            nfo = bootstrap.split(':')
+            host = nfo.pop(0)
+            port = nfo.pop(0) if nfo else self.port
+            bootstrap = (host,port)
+        self.bootstrap = bootstrap if bootstrap else ('127.0.0.1', DEFAULT_PORT)
         self.dhtd = Dhtd(self,self.port,self.bootstrap)
         self.loop = asyncio.new_event_loop()
 
