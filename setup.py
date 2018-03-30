@@ -22,7 +22,11 @@ setup(
         "requests", 
         "pyyaml",
         "pynacl",
-        "gevent"
+        "gevent",
+        "uwsgi",
+        "ws4py",
+        "bitcoin",
+        "web3",
     ],
     py_modules = ['xio'],
     #scripts=['xio/bin/xio'],
