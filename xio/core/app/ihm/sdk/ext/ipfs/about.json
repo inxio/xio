@@ -1,8 +1,0 @@
-{
-    "name": "ipfs",
-    "version": "1.0.0", 
-    "requirements": [
-        "ipfs.js"
-    ]
-}
-        

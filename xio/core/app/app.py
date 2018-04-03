@@ -308,8 +308,8 @@ class App(peer.Peer):
 
 
         # www/xio
-        sdkdir = os.path.dirname( os.path.realpath(__file__) )+'/ihm'
-        self.bind('www/xio', resource.DirectoryHandler(sdkdir) )
+        #sdkdir = os.path.dirname( os.path.realpath(__file__) )+'/ihm'
+        #self.bind('www/xio', resource.DirectoryHandler(sdkdir) )
         
 
         if self.directory:
