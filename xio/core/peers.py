@@ -304,7 +304,7 @@ class PeerClient(Resource):
 
         context = req.client.context or {}
         context['xio_id'] = req.client.id if req.client else 0 
-        client = xio.resource(self.endpoint,context)
+        client = xio.client(self.endpoint,context)
        
         try:
             res = client.request(req.method, req.path, data=req.data,query=req.query,headers=req.headers)

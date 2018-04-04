@@ -198,7 +198,7 @@ class App(peer.Peer):
 
     def load(self):
         module = self.module
-
+        
         # loading ext first because about can refer on
         if os.path.isdir(self.directory+'/ext'):
             import xio
@@ -207,13 +207,10 @@ class App(peer.Peer):
                 child = xio.app(child) 
                 self.put('ext/%s' % childname, child ) 
 
-
         # loading about.yml
-        if not self._about:
-            self._about = {}
-            if os.path.isfile(self.directory+'/about.yml'):
-                with open(self.directory+'/about.yml') as f:
-                    self._about = yaml.load(f)
+        if os.path.isfile(self.directory+'/about.yml'):
+            with open(self.directory+'/about.yml') as f:
+                self._about = yaml.load(f)
 
         self.name = self._about.get('name')
         if 'id' in self._about:
@@ -325,21 +322,37 @@ class App(peer.Peer):
     @handleCache
     @handleStats
     def render(self,req):
-        self.log.info('APP RENDER',req.xmethod or req.method, repr(req.path),'by',self)
+        """
+        pb with code in this method not called if we use request ...
+        """
+    
+        self.log.info('RENDER',req.xmethod or req.method, repr(req.path),'by',self)
+
+        req.path = 'www/'+req.path if req.path else 'www'
 
         # fix ABOUT, HEAD, OPTIONS => if no handler for www ... create defaut handler ?
-        if not req.path:
+        if req.path=='www':
             if req.HEAD:
                 return ''
             if req.OPTIONS:
                 return ''
+            """    
             if req.ABOUT:
-                return self._handleAbout(req)
+                about = self._about or dict()
+                wwwabout = self.about('www').content or dict()
+                print ('$$$$$',wwwabout)
+                about.update(wwwabout)
+                about['id'] = self.id
+                about['name'] = self.name  
+                about['type'] = self.__class__.__name__.lower()
+                return about
+            """
+        
 
         
-        req.path = 'www/'+req.path if req.path else 'www'
-        
         return self.request(req)
+
+
 
        
 

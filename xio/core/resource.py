@@ -30,27 +30,34 @@ from functools import wraps
 def client(*args,**kwargs):
     res = resource(*args,**kwargs)
     # todo: setup flags for this client resource (context, _skip_handler_allowed, xmetods, etcc)
+    res.__CLIENT__ = True
     return res
 
 def resource(handler=None,context=None,about=None,**kwargs):
     
     basepath = ''
-
+    is_client = False
     if isinstance(handler, Resource):
+        is_client = True
         handler = pythonResourceHandler(handler)
     elif isinstance(handler, collections.Callable):
         handler = pythonCallableHandler(handler)
     elif handler and is_string( handler ) and ':' in handler:
+        is_client = True
         handler,basepath = env.resolv(handler) 
     elif handler and is_string( handler ):
+        is_client = True
         handler = PeerHandler(handler)
     elif handler:
+        
         # test fallback handler => object introspection
         # alternative is to add __call__ method on class
         handler = pythonObjectHandler(handler)
         #raise Exception('UNHANDLED RESOURCE HANDLER (%s)' % handler)
 
-    return Resource(handler=handler,handler_path=basepath,handler_context=context,about=about,**kwargs)
+    res = Resource(handler=handler,handler_path=basepath,handler_context=context,about=about,**kwargs)
+    res.__CLIENT__ = is_client
+    return res
 
 
 def extractAbout(h):
@@ -250,6 +257,10 @@ def handleDelegate(func):
         skiphandler = req.context.get('skiphandler') and self._skip_handler_allowed
         must_delegate = self._handler and isinstance(self._handler, collections.Callable) and not skiphandler
 
+        # fix about : if already have about (eg via doctest) we skip handler call if there is not ABOUT in OPTIONS
+        if must_delegate and not self.__CLIENT__ and req.ABOUT and not req.path and self._about and not 'ABOUT' in self._about.get('options'):
+            must_delegate = False # pb with xio.client => in client case must_delegate is ALWAY TRUE 
+
         req.response.status = 0
 
         if must_delegate and req.path:
@@ -274,6 +285,7 @@ def handleDelegate(func):
 
 class Resource(object):
 
+    __CLIENT__ = False
     __XMETHODS__ = True
     _skip_handler_allowed = True
     _tests = None
@@ -667,11 +679,29 @@ class Resource(object):
         fullpath = req.fullpath.replace('/','')
 
         if fullpath=='www' or fullpath=='':
-            about = copy.copy(root._about) if root and root._about else about  
+            # merge resource about with app about
             if peerserver:
                 about['id'] = peerserver.id
                 about['name'] = peerserver.name  
+                # to fix: add withlist of app about field
+
+                fields = ['description','links']
+                for k in fields:
+                    if peerserver._about and k in peerserver._about:
+                        about[k] = peerserver._about[k]
+
             about['type'] = self.__class__.__name__.lower() if not peerserver else peerserver.__class__.__name__.lower()
+            
+            """
+            about = self._about or dict()
+            wwwabout = self.about('www').content or dict()
+
+            about.update(wwwabout)
+            about['id'] = self.id
+            about['name'] = self.name  
+            about['type'] = self.__class__.__name__.lower()
+            return about
+            """
            
         about.setdefault('resources',{})
         
