@@ -71,7 +71,7 @@ class Peers:
         log.info('register',endpoint)
 
         if not peerid:
-            client = xio.resource(endpoint)
+            client = xio.client(endpoint)
             resp = client.request('ABOUT') 
             assert resp.status == 200
             peername = resp.content.get('name', None) 
@@ -309,7 +309,7 @@ class PeerClient(Resource):
         try:
             res = client.request(req.method, req.path, data=req.data,query=req.query,headers=req.headers)
             if res.status==201 and 'Location' in res.headers:
-                self.client = xio.resource(res.headers['Location'])
+                self.client = xio.client(res.headers['Location'])
 
         except Exception as err:
             traceback.print_exc()

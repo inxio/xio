@@ -677,8 +677,9 @@ class Resource(object):
         peerserver = self._root or req.server or root # tofix root could be None
 
         fullpath = req.fullpath.replace('/','')
-
+        print ('????????????????')
         if fullpath=='www' or fullpath=='':
+            
             # merge resource about with app about
             if peerserver:
                 about['id'] = peerserver.id

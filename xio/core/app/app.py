@@ -174,6 +174,7 @@ class App(peer.Peer):
         self._started = None
         self.log = log
 
+       
         self.init()
 
 
@@ -308,6 +309,9 @@ class App(peer.Peer):
         #sdkdir = os.path.dirname( os.path.realpath(__file__) )+'/ihm'
         #self.bind('www/xio', resource.DirectoryHandler(sdkdir) )
         
+        # create default 'www' (required for ABOUT call which fail if not www)
+        if not 'www' in self._children:
+            self.put('www', lambda req: req.PASS)
 
         if self.directory:
             wwwstaticdir = self.directory+'/www/static'
@@ -336,18 +340,6 @@ class App(peer.Peer):
                 return ''
             if req.OPTIONS:
                 return ''
-            """    
-            if req.ABOUT:
-                about = self._about or dict()
-                wwwabout = self.about('www').content or dict()
-                print ('$$$$$',wwwabout)
-                about.update(wwwabout)
-                about['id'] = self.id
-                about['name'] = self.name  
-                about['type'] = self.__class__.__name__.lower()
-                return about
-            """
-        
 
         
         return self.request(req)
