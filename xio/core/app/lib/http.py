@@ -164,6 +164,7 @@ class HttpService:
 
             response = self.app.render(request)
 
+            assert response.status
 
             import inspect
             import json
@@ -173,11 +174,12 @@ class HttpService:
                 response.content_type = 'application/json'
                 response.content = json.dumps(response.content,indent=4,default=str) 
 
+
+            #if request.OPTIONS:
             # add header Access-Control-Allow-Origin => to fix
             response.headers['Access-Control-Allow-Origin'] = '*'
-            if request.OPTIONS:
-                response.headers['Access-Control-Allow-Methods'] = 'GET,HEAD,OPTIONS,POST,PUT,PATCH,DELETE,CONNECT'
-                response.headers['Access-Control-Allow-Headers'] = 'Origin, X-Requested-With, Content-Type, Content-Length, Date, Accept, Authorization, XIO-id, XIO-token, XIO-view, XIO-method, XIO-profile'
+            response.headers['Access-Control-Allow-Methods'] = 'GET, HEAD, OPTIONS, POST, PUT, PATCH, DELETE, CONNECT'
+            response.headers['Access-Control-Allow-Headers'] = 'Origin, X-Requested-With, Content-Type, Content-Length, Date, Accept, Authorization, XIO-id, XIO-token, XIO-view, XIO-method, XIO-profile'
 
             import inspect
 
@@ -198,10 +200,12 @@ class HttpService:
             # send response
             status = '%s %s' % (response.status, http_responses.get(response.status))
           
-            response.headers['Content-Type'] = response.content_type
+            if response.content_type:
+                response.headers['Content-Type'] = response.content_type
             wsgi_response_headers = [ (str(k),str(v)) for k,v in list(response.headers.items()) ]
             
             # reponse wsgi
+            print ('status',status)
             start_response(status, wsgi_response_headers)
             if hasattr(content, 'read'): 
             
@@ -226,8 +230,6 @@ class HttpService:
                 content = str(content) if not is_string(content) else content.encode('utf8')
             elif content==None:
                 content = ''
-
-            print ('http content', type(content))     
 
             return [ _send( content.encode('utf8') ) ] # any iterable/yield ?
 

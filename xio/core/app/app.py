@@ -334,16 +334,7 @@ class App(peer.Peer):
 
         req.path = 'www/'+req.path if req.path else 'www'
 
-        # fix ABOUT, HEAD, OPTIONS => if no handler for www ... create defaut handler ?
-        if req.path=='www':
-            if req.HEAD:
-                return ''
-            if req.OPTIONS:
-                return ''
-
-        
         return self.request(req)
-
 
 
        

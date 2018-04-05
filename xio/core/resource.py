@@ -220,6 +220,7 @@ def handleRequest(func):
             resp = self._toResource(req,resp)
 
         assert isinstance(resp, Resource)
+        assert resp.status
         assert not isinstance(resp.content, Resource)
         return resp
 
@@ -405,6 +406,8 @@ class Resource(object):
         if not isinstance(resp,Response):
             result = resp
             resp = req.response
+            if not resp.status:
+                resp.status = 200
             resp.content = result    
 
         if self.path:
@@ -677,7 +680,7 @@ class Resource(object):
         peerserver = self._root or req.server or root # tofix root could be None
 
         fullpath = req.fullpath.replace('/','')
-        print ('????????????????')
+        
         if fullpath=='www' or fullpath=='':
             
             # merge resource about with app about
