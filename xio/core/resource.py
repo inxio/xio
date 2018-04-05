@@ -25,7 +25,7 @@ from xio.core import env
 is_string = utils.is_string
 
 
-from functools import wraps
+from functools import wraps, update_wrapper
 
 def client(*args,**kwargs):
     res = resource(*args,**kwargs)
@@ -66,6 +66,7 @@ def extractAbout(h):
         import yaml
         about = {}
         docstring = h.__doc__ if h and not is_string(h) and isinstance(h, collections.Callable) else h
+        
         if docstring and is_string(docstring): # warning if h is open file !
             try:
                 about = yaml.load(docstring) 
@@ -309,7 +310,6 @@ class Resource(object):
         self._root = root or (parent._root if parent else self)
         self._children =  collections.OrderedDict()
         self._hooks = []
-
 
         if not self._about:
             # prevent overwrite for inherence (about set before resource.construct eg node/app/resource)
@@ -585,6 +585,7 @@ class Resource(object):
                 self.content = data
                 if isinstance(data, collections.Callable):
                     self._handler = data
+                    self._about = extractAbout(self._handler)
                 return self
 
             assert name
@@ -627,11 +628,12 @@ class Resource(object):
             kwargs['skiphandler'] = True
             return self.put(path,content,**kwargs)        
         else:
+            
             def _wrapper(func):
                 path = args[0]
                 kwargs['skiphandler'] = True
                 return self.put(path,func,*args,**kwargs)        
-            return _wrapper
+            return _wrapper 
 
 
 
@@ -688,7 +690,8 @@ class Resource(object):
                 about['id'] = peerserver.id
                 about['name'] = peerserver.name  
                 # to fix: add withlist of app about field
-
+                print (about)
+                print (self._handler.__doc__)
                 fields = ['description','links']
                 for k in fields:
                     if peerserver._about and k in peerserver._about:
