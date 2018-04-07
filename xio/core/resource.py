@@ -214,8 +214,9 @@ def handleRequest(func):
             else:
                 traceback.print_exc() 
                 req.response.status = 500
+                req.response.traceback = str(traceback.format_exc())
                 resp = None
-   
+                
         if not isinstance(resp, Resource):
             req.path = ori_path
             resp = self._toResource(req,resp)
@@ -292,6 +293,7 @@ class Resource(object):
     _skip_handler_allowed = True
     _tests = None
     _about = None
+    traceback = None
 
     def __init__(self,content=None,path='',status=0,headers=None,parent=None,root=None,handler=None,handler_path=None,handler_context=None,about=None,**context):
 
@@ -424,6 +426,7 @@ class Resource(object):
         res.content_type = resp.headers.get('Content-Type')
         res.headers = resp.headers
         res.status = status
+        res.traceback = resp.traceback if resp else None
         res._handler_path = handler_path
         return res
 

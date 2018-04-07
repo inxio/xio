@@ -187,6 +187,7 @@ class Item(dict):
 
         dict.__init__(self,**self._data)
         self.id = self._data.get('_id')
+
         
 
     def __getattr__(self, name):

@@ -117,6 +117,7 @@ class Docker:
         images = self.docker.images.list(all=True)
         result = []     
         for i in images:
+
             image = Image(self,i)
             if image.name and ( not pattern or pattern in image.name):
                 result.append(image)

@@ -131,6 +131,7 @@ class Request(object):
             'headers': self.headers,
             'query': self.query,
             'data': self.data,
+            'input': self.input,
             'profile': self.profile,
             'client': {
                 'auth': {
@@ -143,6 +144,8 @@ class Request(object):
 
             },
             'server': self.server,
+            
+            'context': self.context
         }
 
     def require(self,key,value,content=None):
@@ -231,6 +234,7 @@ class Response:
         self.content_type = 'text/plain'
         self.content = None
         self.ttl = 0
+        self.traceback = None
 
 
     def __repr__(self):

@@ -183,19 +183,26 @@ class HttpService:
 
             import inspect
 
-            if inspect.isgenerator(response.content):
-                content = [ row for row in response.content ]
-            else:
-                content = response.content
 
             if response.status == 403:
                 response.headers['WWW-Authenticate'] = 'Basic realm="myrealm"'
                 response.status = 401 
                 response.content = ''
 
+            # check HTTP 500 traceback
+            if response.status == 500 and response.traceback:
+                response.content = response.traceback
+                
+
+            if inspect.isgenerator(response.content):
+                content = [ row for row in response.content ]
+            else:
+                content = response.content
+
+
             # check Content-Length (last modif allowed)
-            if is_string(response.content):
-                response.headers['Content-Length'] = len(response.content)
+            if is_string(content):
+                response.headers['Content-Length'] = len(content)
 
             # send response
             status = '%s %s' % (response.status, http_responses.get(response.status))

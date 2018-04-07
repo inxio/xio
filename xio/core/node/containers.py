@@ -149,7 +149,8 @@ class Container(db.Item):
         self._docker.build(name=self.iname,directory=self.directory) # ,dockerfile=self.dockerfile
         self._dockerimage = self._docker.image(name=self.iname)
 
-        assert self._dockerimage
+        # for dockerfile-less image = inxio/app
+        #assert self._dockerimage
 
         self.builded = int(time.time())
         self.save()
