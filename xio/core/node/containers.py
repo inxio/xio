@@ -44,14 +44,12 @@ class Containers:
             container.uri = uri    
             container.save()
 
-
-    def sync(self):
-
-        from pprint import pprint
-
+    #@xio.tools.cache(200)        
+    def resync(self):
+        """ update containers states from current dockers running containers"""
         # sync docker containers
-        print ('*** register docker container')
-        running_endpoints = []
+        print ('*** resync from docker container')
+        running_endpoints = {}
         for container in self.docker.containers():
             name = container.name
             # find port 8080
@@ -59,15 +57,27 @@ class Containers:
                 if v == 8080:
                     # look like deliverable container
                     http_endpoint = 'http://127.0.0.1:%s' % k
+
+                    running_endpoints[name] = {
+                        'endpoint': http_endpoint
+                    }
+                    
                     try:
                         print('REGISTER',http_endpoint) 
-                        self.node.register( http_endpoint )
+                        #self.node.register( http_endpoint )
                     except Exception as err:
                         #import traceback
                         #traceback.print_exc()
                         print ('dockersync error',err) 
-          
+                        
+        return running_endpoints
 
+
+    def sync(self):
+
+        running_endpoints = self.resync()
+
+        
         # fetch container to provide
         try:
             res = self.node.network.getContainersToProvide(self.node.id)
@@ -81,8 +91,10 @@ class Containers:
         # sync deliverable containers
         for row in self.db.select():
             container = self.get(row['_id'])
-            container.sync()
-
+            try:
+                container.sync(running_endpoints)
+            except Exception as err:
+                self.node.log.error('container.sync error',err)
 
 
 
@@ -116,21 +128,34 @@ class Container(db.Item):
         return about
 
 
-    def sync(self):
+    def sync(self,running_endpoints=None):
 
+        
+        if not self.fetched:
+            self.fetch()
 
         if not self.builded:
             self.build()
 
         if not self.started:
-            self.start()
+
+            running_endpoints = running_endpoints or self._containers.resync()
+            if self.cname in running_endpoints:
+                self.started = int(time.time()) # to fix, retreive date from docker ps
+                self.endpoint = running_endpoints.get(self.cname).get('endpoint')
+                self.save()
+            else:    
+                self.start()
+
             if self.started and self.endpoint:
-                self._containers.node.register(self.endpoint)
-       
+                try:
+                    self._containers.node.register(self.endpoint)
+                except Exception as err:
+                    self._containers.node.log.error('unable to register containers endpoint',err)
 
-    def build(self):
+    def fetch(self):
 
-        print ('building ...', self.id)
+        print ('fetching ...', self.id,self.uri)
 
         if self.uri.startswith('/'):
             self.directory = self.uri
@@ -143,14 +168,28 @@ class Container(db.Item):
         nfo = self.name.split(':')
         nfo.pop(0)  # strip xrn:
 
-        self.iname = '/'.join(nfo)
-        self.cname = self.iname.replace('/','-')
+        self.cname = '-'.join(nfo)
 
-        self._docker.build(name=self.iname,directory=self.directory) # ,dockerfile=self.dockerfile
-        self._dockerimage = self._docker.image(name=self.iname)
+        # set image
+        dockerfile = self.directory+'/Dockerfile'
+        if not os.path.isfile(dockerfile):
+            self.iname = 'inxio/app'
+            self.dockerfile = None
+        else:
+            self.iname = self.cname.replace('-','/') 
+            self.dockerfile = dockerfile
 
-        # for dockerfile-less image = inxio/app
-        #assert self._dockerimage
+        self.fetched = int(time.time())
+        self.save()
+
+
+    def build(self):
+
+        print ('building ...', self.id)
+
+        if self.dockerfile:
+            self._docker.build(name=self.iname,directory=self.directory) # ,dockerfile=self.dockerfile
+            self._dockerimage = self._docker.image(name=self.iname)
 
         self.builded = int(time.time())
         self.save()
@@ -185,7 +224,18 @@ class Container(db.Item):
 
         self.save()
 
+    def request(self,method,path,query):
+        """ test for ihm admin only ?"""
+        if self.endpoint:
+            import xio
 
+            print(self.endpoint,method,path,query)
+            cli = xio.client(self.endpoint)
+            print (cli)
+            resp = cli.request(method,path,{}) 
+            print(resp.content)
+            return resp.content
+    
 
 
 

@@ -45,10 +45,8 @@ class Docker:
 
         if not dockerfile:
             dockerfile = directory+'/Dockerfile'
-            if not os.path.isfile(dockerfile):
-                dockerfile = "from inxio/app"
+            assert os.path.isfile(dockerfile)
 
-        # 
         filepath = None
         if not "\n" in dockerfile and not " " in dockerfile:
             filepath = directory+'/'+dockerfile if not dockerfile.startswith('/') else dockerfile
