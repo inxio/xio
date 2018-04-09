@@ -695,7 +695,7 @@ class Resource(object):
                 # to fix: add withlist of app about field
                 print (about)
                 print (self._handler.__doc__)
-                fields = ['description','links']
+                fields = ['description','links','provide']
                 for k in fields:
                     if peerserver._about and k in peerserver._about:
                         about[k] = peerserver._about[k]

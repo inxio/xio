@@ -339,9 +339,9 @@ class App(peer.Peer):
 
        
 
-    def run(self,loop=True,http=None,ws=None,**options):
+    def run(self,loop=True,**options):
         import xio
-        http = options.get('http', xio.env.get('http') )
+        http = options.get('http', xio.env.get('http', 8080) )
         ws = options.get('ws', xio.env.get('ws') )
         debug = options.get('debug', xio.env.get('debug') )
         

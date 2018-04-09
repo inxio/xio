@@ -177,7 +177,7 @@ class HttpHandler:
         else:
             data = None
 
-        print(('http request ....', method, url,params,data,headers))
+        print('http request ....', method, url,params,data,headers)
 
         h = getattr(requests,method,None)
 
@@ -195,14 +195,14 @@ class HttpHandler:
         status = r.status_code
         content = r.content if not r.encoding else r.text
 
-        #print 'http response ....', status, r.headers, type(r.text)
+        print ('http response ....', status, r.headers, type(r.text))
 
         req.response.status = status
         req.response.headers = r.headers
 
         content_type = req.response.headers.get('Content-Type')
-        if content_type=='application/json' and is_string(content):
-            content = json.loads(content)
+        if content_type=='application/json':
+            content = r.json()
         
         return content
         

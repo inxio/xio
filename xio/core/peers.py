@@ -46,7 +46,7 @@ class Peers:
         self.db.truncate()
 
 
-    def register(self,endpoint=None,nodeid=None,type=None,uid=None,id=None,name=None):
+    def register(self,endpoint=None,nodeid=None,type=None,uid=None,id=None,name=None,sub_register=False):
 
         assert endpoint
         nodeid = nodeid or self.id
@@ -56,14 +56,63 @@ class Peers:
         peername = name if name else None
 
         assert endpoint
+        assert is_string(endpoint) or isinstance(endpoint,Peer) or isinstance(endpoint, collections.Callable)   
+
+        log.info('register',endpoint)
+
+        client = xio.client(endpoint)
+        resp = client.request('ABOUT') 
+        about = resp.content
+        
+        assert about
+        pprint(about)
+        
+        peerid = about.get('id')
+        peername = about.get('name', None) 
+
+        # fix pb peerid missing for sub-services
+        if sub_register and not peerid:
+            peername = sub_register # fix for child xrn missing 
+            peerid = md5(peername)
+        
+        peertype = about.get('type','app').lower()
+         
+        assert peerid  
+        assert peerid != self.id
+        
+        # handle provides (multi services) 
+        if not sub_register:
+            provide = resp.content.get('provide')
+            if provide:
+                for xrn in provide:
+                    print (xrn)
+                    postpath = xrn.split(':').pop()
+                    if not is_string(endpoint):
+                        childendpoint = endpoint.resource(postpath) 
+                    else:
+                        childendpoint = endpoint+'/'+postpath
+                        
+                    try:
+                        self.register(childendpoint,sub_register=xrn)
+                    except Exception as err:
+                        log.error('subregister',childendpoint)
+                        import traceback
+                        traceback.print_exc()
+
+                # skip registering of provider (container)     
+                return 
+        """
 
         if not is_string(endpoint):
+        
+            # instance
 
             assert isinstance(endpoint,Peer) or isinstance(endpoint, collections.Callable)   
             if not peertype:   
                 peertype = endpoint.__class__.__name__.lower()
                 peerid = endpoint.id
                 peername = endpoint.name
+
 
         import xio
         import copy
@@ -78,9 +127,9 @@ class Peers:
             peerid = resp.content.get('id')
             peertype = resp.content.get('type',peertype).lower()
 
-        assert peerid  
-        assert peerid != self.id
 
+
+        """
 
         for peer in self.select(id=peerid):
             if peer.data.get('nodeid')==nodeid and peer.id==peerid:

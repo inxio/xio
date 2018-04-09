@@ -235,6 +235,9 @@ class Container:
     def about(self):
         return self._about
 
+    def logs(self):
+        return self.container.logs()
+
     def stop(self):
         return self.container.stop()
 

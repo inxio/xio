@@ -41,8 +41,9 @@ class Containers:
         index = md5(uri)
         container = self.get(index)
         if not container._created:
-            container.uri = uri    
+            container.uri = uri  
             container.save()
+            
 
     #@xio.tools.cache(200)        
     def resync(self):
@@ -128,9 +129,9 @@ class Container(db.Item):
         return about
 
 
+
     def sync(self,running_endpoints=None):
 
-        
         if not self.fetched:
             self.fetch()
 
@@ -151,6 +152,8 @@ class Container(db.Item):
                 try:
                     self._containers.node.register(self.endpoint)
                 except Exception as err:
+                    import traceback
+                    traceback.print_exc()
                     self._containers.node.log.error('unable to register containers endpoint',err)
 
     def fetch(self):
@@ -195,6 +198,12 @@ class Container(db.Item):
         self.save()
 
 
+    def logs(self):
+        dockercontainer = self._docker.container(self.cname)
+        return dockercontainer.logs()
+
+
+
     def start(self):
 
         print ('starting ...', self.id)
@@ -228,14 +237,12 @@ class Container(db.Item):
         """ test for ihm admin only ?"""
         if self.endpoint:
             import xio
-
-            print(self.endpoint,method,path,query)
             cli = xio.client(self.endpoint)
-            print (cli)
             resp = cli.request(method,path,{}) 
+            pprint(resp.headers)
             print(resp.content)
-            return resp.content
-    
+            
+            return resp.content #tofix: tronqué si return direct
 
 
 
