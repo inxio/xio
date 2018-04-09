@@ -29,3 +29,4 @@ except ImportError:
     except:
         pass
 
+assert sha3_keccak_256

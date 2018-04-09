@@ -71,7 +71,8 @@ class Peers:
         peername = about.get('name', None) 
 
         # fix pb peerid missing for sub-services
-        if sub_register and not peerid:
+        if sub_register:
+            # and not peerid: # pb peerid du child ecrasé par le about
             peername = sub_register # fix for child xrn missing 
             peerid = md5(peername)
         
@@ -88,7 +89,9 @@ class Peers:
                     print (xrn)
                     postpath = xrn.split(':').pop()
                     if not is_string(endpoint):
-                        childendpoint = endpoint.resource(postpath) 
+                        childendpoint = client.get(postpath) 
+                        #childendpoint = endpoint.resource(postpath) 
+                        
                     else:
                         childendpoint = endpoint+'/'+postpath
                         
@@ -133,7 +136,7 @@ class Peers:
 
         for peer in self.select(id=peerid):
             if peer.data.get('nodeid')==nodeid and peer.id==peerid:
-                #print(('register ALREADY EXIST', peerid)) 
+                print(('register ALREADY EXIST', peerid)) 
                 return 
 
         if not uid:

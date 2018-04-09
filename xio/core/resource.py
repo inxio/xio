@@ -262,7 +262,10 @@ def handleDelegate(func):
 
         # fix about : if already have about (eg via doctest) we skip handler call if there is not ABOUT in OPTIONS
         if must_delegate and not self.__CLIENT__ and req.ABOUT and not req.path and self._about and not 'ABOUT' in self._about.get('options'):
+            print ('... SKIP DELEGATE ...',req)
             must_delegate = False # pb with xio.client => in client case must_delegate is ALWAY TRUE 
+
+        print ('...',req)
 
         req.response.status = 0
 
@@ -501,7 +504,7 @@ class Resource(object):
         if not req.path and req.ABOUT and options and not 'ABOUT' in options:
             return req.PASS
 
-        if not req.path and options:
+        if not req.path and not req.OPTIONS and options:
             assert method in options, Exception(405)
 
         # step3 : CHECK INPUT
