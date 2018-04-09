@@ -171,11 +171,13 @@ class HttpHandler:
 
         params = query or {}
 
-        if data and isinstance(data,list) or isinstance(data,dict):
+        if data and (isinstance(data,list) or isinstance(data,dict)):
             headers['Content-Type'] = 'application/json'
             data=json.dumps(data)
+        else:
+            data = None
 
-        #print(('http request ....', method, url,params,data,headers))
+        print(('http request ....', method, url,params,data,headers))
 
         h = getattr(requests,method,None)
 

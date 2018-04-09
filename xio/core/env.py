@@ -74,6 +74,11 @@ def setDefaultEnv(data):
 
 class Env:
 
+    def items(self):
+        for key,val in context.items():
+            if key.startswith('XIO_'):
+                yield ( key[4:].lower(),val )    
+
 
     def get(self, name, default=None):
         envkey = 'XIO_%s' % name.upper()
