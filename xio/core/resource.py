@@ -265,7 +265,11 @@ def handleDelegate(func):
             print ('... SKIP DELEGATE ...',req)
             must_delegate = False # pb with xio.client => in client case must_delegate is ALWAY TRUE 
 
-        print ('...',req)
+        # fix options : prevent delegate OPTIONS requests
+        if req.OPTIONS and not req.path:
+            must_delegate = False
+        
+        #print ('...',req)
 
         req.response.status = 0
 

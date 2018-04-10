@@ -4,6 +4,8 @@
 
 from xio.core.lib.crypto.common import *
 
+assert sha3_keccak_256 #tofix, this line is to prevent uwsgi error on python2.7 (sha3_keccak_256 == None)
+
 try:
     import web3
     WEB3_HANDLER = web3.__version__.startswith('4.')

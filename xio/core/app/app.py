@@ -311,7 +311,7 @@ class App(peer.Peer):
         
         # create default 'www' (required for ABOUT call which fail if not www)
         if not 'www' in self._children:
-            self.put('www', lambda req: req.PASS)
+            self.put('www', lambda req: None)
 
         if self.directory:
             wwwstaticdir = self.directory+'/www/static'
@@ -675,113 +675,6 @@ class App(peer.Peer):
         else:
             all = ('all' in (str(args)))
             self.debug()
-
-
-        
-
-  
-
-    def oldmain(self):
-    
-        import sys
-        import os
-        from pprint import pprint
-        import os.path
-        import xio
-
-        args = sys.argv
-
-        args = args+[None]*5
-        param0 = args[0]
-        cmd = args[1]
-        param1 = args[2]
-        param2 = args[3]
-        param3 = args[4]
-        param4 = args[5]
-
-        print('\n\n==========',cmd, param1 or '')
-        print("""
-            map:        app map
-            run:        run services on debug mod
-            *:          HTTP * ( www/* )
-        """)    
-        print()
-        print("\tapp=",self)
-        print("\tapp=",self.id)
-        print('\tapp=',self.name)
-        print('\tapp=',self._about)
-        print('\tnode=',xio.env.get('node'))
-        print()
-
-        if cmd=='run':
-
-            import argparse
-
-            parser = argparse.ArgumentParser(add_help=False)
-            parser.add_argument("run")
-            parser.add_argument('--http', type=int, nargs='?', const=8080, default=8080)
-            parser.add_argument('--ws', type=int, nargs='?', const=8484, default=None)
-            parser.add_argument('--debug', action='store_true')
-            parser.add_argument('--network', action='store_true')
-
-            # add custome env
-            for k,v in xio.env.items():
-                print ('k',k)
-                try:
-                    parser.add_argument('--'+k, default=v)
-                except:
-                    pass
-            
-            options = vars(parser.parse_args() )
-
-            for key,val in options.items():
-                xio.env.set(key,val)
-            
-            self.run(**options)
-            
-            import time
-            while True:
-                time.sleep(0.1)
-            sys.exit()    
-        if cmd:
-            method = cmd.upper()
-
-            h = self.get('bin/%s' % cmd)
-            if h.content:
-                print('=====> bin', cmd,  h.content, args[2:])
-                res = h(xio.request('POST','',data={'args':args[2:]}))
-                pprint(res)
-            else:
-
-                path = param1 or ''
-
-                h = getattr(self,method)
-                res = h(path)
-                print(type(res.content))
-                print() 
-                print('_'*30)
-                print()
-                print('\trequest:\t',method,repr(path or '/'))
-                print('\tresponse:\t', res)
-                print('\tresponse code:\t', res.status)
-                print('\tresponse headers:\t')
-                for k,v in list(res.headers.items()):
-                    print('\t\t',k,':',v)
-                print('\tresponse type:\t', res.content_type)
-                print('\tcontent:\t', res.content) 
-                print()
-
-                if isinstance(res.content,list) or isinstance(res.content,dict) :
-                    pprint(res.content)
-                else:
-                    print(str(res.content)[0:500])
-
-                print() 
-
-        else:
-            all = ('all' in (str(args)))
-            self.debug()
-
 
         
 
