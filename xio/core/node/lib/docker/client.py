@@ -187,14 +187,18 @@ class Image:
 
 class Container:
 
-    def __init__(self,docker,container):
+    def __init__(self,docker,container=None,id=None):
         self.docker = docker
         self.container = container
-        self.raw = container.attrs
-        self.name = container.attrs.get('Name')[1:]
-        self.id = container.attrs.get('Id')
-        #self.image = self.docker.image(id=container.attrs.get('Image'))
-        self.image = container.attrs.get('Image')
+        self.id = id or container.attrs.get('Id')
+        self._load()
+
+    def _load(self):
+        self.container = self.docker.docker.containers.get(self.id)   
+        self.raw = self.container.attrs
+        self.name = self.container.attrs.get('Name')[1:]
+        self.id = self.container.attrs.get('Id')
+        self.image = self.container.attrs.get('Image')
 
         info = self.raw
         #created = datetime.datetime.fromtimestamp(info.get('Created')).strftime('%Y-%m-%d %H:%M')  
@@ -238,8 +242,13 @@ class Container:
     def logs(self):
         return self.container.logs()
 
+    def start(self):
+        self.container.start()
+        self._load()
+
     def stop(self):
-        return self.container.stop()
+        self.container.stop()
+        self._load()
 
     def remove(self):
         return self.container.remove()

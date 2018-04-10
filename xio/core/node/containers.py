@@ -7,10 +7,10 @@ from pprint import pprint
 import datetime
 import yaml
 import time
-
+import traceback
 import xio 
 
-from xio.core.lib.utils import md5
+from xio.tools import md5,mktime
 
 from xio.core.lib.db import db
 
@@ -42,6 +42,7 @@ class Containers:
         container = self.get(index)
         if not container._created:
             container.uri = uri  
+            container.state = 'fetch'
             container.save()
             
 
@@ -76,9 +77,6 @@ class Containers:
 
     def sync(self):
 
-        running_endpoints = self.resync()
-
-        
         # fetch container to provide
         try:
             res = self.node.network.getContainersToProvide(self.node.id)
@@ -93,7 +91,7 @@ class Containers:
         for row in self.db.select():
             container = self.get(row['_id'])
             try:
-                container.sync(running_endpoints)
+                container.sync()
             except Exception as err:
                 self.node.log.error('container.sync error',err)
 
@@ -108,14 +106,54 @@ class Containers:
             
 
 
+from functools import wraps
+
+def workflowOperation(func):
+
+    @wraps(func)
+    def _(self, *args, **kwargs):
+        res = None
+        opname = func.__name__
+        state = self.state
+        if state!= opname:
+            return
+        workflow = self.workflow
+        if not workflow:
+            self.workflow = {}
+        self.workflow.setdefault(opname,{})
+        opstate = self.workflow.get(opname)
+        if not opstate:
+            opstate['started'] = int(time.time())
+            opstate['status'] = 'RUNNING'
+            self.save()
+            try:
+                xio.log.info('workflowOperation',opname,'start')   
+                res = func(self,*args, **kwargs)
+                opstate['status'] = 'SUCCEED'
+            except Exception as err:
+                traceback.print_exc()
+                xio.log.error('workflowOperation',opname,'FAILED',err)   
+                opstate['status'] = 'FAILED'
+                opstate['error'] = err
+            
+            self.save()    
+            return res
+        else:
+            xio.log.warning('workflowOperation',opname,'already running')  
+
+    return _
+
 
 
 class Container(db.Item):
+
+
 
     def __init__(self,containers,*args,**kwargs):
 
         self._containers = containers
         self._docker = containers.docker # skip resource wrapper
+        self.log = self._containers.node.log
 
         db.Item.__init__(self,*args,**kwargs)
 
@@ -130,32 +168,44 @@ class Container(db.Item):
 
 
 
-    def sync(self,running_endpoints=None):
 
-        if not self.fetched:
+    def sync(self):
+
+        self.log.info('sync',self.uri)
+        #pprint(self)
+
+        if self.state != 'running':
+
             self.fetch()
-
-        if not self.builded:
             self.build()
+            self.run()
 
-        if not self.started:
+        else:
 
-            running_endpoints = running_endpoints or self._containers.resync()
-            if self.cname in running_endpoints:
-                self.started = int(time.time()) # to fix, retreive date from docker ps
-                self.endpoint = running_endpoints.get(self.cname).get('endpoint')
-                self.save()
-            else:    
-                self.start()
+            dockercontainer = self._docker.container(name=self.cname)
+            running = dockercontainer.running if dockercontainer else False
 
-            if self.started and self.endpoint:
+            if running:
                 try:
                     self._containers.node.register(self.endpoint)
                 except Exception as err:
-                    import traceback
-                    traceback.print_exc()
-                    self._containers.node.log.error('unable to register containers endpoint',err)
+                    xio.log.error('unable to register containers endpoint',err)
 
+            else:
+                xio.log.warning('container not running, try to restart it ',self.iname)
+                try:
+                    self._containers.node.unregister(self.endpoint)
+                except Exception as err:
+                    xio.log.error('unable to unregister containers endpoint',err)
+                
+                self.state = 'run'
+                if self.workflow and 'run' in self.workflow:
+                    del self.workflow['run']
+                self.save()
+
+
+
+    @workflowOperation    
     def fetch(self):
 
         print ('fetching ...', self.id,self.uri)
@@ -182,20 +232,86 @@ class Container(db.Item):
             self.iname = self.cname.replace('-','/') 
             self.dockerfile = dockerfile
 
-        self.fetched = int(time.time())
-        self.save()
+        self.state = 'build'
 
 
+
+    @workflowOperation 
     def build(self):
 
-        print ('building ...', self.id)
-
         if self.dockerfile:
-            self._docker.build(name=self.iname,directory=self.directory) # ,dockerfile=self.dockerfile
-            self._dockerimage = self._docker.image(name=self.iname)
+            print ('building ...', self.id)
 
-        self.builded = int(time.time())
-        self.save()
+            dockerimage = self._docker.image(name=self.iname)
+            """
+            created = dockerimage._about['created']
+            created = mktime(created)
+
+            """
+
+            if not dockerimage and self.dockerfile:
+                self._docker.build(name=self.iname,directory=self.directory) # ,dockerfile=self.dockerfile
+                self._dockerimage = self._docker.image(name=self.iname)
+                assert self._dockerimage
+        self.state = 'run'
+
+
+
+    @workflowOperation    
+    def run(self):
+        
+        
+        dockercontainer = self._docker.container(name=self.cname)
+        cport = 80
+
+        if not dockercontainer:
+
+            print ('.... run container ...', self.id)
+
+            assert self.cname
+            assert self.iname
+            assert self.directory
+            
+            info = {
+                'name': self.cname,
+                'image': self.iname,
+                'ports': {
+                    cport: 0,
+                    8080: 0, # test/debug
+                },
+                'volumes': {
+                    '/apps/xio': '/apps/xio',
+                    self.directory: '/apps/app',
+                }
+            }
+            dockercontainer = self._docker.run(**info)
+            assert dockercontainer
+            print (dockercontainer)
+
+        else:
+            if not dockercontainer.running:
+                print ('.... start container ...', self.id)
+                dockercontainer.start()  
+                
+
+
+        """
+        if dockercontainer:
+            import sys
+            print (dockercontainer)
+            sys.exit(0)
+        """
+
+        portmapping = dockercontainer.about().get('port') # receive {32776: 8080}
+        print (dockercontainer.about())
+        for k,v in portmapping.items():
+            if v==cport:
+                self.endpoint = 'http://127.0.0.1:%s' % k
+
+        assert self.endpoint
+
+        self.state = 'running'
+
 
 
     def logs(self):
@@ -203,35 +319,6 @@ class Container(db.Item):
         return dockercontainer.logs()
 
 
-
-    def start(self):
-
-        print ('starting ...', self.id)
-        cport = 80
-        info = {
-            'name': self.cname,
-            'image': self.iname,
-            'ports': {
-                cport: 0,
-                8080: 0, # test/debug
-            },
-            'volumes': {
-                '/apps/xio': '/apps/xio',
-                self.directory: '/apps/app',
-            }
-        }
-        self._dockercontainer = self._docker.run(**info)
-
-        assert self._dockercontainer
-
-        portmapping = self._dockercontainer.about().get('port') # receive {32776: 8080}
-        for k,v in portmapping.items():
-            if v==cport:
-                self.endpoint = 'http://127.0.0.1:%s' % k
-
-        self.started = int(time.time())
-
-        self.save()
 
     def request(self,method,path,query):
         """ test for ihm admin only ?"""

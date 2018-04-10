@@ -99,11 +99,11 @@ class Node(App):
 
         # containers sync
         node_peers_heartbeat = xio.env.get('node_peers_heartbeat',300)
-        self.schedule( node_peers_heartbeat, self.containers.sync)
+        self.schedule( node_peers_heartbeat, self.peers.sync)
 
         # peers sync
         node_containers_heartbeat = xio.env.get('node_containers_heartbeat',300)
-        self.schedule( node_containers_heartbeat, self.peers.sync)
+        self.schedule( node_containers_heartbeat, self.containers.sync)
 
         # dht sync
         node_dht_heartbeat = xio.env.get('node_dht_heartbeat',300)
@@ -128,8 +128,10 @@ class Node(App):
             
         if networkhandler:
             networkhandler.start(self)
-            
-        
+
+        self.containers.sync()
+        self.peers.sync()
+        self.syncDht()
 
     def register(self,endpoints):
         

@@ -9,6 +9,7 @@ import binascii
 from functools import wraps
 import os
 import pwd
+import time
 import os.path
     
 try:
@@ -102,7 +103,17 @@ def is_string(s):
 
 def generateuid():
     return uuid.uuid4().hex
+
+
+def mktime(dt):
     
+    try:
+        from dateutil.parser import parse
+        dt = parse(dt)
+    except:
+        import datetime
+        dt = datetime.datetime.strptime( dt, "%Y-%m-%dT%H:%M:%S" )
+    return int(time.mktime(dt.timetuple()))
 
 def md5(*args):
     assert args
