@@ -153,7 +153,7 @@ class Container(db.Item):
 
         self._containers = containers
         self._docker = containers.docker # skip resource wrapper
-        self.log = self._containers.node.log
+        self._log = self._containers.node.log
 
         db.Item.__init__(self,*args,**kwargs)
 
@@ -171,7 +171,7 @@ class Container(db.Item):
 
     def sync(self):
 
-        self.log.info('sync',self.uri)
+        self._log.info('sync',self.uri)
         #pprint(self)
 
         if self.state != 'running':
