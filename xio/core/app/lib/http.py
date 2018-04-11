@@ -18,6 +18,7 @@ if sys.version_info.major == 2:
     from cgi import parse_qs, escape
     import httplib
     import urllib
+    from urllib import unquote_plus
     from httplib import responses as http_responses
     from Cookie import SimpleCookie
 
@@ -28,7 +29,7 @@ else:
     import http.client
     from http.cookies import SimpleCookie
     import urllib.error 
-
+    from urllib.parse import unquote_plus
     from xio.core.lib.utils import to_bytes
     def _send(content):
         return to_bytes(content)
@@ -135,7 +136,7 @@ class HttpService:
                             tmpfile.write(val.file.read())
                             post_params[key] = (tmpfile,val.filename)
                         else:
-                            post_params[key] = urllib.parse.unquote_plus(val.value) 
+                            post_params[key] = unquote_plus(val.value) 
 
                     post_data = post_params
 

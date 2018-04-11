@@ -396,7 +396,7 @@ class App(peer.Peer):
                     servicehandler.start()
                     self.put('run/services/%s' % name, servicehandler)
             except Exception as err:
-                self.log.error('STARTING SERVICE %s FAIL' % (name,err)) 
+                self.log.error('STARTING SERVICE %s FAIL : %s' % (name,err)) 
 
         
         self.debug()
