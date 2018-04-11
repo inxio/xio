@@ -311,7 +311,7 @@ class App(peer.Peer):
         
         # create default 'www' (required for ABOUT call which fail if not www)
         if not 'www' in self._children:
-            self.put('www', lambda req: None)
+            self.put('www', None)
 
         if self.directory:
             wwwstaticdir = self.directory+'/www/static'
@@ -536,6 +536,7 @@ class App(peer.Peer):
 
         parser = argparse.ArgumentParser(add_help=False)
         parser.add_argument('cmd',nargs='?', const=None, default=None)
+        parser.add_argument('param',nargs='?', const=None, default=None)
         parser.add_argument('--http', type=int, nargs='?', const=8080, default=8080)
         parser.add_argument('--ws', type=int, nargs='?', const=8484, default=None)
         parser.add_argument('--debug', action='store_true')
@@ -571,74 +572,30 @@ class App(peer.Peer):
             import time
             while True:
                 time.sleep(0.1)
-
                 
-        sys.exit() 
+        elif args.cmd=='about':
 
-    
-    
-        import sys
-        import os
-        from pprint import pprint
-        import os.path
-        import xio
-
-        args = sys.argv
-
-        args = args+[None]*5
-        param0 = args[0]
-        cmd = args[1]
-        param1 = args[2]
-        param2 = args[3]
-        param3 = args[4]
-        param4 = args[5]
-
-        print('\n\n==========',cmd, param1 or '')
-        print("""
-            map:        app map
-            run:        run services on debug mod
-            *:          HTTP * ( www/* )
-        """)    
-        print()
-        print("\tapp=",self)
-        print("\tapp=",self.id)
-        print('\tapp=',self.name)
-        print('\tapp=',self._about)
-        print('\tnode=',xio.env.get('node'))
-        print()
-
-        if cmd=='run':
-
-            import argparse
-
-            parser = argparse.ArgumentParser(add_help=False)
-            parser.add_argument("run")
-            parser.add_argument('--http', type=int, nargs='?', const=8080, default=8080)
-            parser.add_argument('--ws', type=int, nargs='?', const=8484, default=None)
-            parser.add_argument('--debug', action='store_true')
-            parser.add_argument('--network', action='store_true')
-
-            # add custome env
-            for k,v in xio.env.items():
-                print ('k',k)
-                try:
-                    parser.add_argument('--'+k, default=v)
-                except:
-                    pass
+            if not args.param:
+                print ('\n======= about /')
+                pprint(self.about().content)
+                print ('\n======= about www')
             
-            options = vars(parser.parse_args() )
-
-            for key,val in options.items():
-                xio.env.set(key,val)
+                pprint(self.render('ABOUT').content)
+            else:
             
-            self.run(**options)
+                pprint(self.render('ABOUT',args.param).content)
+        elif args.cmd=='api':
+        
+            path = args.param or ''
+            res = self.render('API',path)
+            print (res)
+            api = self.render('API',path).content
+            assert api
+            pprint (dict(api))
+            for key,val in api.items():
+                print (key,val.get('description'))
             
-            import time
-            while True:
-                time.sleep(0.1)
-            sys.exit()    
-        if cmd:
-            method = cmd.upper()
+        elif args.cmd=='get':
 
             h = self.get('bin/%s' % cmd)
             if h.content:
@@ -671,13 +628,9 @@ class App(peer.Peer):
                     print(str(res.content)[0:500])
 
                 print() 
-
         else:
-            all = ('all' in (str(args)))
-            self.debug()
-
+            self.debug()          
         
-
 
 
 

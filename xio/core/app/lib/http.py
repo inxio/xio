@@ -243,6 +243,7 @@ class HttpService:
             return [ _send( content.encode('utf8') ) ] # any iterable/yield ?
 
         except Exception as err:
+            # to fix - missing cors header in this case
             print(traceback.format_exc())    
             status = '%s %s' % (500, http_responses.get(500))
             
@@ -251,6 +252,7 @@ class HttpService:
             res = """<html><body><h1>%s</h1><h2>%s</h2><p>%s</p></body></html>""" % (status,err,res)
             start_response(status,[('Content-Type','text/html')])
             return [ _send(res) ]
+
 
 
 class Httpds(Httpd):

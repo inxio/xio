@@ -60,6 +60,69 @@ def resource(handler=None,context=None,about=None,**kwargs):
     return res
 
 
+
+
+ABOUT_APP_PUBLIC_FIELDS = ['description','links','provide','configuration','links','profiles']
+
+def fixAbout(about):
+
+    """
+    print('============= FIX ABOUT BEFORE')
+    pprint(about)
+    print('=============')
+    """
+
+    # setup required keys
+    options = about.pop('options',[])
+    if not isinstance(options,list):
+        options = [ o.strip().upper() for o in options.split(',') ] 
+
+    about.setdefault('options',options)
+    about.setdefault('methods',{})
+    about.setdefault('routes',{})
+
+    # v0.1
+    """
+    type: operation 
+    method: GET
+    links: 
+        - ...
+    input:
+        params:
+    context: products
+    implement: xrn..
+    icon: fa-barcode 
+    """
+    oldtype = about.pop('type',None)
+    oldmethod = about.pop('method','')
+    oldinput = about.pop('input',{})
+    oldoutput = about.pop('output',{})
+
+    if oldinput and not oldmethod:
+        oldmethod = 'get,post'
+    if oldmethod:
+        for m in oldmethod.split(','):
+            method = m.strip().upper()
+            about['methods'][method] = {}
+            if oldinput:
+                about['methods'][method]['input'] = oldinput
+            if oldoutput:
+                about['methods'][method]['output'] = oldoutput             
+
+    # fix options
+    for key in about['methods']:
+        if not key in about['options']:
+            about['options'].append(key)
+
+
+    # clear old params
+    about.pop('output',None)
+    about.pop('input',None)
+    about.pop('method',None)
+
+    # skip empty data (routes,method) ? 
+    return about
+
 def extractAbout(h):
     about = h if isinstance(h,dict) else {}
     if not about:
@@ -78,30 +141,7 @@ def extractAbout(h):
             except Exception as err:   
                 about = {}    
 
-    # fix methods
-    about.setdefault('methods',{})
-    options = about.pop('options',[])
-
-    assert not isinstance(options,dict) # prevent old versions
-    
-    if not isinstance(options,list):
-        options = [ o.strip().upper() for o in options.split(',') ] 
-    if not about['methods']:
-        for method in options:
-            about['methods'][method] = {}
-            if 'input' in about:
-                about['methods'][method]['input'] = about['input']
-            if 'output' in about:
-                about['methods'][method] ['output'] = about['output']
-
-    about['options'] = options
-
-    # clear old params
-    about.pop('output',None)
-    about.pop('input',None)
-    about.pop('method',None)
-
-    return about
+    return fixAbout(about)
 
 
 def handleAuth(func):
@@ -129,10 +169,8 @@ def handleAuth(func):
                 auhtenticate = resp.headers.get('WWW-Authenticate')
                 if auhtenticate:
                     scheme = auhtenticate.split(' ').pop(0).split('/').pop()
-                    #print scheme
                     token = peer.key.generateToken(scheme)
                     self._handler_context['authorization'] = 'xio/'+scheme+' '+token
-                    #print cli.context
                     resp = func(self,method,*args,**kwargs)
                 
             if resp.status==402:
@@ -260,8 +298,10 @@ def handleDelegate(func):
         skiphandler = req.context.get('skiphandler') and self._skip_handler_allowed
         must_delegate = self._handler and isinstance(self._handler, collections.Callable) and not skiphandler
 
-        # fix about : if already have about (eg via doctest) we skip handler call if there is not ABOUT in OPTIONS
-        if must_delegate and not self.__CLIENT__ and req.ABOUT and not req.path and self._about and not 'ABOUT' in self._about.get('options'):
+        
+        # fix about + api: if already have about (eg via doctest) we skip handler call if there is not ABOUT in OPTIONS
+        #print ('... DELEGATE? ...',req)
+        if must_delegate and not self.__CLIENT__ and (req.ABOUT or req.API) and not req.path and self._about and not 'ABOUT' in self._about.get('options'):
             print ('... SKIP DELEGATE ...',req)
             must_delegate = False # pb with xio.client => in client case must_delegate is ALWAY TRUE 
 
@@ -269,7 +309,6 @@ def handleDelegate(func):
         if req.OPTIONS and not req.path:
             must_delegate = False
         
-        #print ('...',req)
 
         req.response.status = 0
 
@@ -686,26 +725,27 @@ class Resource(object):
 
     def _handleAbout(self,req):
 
+        print('.................handleAbout',self.path)
+
         about = copy.copy(self._about)
         root = req.context.get('root')
         
         peerserver = self._root or req.server or root # tofix root could be None
 
         fullpath = req.fullpath.replace('/','')
-        
-        if fullpath=='www' or fullpath=='':
+        add_app_info = (fullpath=='www' or self.path=='www') # or fullpath=='': # pb with fullpath=='' ===> r = app.get('www'/p2') r.about() have fullpath==''
+        if add_app_info: 
             
             # merge resource about with app about
             if peerserver:
                 about['id'] = peerserver.id
                 about['name'] = peerserver.name  
                 # to fix: add withlist of app about field
-                print (about)
-                print (self._handler.__doc__)
-                fields = ['description','links','provide']
-                for k in fields:
+
+                for k in ABOUT_APP_PUBLIC_FIELDS:
                     if peerserver._about and k in peerserver._about:
                         about[k] = peerserver._about[k]
+
 
             about['type'] = self.__class__.__name__.lower() if not peerserver else peerserver.__class__.__name__.lower()
             
@@ -726,6 +766,44 @@ class Resource(object):
             about['resources'][childname] = {}
         
         return about
+
+
+    def _handleApi(self,req):
+
+        print('.................handleApi',self)
+        api = collections.OrderedDict()
+
+        about = self.about().content
+
+        methods = about.get('methods',{})
+        routes = about.get('resources',{})
+        description = about.get('description')
+
+        pprint(about)
+
+        # root route
+        info = {}
+        if description:
+            info['description'] = description
+
+        if methods:
+            info['methods'] = collections.OrderedDict()
+            for method,methodinfo in list(methods.items()):
+                info['methods'][method] = methodinfo
+
+        api['/'] = info
+
+        for childpath,info in routes.items():
+            #print('.................childapi',childpath,info)
+            childapi = self.api(childpath).content or {}
+            print('.................childapi',childpath,childapi)
+            for cpath,cinfo in list(childapi.items()):
+                if cpath[-1]=='/':
+                    cpath=cpath[:-1]
+                cpath = '/'+childpath+cpath
+                api[cpath] = cinfo
+                
+        return api
 
 
 
@@ -761,38 +839,6 @@ class Resource(object):
             results.append(result)
 
         return results
-
-
-    def _handleApi(self,req):
-
-        api = collections.OrderedDict()
-
-        about = self.about(req).content
-
-        methods = about.get('methods',{})
-        resources = about.get('resources',{})
-        description = about.get('description')
-
-        # root route
-        info = {}
-        if description:
-            info['description'] = description
-
-        if methods:
-            info['methods'] = collections.OrderedDict()
-            for method,methodinfo in list(methods.items()):
-                info['methods'][method] = methodinfo
-
-        api['/'] = info
-
-        for childname,info in list(resources.items()):
-            childapi = self.api(childname).content or {}
-            for cpath,info in list(childapi.items()):
-                if cpath[-1]=='/':
-                    cpath=cpath[:-1]
-                cpath = '/'+childname+cpath
-                api[cpath] = info
-        return api
 
 
 
