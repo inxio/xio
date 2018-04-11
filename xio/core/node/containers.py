@@ -215,7 +215,7 @@ class Container(db.Item):
 
         about_filepath = self.directory+'/about.yml'
         with open(about_filepath) as f:
-            data = yaml.load(f)
+            about = yaml.load(f)
 
         self.name = data.get('name')
         nfo = self.name.split(':')
@@ -223,10 +223,12 @@ class Container(db.Item):
 
         self.cname = '-'.join(nfo)
 
+        dockerinfo = about.get('docker',{})
+
         # set image
         dockerfile = self.directory+'/Dockerfile'
         if not os.path.isfile(dockerfile):
-            self.iname = 'inxio/app'
+            self.iname = dockerinfo.get('image', 'inxio/app-alpine')
             self.dockerfile = None
         else:
             self.iname = self.cname.replace('-','/') 
