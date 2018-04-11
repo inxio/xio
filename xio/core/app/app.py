@@ -332,10 +332,79 @@ class App(peer.Peer):
     
         self.log.info('RENDER',req.xmethod or req.method, repr(req.path),'by',self)
 
-        req.path = 'www/'+req.path if req.path else 'www'
+        # handle test
+        if not req.path and req.TEST:
+            return self._handleTest(req)
 
+        req.path = 'www/'+req.path if req.path else 'www'
         return self.request(req)
 
+
+
+    def _handleTest(self,req):
+
+        sumarize = []
+        if self._tests:
+
+            import unittest 
+
+            modules = [
+                self._tests,
+            ]
+
+            suite = unittest.TestSuite()
+            loader = unittest.TestLoader()
+            for mod in modules:
+                suitemod = loader.loadTestsFromModule(mod)
+                suite.addTests( suitemod )
+
+            result = unittest.TestResult()
+            result.buffer=True
+            suite.run(result)
+
+            ERRORS = {}
+            for error in result.errors+result.failures:
+                t,mess = error
+                ERRORS[t.id()] = mess  
+
+            for s in suite:
+                for t in s:
+                    failure = None
+                    if not t.id() in ERRORS:
+                        status = 'OK'
+                    else:
+                        status = 'FAILED'
+                        failure = ERRORS[t.id()].replace('\n','\n\t\t')
+                    name = t.id().split('.').pop()
+                    row = {
+                        'test': name,
+                        'status': status,
+                    }
+                    if failure:
+                        row['failure'] = failure
+                    sumarize.append(row)
+
+
+        nb_ok = 0
+        nb_ko = 0
+        nb_total = 0
+        for row in sumarize:
+            nb_total += 1
+            status = row.get('status')
+            if status=='OK':
+                nb_ok+=1
+            else:
+                nb_ko+=1
+        
+        return {
+            'qos': int(nb_ok*100/nb_total),
+            'statuses': {
+                'ok': nb_ok,
+                'ko': nb_ko,
+                'total': nb_total,    
+            },
+            'details': sumarize
+        }
 
        
 

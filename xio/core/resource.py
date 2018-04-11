@@ -809,12 +809,6 @@ class Resource(object):
 
     def _handleTest(self,req):
 
-        root = req.context.get('root')
-        return root._handleTest(req)
-        
-        if req.fullpath.replace('/','')=='www':
-            return root._handleTest(req)
-
         tests = self._about.get('tests',[])
         results = []
         for test in tests:
