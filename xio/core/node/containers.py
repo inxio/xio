@@ -217,7 +217,7 @@ class Container(db.Item):
         with open(about_filepath) as f:
             about = yaml.load(f)
 
-        self.name = data.get('name')
+        self.name = about.get('name')
         nfo = self.name.split(':')
         nfo.pop(0)  # strip xrn:
 
