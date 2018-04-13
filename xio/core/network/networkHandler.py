@@ -63,7 +63,7 @@ class NetworkHandler:
             abi = self._about.get('abi')
             assert abi
 
-        self.contract = self.ethereum.contract(address=address,abi=abi)
+        self.contract = self.ethereum.contract(address=address,abi=abi) if address else None
 
         self._handler_api = {}
         for m in dir(self):
@@ -74,10 +74,11 @@ class NetworkHandler:
 
     def about(self):
         about = self._about
-        about.update({
-            'address': self.contract.address,
-            'api': self.contract.api
-        })
+        if self.contract:
+            about.update({
+                'address': self.contract.address,
+                'abi': self.contract.abi
+            })
         return about
 
     def start(self,app):

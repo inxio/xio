@@ -56,7 +56,6 @@ class Node(App):
 
         App.__init__(self,name,**kwargs)
 
-
         self.uid = generateuid()
 
         # if network defined we have to connect to it for AUTH handling    
@@ -67,8 +66,13 @@ class Node(App):
         try:
             networkhandler = self.network._handler.handler._handler
             self.dht = networkhandler.dht
-        except:
-            pass
+
+            self._about['network'] = networkhandler.about()  
+
+        except Exception as err:
+            self.log.warning('networkhandler error',err) 
+
+            
         self.dht = None
 
         self.bind('www', self.renderWww)   
