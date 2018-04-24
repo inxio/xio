@@ -125,13 +125,13 @@ class Node(App):
 
         try:
             # if exist this node act as a server
-            networkhandler = self.network._handler.handler._handler
+            self.networkhandler = self.network._handler.handler._handler
         except:
             # maybe remote network, this node is a client
-            networkhandler = None 
+            self.networkhandler = None 
             
-        if networkhandler:
-            networkhandler.start(self)
+        if self.networkhandler:
+            self.networkhandler.start(self)
 
         self.containers.sync()
         self.peers.sync()
@@ -176,9 +176,18 @@ class Node(App):
         # NODE DELIVERY
         if not req.path:
             log.info('==== NODE DELIVERY =====', req.path, req.method, req.xmethod )
-
+            log.info('==== USER =====', req.client.id )
             if req.GET:
-                return [ peer.getInfo() for peer in self.peers.select() ]
+                # node peers 
+                peers =  [ peer.about().content for peer in self.peers.select() ]
+                resources = []
+                rows = self.networkhandler.getResources(req.client.id)
+                for row in rows:
+                    xrn = row.get('name')
+                    peer = self.peers.get(xrn)
+                    row['available'] = bool(peer)
+                    resources.append( row )
+                return resources
 
             elif req.ABOUT:
                 about = self._handleAbout(req)

@@ -128,12 +128,8 @@ class Container:
 
         query = {'_id': index }
         data = data or {}
-
-        #print (data)
-        #return self.collection.insert(query, {"$set":data}); # to fix
-        exist = self.get(index)
-        if not exist:
-            return self.collection.update(query, {"$set":data}, upsert=True); # pb car put faisait une mise a jour
+        self.delete(index)
+        return self.collection.update(query, {"$set":data}, upsert=True); # pb car put faisait une mise a jour
 
 
 
