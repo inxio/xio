@@ -9,8 +9,8 @@ try:
 except:
     import ipfsapi as ipfsApi
 
-#IPFS_HOST = '127.0.0.1'
-IPFS_HOST = 'https://ipfs.infura.io'
+IPFS_HOST = '127.0.0.1'
+#IPFS_HOST = 'https://ipfs.infura.io'
 IPFS_PORT = 5001
 
 IPFS_GATEWAYS = [

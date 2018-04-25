@@ -18,7 +18,7 @@ class ContractMethodWrapper:
 
     def __call__(self,*args,**kwargs):
         print( 'CONTRACT CALL',self.method,args,kwargs)
-        return self.contract.request(self.method,*args,**kwargs)
+        return self.contract.request(self.method,args,kwargs)
 
 
 
@@ -114,13 +114,21 @@ class Contract:
 
         print( 'CONTRACT REQUEST',method,args,context)
 
+        if not context.get('from'):
+            context['from'] = self.account
+
         _from = context.get('from')
 
-        if hasattr(_from,'key'):
+        if hasattr(_from,'address'):
+            context['from'] = _from.address
+            private = _from.private
+        elif hasattr(_from,'key'):
             account = self.ethereum.account(_from)
             private = account.private
             context['from'] = account.address
 
+
+        assert context.get('from')     
 
         # fix for uppercase method handling (req)
 
@@ -154,11 +162,13 @@ class Contract:
         if 'to' in context:
             context['to'] = self.web3.toChecksumAddress(context['to'])
         """
+        print (context)
 
         if not USE_TRANSACTION:
             methodhandler = getattr( self.c.call(context) , name)
             return methodhandler(*args)
         else:
+            assert private # to fix, if no private must send HTTP respnse status for sign
             if not private:
                 context.setdefault('gas',2000000) # fix bug gas
                 methodhandler = getattr( self.c.transact(context) , name)

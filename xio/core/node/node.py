@@ -31,7 +31,6 @@ import sys
 import collections
 
 
-
 def node(*args,**kwargs):
     return Node.factory(*args,**kwargs)
 
@@ -175,8 +174,11 @@ class Node(App):
 
         # NODE DELIVERY
         if not req.path:
+
             log.info('==== NODE DELIVERY =====', req.path, req.method, req.xmethod )
             log.info('==== USER =====', req.client.id )
+
+            # handle network resources listings
             if req.GET:
                 # node peers 
                 peers =  [ peer.about().content for peer in self.peers.select() ]
@@ -211,19 +213,29 @@ class Node(App):
             elif req.EXPORT:
                 return self.peers.export()
 
-        
+            
         else:
-               
+            # handle resource REQUEST
+
             p = req.path.split('/')
             peerid = p.pop(0)
             assert peerid
 
-            peer = self.peers.get(peerid)
-            assert peer,404
             
             log.info('==== DELIVERY REQUEST =====', req.method, req.xmethod )
             log.info('==== DELIVERY FROM =====', req.client.id )
             log.info('==== DELIVERY TO   =====', peerid) 
+
+            peer = self.peers.get(peerid)
+
+            # fallback about for peer not registered
+            if req.ABOUT and not p and not peer:
+                row = self.networkhandler.getResource(req.client.id, peerid)
+                assert row,404
+                return row
+            
+            assert peer,404
+
             try:
                 req.path = '/'.join(p)
                 resp = peer.request(req)
