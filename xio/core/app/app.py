@@ -255,7 +255,7 @@ class App(peer.Peer):
         from .lib.cache import CacheService
         self.put('services/cache', CacheService(self) )
 
-
+        """
         # build resources
         if self._about:
             resources = self._about.get('resources')
@@ -272,6 +272,7 @@ class App(peer.Peer):
                     rhandler.basepath = handler_path
                     rhandler.profile = handler_params # tofix
                     self.bind(path, rhandler )
+        """
 
         # build services
         services = self._about.get('services')

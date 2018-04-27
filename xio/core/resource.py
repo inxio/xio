@@ -62,7 +62,7 @@ def resource(handler=None,context=None,about=None,**kwargs):
 
 
 
-ABOUT_APP_PUBLIC_FIELDS = ['description','links','provide','configuration','links','profiles','network']
+ABOUT_APP_PUBLIC_FIELDS = ['description','links','provide','configuration','links','profiles','network','methods','options','resources']
 
 def fixAbout(about):
 
