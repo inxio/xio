@@ -98,8 +98,19 @@ class Connector:
     def transaction(self,data):
         return Transaction(self,data)
 
+
+
     def sendRawTransaction(self,raw):
-        return self.web3.eth.sendRawTransaction(raw) 
+        tx = self.web3.eth.sendRawTransaction(raw) 
+        return tx
+        """    
+        # not ready for parsing response/logs 
+        receipt = ethereum.web3.eth.getTransactionReceipt(tx)
+        log = receipt.get('logs')[0]
+        pprint(dict(log))
+        """
+
+        
 
 class Transaction:
 

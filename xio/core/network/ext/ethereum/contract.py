@@ -61,7 +61,7 @@ class Contract:
             'fromBlock': 0, 
             'toBlock': 'latest'
         }
-        if ethereum.OLDWEB3VERSION:
+        if self.ethereum.OLDWEB3VERSION:
             # http://web3py.readthedocs.io/en/stable/contracts.html
             events = self.c.pastEvents(name, params) #
             rows = events.get(only_changes=False)
