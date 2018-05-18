@@ -45,6 +45,8 @@ class Contract:
                     setattr(self,name, h)           # binding for direct use
 
 
+    def getBalance(self):
+        return self.ethereum.getBalance(self.address)
 
     def events(self,name=None,filter=None):
         """
