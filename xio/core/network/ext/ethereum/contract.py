@@ -86,7 +86,7 @@ class Contract:
 
         
 
-    def transaction(self,_from,method,args):
+    def transaction(self,_from,method,args,kwargs):
 
         """
         v3 https://github.com/ethereum/web3.py/blob/v3/web3/contract.py
@@ -101,12 +101,14 @@ class Contract:
         else:
             data = self.c.encodeABI(method, args)
 
+
         transaction = self.ethereum.transaction({
             'from': _from,
             'to': self.address,
             #'gasPrice': 2345678921,
             #'gas': 200000,
             #'nonce': nonce,
+            'value': kwargs.get('value',0),
             'data': data
         })
         return transaction
@@ -139,7 +141,7 @@ class Contract:
         assert abi
         name = abi.get('name')
 
-        USE_TRANSACTION = not abi.get('constant')
+        USE_TRANSACTION = not abi.get('constant') and not abi.get('view')
 
 
         if self.ethereum.OLDWEB3VERSION:
@@ -177,7 +179,7 @@ class Contract:
                 return methodhandler(*args)
             else:
                
-                transaction = self.transaction(context['from'],name,args)
+                transaction = self.transaction(context['from'],name,args,context)
                 transaction.sign(private)
                 return transaction.send()
            
