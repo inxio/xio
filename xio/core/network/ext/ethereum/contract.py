@@ -48,6 +48,22 @@ class Contract:
     def getBalance(self):
         return self.ethereum.getBalance(self.address)
 
+    def new(self,cls,*args):
+        
+        transparams = {
+            'from': self.account.address,
+        }
+        deploy_txn = self.web3.eth.contract(abi=self.abi, bytecode=self.bytecode).deploy(transparams,args=args) # args=[name.encode()]
+        deploy_receipt = None
+        while not deploy_receipt:
+            deploy_receipt = self.web3.eth.getTransactionReceipt(deploy_txn)
+        assert deploy_receipt is not None
+        address = deploy_receipt['contractAddress']   
+        assert address
+        print("====> contract created ",address)
+        return address
+        
+
     def events(self,name=None,filter=None):
         """
         # http://web3py.readthedocs.io/en/latest/contracts.html
