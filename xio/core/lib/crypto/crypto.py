@@ -57,8 +57,6 @@ class Key:
             account = ethereum_handler(seed=self.private) if ethereum_handler else None
             self._accounts[network] = account
         return self._accounts.get(network)
-            
-
 
         
     def encrypt(self,message,*args,**kwargs):

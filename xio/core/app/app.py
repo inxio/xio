@@ -138,6 +138,7 @@ def handleCache(func):
                     response = req.response
                     
                     ttl = req.response.ttl
+                    ttl = 0 # to fix, disable
                     cache_allowed = ttl and bool(response) and response.status==200 and not inspect.isgenerator(response.content)
                     if cache_allowed:
                         print('write cache !!!', uid,ttl)
@@ -216,6 +217,12 @@ class App(peer.Peer):
         self.name = self._about.get('name')
         if 'id' in self._about:
             self.id = self._about.get('id')
+        else:
+            #tofix - dev only, generate app key from name
+            from xio.core.lib.crypto import crypto
+            self.key = crypto.key(seed=self.name) 
+            self.id = self.key.account('ethereum').address
+            self.token = self.key.generateToken('ethereum')
 
         # loading test
         if os.path.isfile(self.directory+'/tests.py'):

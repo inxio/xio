@@ -172,6 +172,9 @@ class Node(App):
         if req.OPTIONS:
             return ''
 
+        if not req.client.id:
+            req.client.id = '0xede749ac3AF55575640aDd01E28760d88c9Cd6E4'
+
         # NODE DELIVERY
         if not req.path:
 
@@ -180,7 +183,11 @@ class Node(App):
 
             # handle network resources listings
             if req.GET:
-                # node peers 
+                # node peers
+                peers = [peer.about().content for peer in self.peers.select()]
+                return peers
+                """
+
                 peers =  [ peer.about().content for peer in self.peers.select() ]
                 resources = []
                 rows = self.networkhandler.getResources(req.client.id)
@@ -190,7 +197,7 @@ class Node(App):
                     row['available'] = bool(peer)
                     resources.append( row )
                 return resources
-
+                """
             elif req.ABOUT:
                 about = self._handleAbout(req)
                 if self.network:
@@ -213,47 +220,67 @@ class Node(App):
             elif req.EXPORT:
                 return self.peers.export()
 
-            
-        else:
-            # handle resource REQUEST
+             # method not allowed
+            raise Exception(405,'METHOD NOT ALLOWED')
 
-            p = req.path.split('/')
-            peerid = p.pop(0)
-            assert peerid
+        # handle resource REQUEST
+        assert req.path
 
-            
-            log.info('==== DELIVERY REQUEST =====', req.method, req.xmethod )
-            log.info('==== DELIVERY FROM =====', req.client.id )
-            log.info('==== DELIVERY TO   =====', peerid) 
+        p = req.path.split('/')
+        peerid = p.pop(0)
+        assert peerid
 
-            peer = self.peers.get(peerid)
+        
+        log.info('==== DELIVERY REQUEST =====', req.method, req.xmethod )
+        log.info('==== DELIVERY FROM =====', req.client.id )
+        log.info('==== DELIVERY TO   =====', peerid) 
 
-            # fallback about for peer not registered
-            if req.ABOUT and not p and not peer:
-                row = self.networkhandler.getResource(req.client.id, peerid)
-                assert row,404
-                return row
-            
-            assert peer,404
+        peer = self.peers.get(peerid)
 
-            try:
-                req.path = '/'.join(p)
-                resp = peer.request(req)
-                req.response.status = resp.status
-                req.response.headers = resp.headers  # pb si header transferé tel quel ->
-                req.response.content_type = resp.content_type
-                req.response.ttl = resp.ttl
-                return resp.content      
-            except Exception as err:
-                traceback.print_exc()
-                req.response.status = 500
+        # fallback about for peer not registered
+        if req.ABOUT and not p and not peer:
+            row = self.networkhandler.getResource(req.client.id, peerid)
+            assert row,404
+            return row
+        
+        assert peer,404
+
+        # checkpoint, handle userid/serviceid registration,stats,quota
+        #req.require('quota',100)
+        assert req.client.id and peer.id
+        quotas = self.check(req.client.id,peer.id)
+        log.info('==== DELIVERY QUOTAS   =====', quotas) 
+        import json
+        req.headers['XIO-quotas'] = json.dumps(quotas)
+
+        try:
+            req.path = '/'.join(p)
+            resp = peer.request(req)
+            print (peer)
+            print (resp)
+
+            req.response.status = resp.status
+            req.response.headers = resp.headers  # pb si header transferé tel quel ->
+            req.response.content_type = resp.content_type
+            req.response.ttl = resp.ttl
+            return resp.content      
+        except Exception as err:
+            traceback.print_exc()
+            req.response.status = 500
 
                
         # NETWORK DELIVERY
         return self.network.render(req)
 
 
-
+    def check(self,userid,serviceid):
+        networkhandler = self.network._handler.handler._handler
+        quotas = networkhandler.getUserRegistration(userid,serviceid)
+        pprint(quotas)
+        assert quotas[0], Exception(402,'Payment Required')
+        #raise Exception(428,'Precondition Required')
+        #raise Exception(429,'QUOTA EXCEEDED')
+        return quotas
         
 
 

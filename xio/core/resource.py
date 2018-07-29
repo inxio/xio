@@ -260,7 +260,7 @@ def handleRequest(func):
             resp = self._toResource(req,resp)
 
         assert isinstance(resp, Resource)
-        assert resp.status
+        #assert resp.status
         assert not isinstance(resp.content, Resource)
         return resp
 
@@ -640,7 +640,14 @@ class Resource(object):
             assert name
 
             path = self.path+'/'+name if self.path else name
-            child = Resource(path=path,content=data,status=201,parent=self) if not isinstance(data,Resource) else data
+            import xio
+            from xio.core.app.app import App
+            if isinstance(data,App):
+                child = xio.client( data )
+            elif isinstance(data,Resource):
+                child = data
+            else:
+                child = Resource(path=path,content=data,status=201,parent=self)
 
             self._children[name] = child
             return self._children[name]

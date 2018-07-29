@@ -110,6 +110,16 @@ class Web3Handler(_Account):
         address = cls.recover(nonce,sig)
         return address
 
+   
+    def generateToken(self):
+        import time
+        nonce = str(int(time.time()))
+        v,s,r = self.sign(nonce)
+        token = '%s-%s-%s-%s-%s' % (self.address,nonce,v,r,s)
+        assert self.recoverToken(token).lower()==self.address.lower()
+        return token
+
+
 class BitcoinEthereumHandler(_Account):
 
     def __init__(self,private=None,seed=None,**kwargs):

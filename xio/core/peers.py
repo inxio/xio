@@ -74,7 +74,9 @@ class Peers:
         if sub_register:
             # and not peerid: # pb peerid du child ecrasé par le about
             peername = sub_register # fix for child xrn missing 
-            peerid = md5(peername)
+            print(peername)
+            assert peerid
+            #peerid = md5(peername)
         
         peertype = about.get('type','app').lower()
          
@@ -357,7 +359,7 @@ class PeerClient(Resource):
         context = req.client.context or {}
         context['xio_id'] = req.client.id if req.client else 0 
         client = xio.client(self.endpoint,context)
-       
+        print ('????',self.endpoint)
         try:
             res = client.request(req.method, req.path, data=req.data,query=req.query,headers=req.headers)
             if res.status==201 and 'Location' in res.headers:

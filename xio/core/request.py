@@ -196,6 +196,24 @@ class Request(object):
             self._uid = uid
         return self._uid
 
+    def getQuotas(self):
+        """
+        retreive quotas provided by node
+        """
+        quotas = self.headers.get('XIO-quotas') or self.headers.get('xio_quotas')
+        if quotas:
+            infos = json.loads(quotas)
+            quotas = {}
+            if infos[0]:
+                quotas['ttl'] = infos[0]
+            if infos[1]:
+                quotas['storage'] = infos[1]
+            if infos[2]:
+                quotas['request'] = infos[2]
+            if infos[2]:
+                quotas['items'] = infos[3]
+        return quotas or {}
+        
 
     def getStat(self):
         """

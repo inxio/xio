@@ -8,6 +8,11 @@ import sys
 
 from pprint import pprint
 
+
+ 
+
+
+
 class TestCases(unittest.TestCase):
 
     def test_base(self):
@@ -22,6 +27,18 @@ class TestCases(unittest.TestCase):
         cli = xio.resource(app)
         assert cli.about().content.get('id')==app.id
         assert cli.request('ABOUT','').content.get('id')==app.id
+
+    def test_mixed(self):
+    
+        app1 = xio.app( lambda req: 'app1' )
+        app2 = xio.app( lambda req: 'app2' )
+        app = xio.app()
+        app.bind('www/app1', app1)
+        app.bind('www/app2', app2)
+
+        assert app.get('www/app1').content=='app1'
+        assert app.get('www/app2').content=='app2'
+        
 
     def test_app_server_lambda(self):
 

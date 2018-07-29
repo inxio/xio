@@ -98,13 +98,13 @@ class NetworkHandler:
         if req.ABOUT:
             return self.about()
     
-        pprint(req._debug())
+        #pprint(req._debug())
 
         # check for method handler
         method = req.xmethod or req.method
 
         h = self._handler_api.get(method.lower())
-        print(self._handler_api)
+        #print(self._handler_api)
         if h:
             return h(req)
         elif method.lower() in self.contract.api:

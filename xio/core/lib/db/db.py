@@ -101,6 +101,14 @@ class Container:
     def get(self,id,fields=None):
         assert id
         data = self.handler.get(id)
+        if data and '_ttl' in data:
+            created = data.get('_created')
+            ttl = data.get('_ttl')
+            now = int(time.time()) 
+            if ttl and now > created+ttl:
+                self.handler.delete(id)
+                return None
+
         return xio.data(data,fields=fields) if not self._factory else self._factory(data,container=self)
   
     def select(self,filter=None,fields=None,limit=None,start=0,sort=None,**kwargs):
