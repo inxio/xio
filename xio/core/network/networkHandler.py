@@ -24,7 +24,12 @@ BASEABI = [{
 
 class NetworkHandler:
 
-    def __init__(self,address=None,abi=None):
+    def __init__(self,config):
+
+        ethereum_network = config.get('ethereum').get('network')
+        abi = config.get('ethereum').get('abi')
+        address = config.get('ethereum').get('address')
+        coinbase = config.get('ethereum').get('coinbase')
     
         # DHT
         from .ext.dht.service import DhtService
@@ -45,7 +50,8 @@ class NetworkHandler:
 
         # ETHEREUM
         from .ext.ethereum.connector import Connector
-        self.ethereum = Connector()
+        user = xio.user(seed='root')
+        self.ethereum = Connector(network=ethereum_network,user=user)
 
         self.log = xio.log
         self._about = {}
@@ -64,6 +70,7 @@ class NetworkHandler:
             assert abi
 
         self.contract = self.ethereum.contract(address=address,abi=abi) if address else None
+        self.contract.account = coinbase
 
         self._handler_api = {}
         for m in dir(self):

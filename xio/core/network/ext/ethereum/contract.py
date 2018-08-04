@@ -35,6 +35,7 @@ class Contract:
         self.api = {}
 
         if self.address:
+            self.address = self.web3.toChecksumAddress(address)
             self.c = self.web3.eth.contract(abi=self.abi,address=self.address)
             for row in self.abi:
                 name = row.get('name','')
@@ -146,6 +147,10 @@ class Contract:
             account = self.ethereum.account(_from)
             private = account.private
             context['from'] = account.address
+        else:
+            account = self.account
+            private = account.private
+            context['from'] = account.address
 
 
         assert context.get('from')     
@@ -182,7 +187,7 @@ class Contract:
         if 'to' in context:
             context['to'] = self.web3.toChecksumAddress(context['to'])
         """
-        print (context)
+        #print (context)
 
         if not USE_TRANSACTION:
             methodhandler = getattr( self.c.call(context) , name)

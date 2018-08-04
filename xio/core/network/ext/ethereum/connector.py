@@ -121,7 +121,7 @@ class Transaction:
         data.update({
             'gasPrice': '2345678',
             'gas': 3100000,
-            'chainId': '1',
+            #'chainId': '1',
             'nonce': self.web3.eth.getTransactionCount(data.get('from')),
             'gasPrice': self.web3.eth.gasPrice
         })
