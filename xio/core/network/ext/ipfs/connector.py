@@ -48,7 +48,13 @@ class Handler:
 class Connector:
 
     def __init__(self,endpoint=None):
-        if endpoint:
+        if endpoint=='local':
+            host = '127.0.0.1'
+            port = IPFS_PORT
+        elif endpoint=='infura':
+            host = 'https://ipfs.infura.io'
+            port = IPFS_PORT
+        elif endpoint:
             info = endpoint.split(':')
             host = info.pop(0)
             port = int(info.pop(0)) if info else IPFS_PORT

@@ -43,10 +43,10 @@ class NetworkHandler:
         except Exception as err:
             print (err)
             self.dht = None
+
         # IPFS
         from .ext.ipfs.connector import Connector
-        ipfsendpoint = xio.env.get('ipfs')
-        self.ipfs = Connector(endpoint=ipfsendpoint)
+        self.ipfs = Connector(endpoint=config.get('ipfs'))
 
         # ETHEREUM
         from .ext.ethereum.connector import Connector
@@ -70,7 +70,8 @@ class NetworkHandler:
             assert abi
 
         self.contract = self.ethereum.contract(address=address,abi=abi) if address else None
-        self.contract.account = coinbase
+        adminuser = xio.user(seed='root')
+        self.contract.account = self.ethereum.account(adminuser)
 
         self._handler_api = {}
         for m in dir(self):
@@ -84,7 +85,7 @@ class NetworkHandler:
         if self.contract:
             about.update({
                 'address': self.contract.address,
-                'abi': self.contract.abi
+                #'abi': self.contract.abi
             })
         return about
 
