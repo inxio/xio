@@ -17,7 +17,8 @@ class ContractMethodWrapper:
         self.method = method 
 
     def __call__(self,*args,**kwargs):
-        print( 'CONTRACT CALL',self.method,args,kwargs)
+        if self.contract.debug:
+            print( 'CONTRACT CALL',self.method,args,kwargs)
         return self.contract.request(self.method,args,kwargs)
 
 
@@ -25,6 +26,7 @@ class ContractMethodWrapper:
 class Contract:
 
     def __init__(self,ethereum=None,abi=None,address=None,bytecode=None,filepath=None,source=None,name=None,account=None):
+        self.debug = False
         self.ethereum = ethereum
         self.account = account
         self.web3 = self.ethereum.web3
@@ -122,9 +124,6 @@ class Contract:
         transaction = self.ethereum.transaction({
             'from': _from,
             'to': self.address,
-            #'gasPrice': 2345678921,
-            #'gas': 200000,
-            #'nonce': nonce,
             'value': kwargs.get('value',0),
             'data': data
         })
@@ -133,7 +132,8 @@ class Contract:
 
     def request(self,method,args=[],context={}):
 
-        print( 'CONTRACT REQUEST',method,args,context)
+        if self.debug:
+            print( 'CONTRACT REQUEST',method,args,context)
 
         if not context.get('from'):
             context['from'] = self.account
@@ -199,7 +199,6 @@ class Contract:
                 methodhandler = getattr( self.c.transact(context) , name)
                 return methodhandler(*args)
             else:
-               
                 transaction = self.transaction(context['from'],name,args,context)
                 transaction.sign(private)
                 return transaction.send()

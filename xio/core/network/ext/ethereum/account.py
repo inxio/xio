@@ -46,10 +46,15 @@ class _Account:
         transaction = {
             'from': self.address,
             'to': dst,
-            'value': value
+            'value': value,
+            'data': ''
         }
-        return self.web3.sendRawTransaction(transaction,self.key._private)
-
+        print (transaction)
+        transaction = self.ethereum.transaction(transaction)
+        transaction.sign(self.private)
+        tx = transaction.send()
+        print (tx)
+        return tx
 
 
 class Web3Handler(_Account):
