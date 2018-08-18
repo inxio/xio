@@ -163,6 +163,9 @@ class Node(App):
                 self.dht.put(peer.id, self.id)
     
     def renderWww(self,req):
+        """
+        options: ABOUT
+        """
 
         # why this line ?
         #req.path = self.path +'/'+ req.path if self.path else req.path
@@ -172,8 +175,8 @@ class Node(App):
         if req.OPTIONS:
             return ''
 
-        if not req.client.id:
-            req.client.id = '0xede749ac3AF55575640aDd01E28760d88c9Cd6E4'
+        # require ethereum account based authentication
+        req.require('auth', 'xio/ethereum')
 
         # NODE DELIVERY
         if not req.path:
@@ -199,11 +202,13 @@ class Node(App):
                 return resources
                 """
             elif req.ABOUT:
+
                 about = self._handleAbout(req)
+                about['id'] = self.id # fix id missing
                 if self.network:
-                    about['network'] = self.network._handleAbout(req)
+                    about['network'] = self.network.about('www').content
                 if req.client.peer:
-                    about['user'] = req.client.peer._handleAbout(req)
+                    about['user'] = {'id': req.client.peer.id}
                 return about
 
             elif req.REGISTER:
@@ -224,6 +229,8 @@ class Node(App):
             raise Exception(405,'METHOD NOT ALLOWED')
 
         # handle resource REQUEST
+        networkhandler = self.network._handler.handler._handler
+
         assert req.path
 
         p = req.path.split('/')
@@ -237,21 +244,44 @@ class Node(App):
 
         peer = self.peers.get(peerid)
 
-        # fallback about for peer not registered
-        if req.ABOUT and not p and not peer:
-            row = self.networkhandler.getResource(req.client.id, peerid)
-            assert row,404
-            return row
+        # check if peerid is a contract serviceid
+        if not peer:
+            
+            service = networkhandler.getResource(peerid)
+
+            assert service, Exception(404)
+
+            serviceid = service.get('id')
+            peerid = service.get('service').get('provider')
+            peer = self.peers.get(peerid)
+
+            quotas = networkhandler.getUserSubscription(req.client.id,serviceid)
+            pprint(quotas)
+            assert quotas, Exception(428)
+            assert quotas.get('ttl'), Exception(428) # check ttl
+            #raise Exception(428,'Precondition Required')
+            #raise Exception(429,'QUOTA EXCEEDED')
+            log.info('==== DELIVERY QUOTAS   =====', quotas) 
+            import json
+            req.headers['XIO-quotas'] = json.dumps(quotas)
+
+            """    
+            # fallback about for peer not registered
+            if req.ABOUT and not p and not peer:
+                row = networkhandler.getResource(peerid)
+                assert row,404
+                return row
+            """
+
         
-        assert peer,404
+        assert peer,Exception(404)
 
         # checkpoint, handle userid/serviceid registration,stats,quota
         #req.require('quota',100)
-        assert req.client.id and peer.id
-        quotas = self.check(req.client.id,peer.id)
-        log.info('==== DELIVERY QUOTAS   =====', quotas) 
-        import json
-        req.headers['XIO-quotas'] = json.dumps(quotas)
+        userid = req.client.id
+        assert userid 
+        
+
 
         try:
             req.path = '/'.join(p)
@@ -271,17 +301,6 @@ class Node(App):
                
         # NETWORK DELIVERY
         return self.network.render(req)
-
-
-    def check(self,userid,serviceid):
-        networkhandler = self.network._handler.handler._handler
-        quotas = networkhandler.getUserRegistration(userid,serviceid)
-        pprint(quotas)
-        assert quotas[0], Exception(402,'Payment Required')
-        #raise Exception(428,'Precondition Required')
-        #raise Exception(429,'QUOTA EXCEEDED')
-        return quotas
-        
 
 
 
