@@ -122,7 +122,7 @@ class Connector:
             f = open(tmpfilename,'w')
             f.write(data)
             f.close() # attention le fichier doit etre fermé avant de le passer a ipfs
-            print(('... writing tmpfile',tmpfilename,repr(data)))
+            #print(('... writing tmpfile',tmpfilename,repr(data)))
             result = self.conn.add(tmpfilename) # attention ipfsApi buggué 
         except Exception as err:
             print(('error adding ipfs file',err))
