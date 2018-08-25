@@ -17,8 +17,6 @@ class ContractMethodWrapper:
         self.method = method 
 
     def __call__(self,*args,**kwargs):
-        if self.contract.debug:
-            print( 'CONTRACT CALL',self.method,args,kwargs)
         return self.contract.request(self.method,args,kwargs)
 
 
@@ -131,9 +129,9 @@ class Contract:
 
 
     def request(self,method,args=[],context={}):
-
-        if self.debug:
-            print( 'CONTRACT REQUEST',method,args,context)
+        debug = context.get('debug',self.debug)
+        #if debug:
+        #    print( 'CONTRACT REQUEST',method,args,context)
 
         if not context.get('from'):
             context['from'] = self.account
@@ -201,8 +199,10 @@ class Contract:
             else:
                 transaction = self.transaction(context['from'],name,args,context)
                 transaction.sign(private)
-                return transaction.send()
-           
+                tx = transaction.send()
+                assert tx
+                context['tx'] = tx #for debug need to know if bytes32 return request are tx
+                return tx
 
 
 

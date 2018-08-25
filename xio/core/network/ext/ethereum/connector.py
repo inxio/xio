@@ -34,18 +34,19 @@ class Connector:
     WEB3VERSION = WEB3VERSION
     OLDWEB3VERSION = WEB3VERSION < 4
 
-    def __init__(self,network=None,user=None):
+    def __init__(self,network='local',user=None):
 
         from web3 import Web3, HTTPProvider
-
-        if network=='testrpc':
+        print(network)
+        if network=='local':
             endpoint = ETH_DEFAULT_ENDPOINT
         elif network=='ropsten':
             endpoint = 'https://ropsten.infura.io/'
         elif network=='mainnet':
             endpoint = 'https://mainnet.infura.io/'
         else:
-            endpoint = ETH_DEFAULT_ENDPOINT
+            raise Exception('unknow network')
+            #endpoint = ETH_DEFAULT_ENDPOINT
 
         self.endpoint = endpoint
         self.web3 = Web3(HTTPProvider(self.endpoint))
@@ -133,9 +134,6 @@ class Transaction:
 
         from xio.core.lib.utils import decode_hex,to_bytes
 
-        print (len(key),repr(key))
-        
-
         if self.ethereum.OLDWEB3VERSION:
             import rlp
             from ethereum.transactions import Transaction
@@ -158,13 +156,12 @@ class Transaction:
             raw_tx = rlp.encode(tx)
             raw_tx_hex = self.ethereum.web3.toHex(raw_tx)
             self.raw = raw_tx_hex
-            print (repr(self.raw))
         else:
             # http://web3py.readthedocs.io/en/latest/web3.eth.account.html
             key = decode_hex(key)
             signed = self.web3.eth.account.signTransaction(self.data,key)
             self.raw = signed.get('rawTransaction')
-            print (repr(self.raw))
+
 
         return self.raw
 
