@@ -86,9 +86,6 @@ class Contract:
             rows = events.get(only_changes=False)
 
         else:
-            params = {
-                
-            }
             events = self.c.eventFilter(name, params)
             rows = events.get_all_entries()
             print (rows)
