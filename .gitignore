@@ -6,7 +6,8 @@ dev
 build
 dist
 *.egg*
-
+.pytest_cache
+.env
 .tox
 
 
