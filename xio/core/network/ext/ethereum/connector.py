@@ -45,8 +45,7 @@ class Connector:
         elif network=='mainnet':
             endpoint = 'https://mainnet.infura.io/'
         else:
-            raise Exception('unknow network')
-            #endpoint = ETH_DEFAULT_ENDPOINT
+            endpoint = network
 
         self.endpoint = endpoint
         self.web3 = Web3(HTTPProvider(self.endpoint))

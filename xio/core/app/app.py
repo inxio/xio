@@ -639,7 +639,7 @@ class App(peer.Peer):
         print('\tapp=',self._about)
         print('\tnode=',xio.env.get('node'))
         for k,v in xio.env.items():
-            print('\tenv',k,v)
+            print('\tenv',k,'.'*(40-len(k)),v)
         print()
 
         if args.cmd=='run':
