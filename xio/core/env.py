@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from .lib.utils import urlparse,is_string
+from .lib.utils import urlparse, is_string
 
 import os.path
 import inspect
 import traceback
+
 
 class Context(dict):
 
@@ -15,13 +16,13 @@ class Context(dict):
 
     def __getattr__(self, name):
         return self.get(name)
-        
+
     def __setattr__(self, name, value):
         super(Context, self).__setattr__(name, value)
-        if name=='config':
+        if name == 'config':
             self.init()
 
-    def init(self,**config):
+    def init(self, **config):
 
         import xio
 
@@ -33,13 +34,13 @@ class Context(dict):
             private_key = config.get('key')
 
             try:
-                self.user = xio.user(id=str(id),token=str(token),key=str(private_key))
+                self.user = xio.user(id=str(id), token=str(token), key=str(private_key))
             except:
                 self.user = xio.user()
             assert self.user.id
 
             # SETUP DEFAULT XIO ENDPOINT
-            network_uri = config.get('network', xioenvdefault.get('network') )
+            network_uri = config.get('network', xioenvdefault.get('network'))
             self.network = xio.network(network_uri)
         except Exception as err:
             pass
@@ -47,10 +48,10 @@ class Context(dict):
 context = Context()
 
 
-# environnement 
+# environnement
 userhomedir = os.getenv("HOME")
-xioenvdir = userhomedir+'/.xio/'
-xioenvfilepath = xioenvdir+'user.session'
+xioenvdir = userhomedir + '/.xio/'
+xioenvfilepath = xioenvdir + 'user.session'
 xioenvdefault = {}
 try:
     import json
@@ -62,36 +63,37 @@ try:
 except Exception as err:
     pass
 
+
 def getDefaultEnv():
     return xioenvdefault
+
 
 def setDefaultEnv(data):
     if not os.path.isdir(xioenvdir):
         os.mkdir(xioenvdir)
-    with open(xioenvfilepath,'w') as f:
-        json.dump(data, f,  sort_keys=True,indent=4)
+    with open(xioenvfilepath, 'w') as f:
+        json.dump(data, f,  sort_keys=True, indent=4)
 
 
 class Env:
 
     def items(self):
-        for key,val in context.items():
+        for key, val in context.items():
             if key.startswith('XIO_'):
-                yield ( key[4:].lower(),val )    
-
+                yield (key[4:].lower(), val)
 
     def get(self, name, default=None):
         envkey = 'XIO_%s' % name.upper()
-        value = context.get(envkey, os.environ.get(envkey) ) or xioenvdefault.get('xio.'+name)
-        if value==None:
+        value = context.get(envkey, os.environ.get(envkey)) or xioenvdefault.get('xio.' + name)
+        if value == None:
             return default
         return value
-        
+
     def set(self, name, value):
         envkey = 'XIO_%s' % name.upper()
         context[envkey] = value
-        #      
-        #if is_string(value):
+        #
+        # if is_string(value):
         #    os.environ[envkey] = value
 
 env = Env()
@@ -108,9 +110,6 @@ def env(key,val=None):
 """
 
 
-
-
-
 # XRN RESOLVE
 
 __PATH__ = []
@@ -121,15 +120,17 @@ def resolv(uri):
     info = urlparse(uri)
     scheme = info.scheme
     netloc = info.netloc
-    path = info.path 
+    path = info.path
 
     from xio import handlers
     handler = handlers.get(scheme)
 
     # handle class and/or function/coroutine
-    if inspect.isclass(handler) or inspect.isfunction(handler):
-        handler = handler(uri)   
-    return (handler,None)    
+    if handler and (inspect.isclass(handler) or inspect.isfunction(handler)):
+        handler = handler(uri)
+
+    return (handler, None)
+
 
 def getLocalApp(xrn):
     import sys
@@ -149,17 +150,17 @@ def getLocalApp(xrn):
 
         if os.path.isdir(path):
             for name in os.listdir(path):
-                if os.path.isfile(path+'/'+name+'/app.py'):
+                if os.path.isfile(path + '/' + name + '/app.py'):
                     syspath = path
-                    sys.path.insert(0,syspath)
+                    sys.path.insert(0, syspath)
                     try:
                         x = xrn.split(':')
-                        n = name.replace('_',':')
-                        if n in xrn or (len(x)>2 and x[2] in n) or x[2] in n:
-                            directory = path+'/'+name
+                        n = name.replace('_', ':')
+                        if n in xrn or (len(x) > 2 and x[2] in n) or x[2] in n:
+                            directory = path + '/' + name
                             if os.path.isdir(directory):
-                                modpath = name+'.app'
-                                mod = importlib.import_module(modpath,package='.')
+                                modpath = name + '.app'
+                                mod = importlib.import_module(modpath, package='.')
                                 __LOCAL_APPS__[mod.app.id] = mod.app
                                 __LOCAL_APPS__[mod.app.name] = mod.app
                                 if xrn in mod.app.id or xrn in mod.app.name:
@@ -167,16 +168,6 @@ def getLocalApp(xrn):
                     except Exception as err:
                         import xio
                         import traceback
-                        xio.log.warning('unable to load',xrn,'from', directory,err)
+                        xio.log.warning('unable to load', xrn, 'from', directory, err)
                         traceback.print_exc()
                     sys.path.remove(syspath)
-
-
-
-
-
-
-
-
-
-

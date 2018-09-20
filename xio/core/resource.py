@@ -44,14 +44,14 @@ def resource(handler=None, context=None, about=None, **kwargs):
         handler = pythonResourceHandler(handler)
     elif isinstance(handler, collections.Callable):
         handler = pythonCallableHandler(handler)
-    elif handler and is_string(handler) and ':' in handler:
-        is_client = True
-        handler, basepath = env.resolv(handler)
     elif handler and is_string(handler):
         is_client = True
-        handler = PeerHandler(handler)
+        print('handler', handler)
+        handler, basepath = env.resolv(handler)
+        if isinstance(handler, Resource):
+            handler.__CLIENT__ = True
+            return handler
     elif handler:
-
         # test fallback handler => object introspection
         # alternative is to add __call__ method on class
         handler = pythonObjectHandler(handler)
@@ -244,7 +244,7 @@ def handleAuth(func):
         if hasattr(peer, 'key') and hasattr(peer.key, 'private'):
 
             # test handling 401/402 -> @handleAuth
-            if resp.status in (401,403):
+            if resp.status in (401, 403):
                 print('401 recevied by', self)
                 auhtenticate = resp.headers.get('WWW-Authenticate')
                 if auhtenticate:

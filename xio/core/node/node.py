@@ -76,8 +76,9 @@ class Node(App):
         self.put('services/docker', DockerService(self))
 
         # service dht
-        self.dht = networkhandler.dht
-        self.put('services/dht', self.dht)
+        if hasattr(networkhandler, 'dht'):
+            self.dht = networkhandler.dht
+            self.put('services/dht', self.dht)
 
         # service memdb
         import xio

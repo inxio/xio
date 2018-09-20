@@ -64,20 +64,15 @@ def XrnHandler(xrn):
     nfo.pop(0)  # xrn
     name = nfo.pop(0)  # name
     handler = __XRN__.get(name)
-    uri = ':'.join(nfo)
-    return handler(uri)
-
-
-class PeerHandler:
-
-    def __init__(self, id):
+    if handler:
+        uri = ':'.join(nfo)
+        return handler(uri)
+    else:
         import xio
-        self.id = id
-        self.network = xio.context.network
-
-    def __call__(self, req):
-        req.path = self.id + '/' + req.path if req.path else self.id
-        return self.network.request(req)
+        user = xio.context.user
+        network = xio.context.network or xio.context.node
+        assert user and network
+        return user.connect(network).get(xrn)
 
 
 class pythonResourceHandler:
