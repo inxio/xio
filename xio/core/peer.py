@@ -75,20 +75,6 @@ class Peer(resource.Resource):
         assert peer and isinstance(peer,resource.Resource)
         cli = resource.resource( peer, client=self)
         return cli
-        """
-        res = cli.connect()
-
-        # handle auth scheme update
-        if res.status == 401:
-            auhtenticate = res.headers.get('WWW-Authenticate')
-            if auhtenticate:
-                scheme = auhtenticate.split(' ').pop(0).split('/').pop()
-                #print scheme
-                cli._handler_context['authorization'] = 'xio/'+scheme+' '+self.key.generateToken(scheme)
-                #print cli.context
-                res = cli.connect()
-        """
-        return res
 
 
     def encrypt(self,message,dst_public_key=None):

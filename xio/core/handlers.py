@@ -3,7 +3,7 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-from .request import Request,Response
+from .request import Request, Response
 from xio.core.lib.utils import is_string, urlparse
 
 import os
@@ -30,29 +30,32 @@ __SCHEMES__ = {}
 
 __XRN__ = {}
 
+
 def get(scheme):
     return __SCHEMES__.get(scheme)
 
-def bindScheme(*args,**kwargs):
-    if len(args)>1:
+
+def bindScheme(*args, **kwargs):
+    if len(args) > 1:
         scheme = args[0]
         handler = args[1]
-        __SCHEMES__[scheme] = handler        
+        __SCHEMES__[scheme] = handler
     else:
         def _wrapper(handler):
             scheme = args[0]
-            __SCHEMES__[scheme] = handler       
+            __SCHEMES__[scheme] = handler
         return _wrapper
 
-def bindNetwork(*args,**kwargs):
-    if len(args)>1:
+
+def bindNetwork(*args, **kwargs):
+    if len(args) > 1:
         name = args[0]
         handler = args[1]
-        __XRN__[name] = handler        
+        __XRN__[name] = handler
     else:
         def _wrapper(handler):
             name = args[0]
-            __XRN__[name] = handler       
+            __XRN__[name] = handler
         return _wrapper
 
 
@@ -67,70 +70,65 @@ def XrnHandler(xrn):
 
 class PeerHandler:
 
-    def __init__(self,id):
+    def __init__(self, id):
         import xio
         self.id = id
         self.network = xio.context.network
-        
 
-    def __call__(self,req):
-        req.path = self.id+'/'+req.path if req.path else self.id
+    def __call__(self, req):
+        req.path = self.id + '/' + req.path if req.path else self.id
         return self.network.request(req)
 
 
-    
 class pythonResourceHandler:
 
-    def __init__(self,handler,context=None):
+    def __init__(self, handler, context=None):
         from . import resource
-        assert isinstance(handler,resource.Resource) 
+        assert isinstance(handler, resource.Resource)
         self.handler = handler
         self.context = context or {}
         self.debug = True
         self.client = self.context.get('client')
 
-    def __call__(self,req):
-        
+    def __call__(self, req):
+
         req.context['skipjsonencode'] = True
 
         # as client we force to request public resource (www for App)
         res = self.handler.render(req)
-        
+
         req.response.status = res.status
         req.response.headers = res.headers
         return res.content
-        
 
 
 class pythonCallableHandler:
 
-    def __init__(self,handler):
+    def __init__(self, handler):
         self.handler = handler
 
-    def __call__(self,req):
-        return self.handler( req )      
-        
+    def __call__(self, req):
+        return self.handler(req)
 
 
-    
 class pythonObjectHandler:
 
-    def __init__(self,handler,context=None):
-    
+    def __init__(self, handler, context=None):
+
         self.handler = handler
         self.api = {}
         for name in dir(self.handler):
-            if name[0]!='_':
-                h = getattr(self.handler,name)
+            if name[0] != '_':
+                h = getattr(self.handler, name)
                 if callable(h):
                     argspec = inspect.getargspec(h)
                     params = []
                     args = argspec.args
-                    for arg in argspec.args[1:]: # skip self args .. not working with @staticmethod
+                    for arg in argspec.args[1:]:  # skip self args .. not working with @staticmethod
                         param = {
                             'name': arg
                         }
-                        params.append(param)    
+                        params.append(param)
                     self.api[name.lower()] = {
                         'handler': h,
                         'input': {
@@ -138,24 +136,22 @@ class pythonObjectHandler:
                         }
                     }
 
-        
-    def __call__(self,req):
+    def __call__(self, req):
         method = req.xmethod or req.method
         args = []
-        cfg = self.api.get( method.lower(),{})
+        cfg = self.api.get(method.lower(), {})
         assert cfg, Exception(404)
-        h = self.api.get( method.lower(),{}).get('handler')
+        h = self.api.get(method.lower(), {}).get('handler')
         assert h, Exception(404)
         return h(*args)
 
 
-
 class HttpHandler:
 
-    def __init__(self,endpoint):
-        self.endpoint = endpoint[:-1] if endpoint[-1]=='/' else endpoint
+    def __init__(self, endpoint):
+        self.endpoint = endpoint[:-1] if endpoint[-1] == '/' else endpoint
 
-    def __call__(self,req):
+    def __call__(self, req):
 
         method = req.method
         path = req.path or '/'
@@ -163,72 +159,66 @@ class HttpHandler:
         headers = req.headers
         data = req.data
 
-        path = '/'+path if path[0]!='/' else path
+        path = '/' + path if path[0] != '/' else path
 
         method = method.lower()
 
-        url = self.endpoint+path      
+        url = self.endpoint + path
 
         params = query or {}
 
-        if data and (isinstance(data,list) or isinstance(data,dict)):
+        if data and (isinstance(data, list) or isinstance(data, dict)):
             headers['Content-Type'] = 'application/json'
-            data=json.dumps(data)
+            data = json.dumps(data)
         else:
             data = None
 
-        print('http request ....', method, url,params,data,headers)
-
-        h = getattr(requests,method,None)
+        print('http request ....', method, url, params, data, headers)
+        print('http request context', req.context)
+        h = getattr(requests, method, None)
 
         # fix headers (convert du _)
-        headers = dict( ( key.replace('_','-'), value) for (key, value) in list(headers.items()))
+        headers = dict((key.replace('_', '-'), value) for (key, value) in list(headers.items()))
 
         timeout = 300  # tofix => context params
         verify = True  # tofix => context params
 
         # fix for: Unexpected Content-Length
-        if method=='head':
+        if method == 'head':
             data = None
-           
-        r = h(url,params=params,data=data,headers=headers,timeout=timeout,verify=verify)     
+
+        r = h(url, params=params, data=data, headers=headers, timeout=timeout, verify=verify)
         status = r.status_code
         content = r.content if not r.encoding else r.text
 
-        print ('http response ....', status, r.headers, type(r.text))
+        print('http response ....', status, r.headers, type(r.text))
 
         req.response.status = status
         req.response.headers = r.headers
 
         content_type = req.response.headers.get('Content-Type')
-        if content_type=='application/json':
+        if content_type == 'application/json':
             content = r.json()
-        
+
         return content
-        
 
-
-
-
-
-    
 
 class DirectoryHandler:
 
-    def __init__(self,directory):
+    def __init__(self, directory):
         self.directory = directory
         assert os.path.isdir(directory)
 
-    def __call__(self,req):
+    def __call__(self, req):
 
         path_info = req.context.get('PATH_INFO')
-        if not req.path and path_info and path_info[-1]!='/':
-            req.response.status = 301 
-            req.response.headers['Location'] = path_info+'/'
+        if not req.path and path_info and path_info[-1] != '/':
+            req.response.status = 301
+            req.response.headers['Location'] = path_info + '/'
             return None
 
         def _indexfile(dirpath):
-            indexpath = dirpath+'/index.html'
+            indexpath = dirpath + '/index.html'
             if os.path.isfile(indexpath):
                 return indexpath
 
@@ -238,8 +228,8 @@ class DirectoryHandler:
                 indexpath = _indexfile(self.directory)
                 return FileHandler(indexpath)(req) if indexpath else os.listdir(self.directory)
 
-            path = self.directory+'/'+req.path if req.path else self.directory
-            if os.path.isfile(path):        
+            path = self.directory + '/' + req.path if req.path else self.directory
+            if os.path.isfile(path):
                 h = FileHandler(path)
                 return h(req)
             elif os.path.isdir(path):
@@ -247,23 +237,21 @@ class DirectoryHandler:
                 return FileHandler(indexpath)(req) if indexpath else os.listdir(path)
 
 
-
-
-
 class FileHandler:
 
-    def __init__(self,filepath):
+    def __init__(self, filepath):
         self.filepath = filepath
         assert os.path.isfile(filepath)
         self._content_type, self._content_encoding = mimetypes.guess_type(filepath)
 
-    def __call__(self,req):
+    def __call__(self, req):
 
         fp = open(self.filepath, 'rb')
         req.response.headers['Content-Type'] = self._content_type
-        if self._content_encoding:    
-            request.response.headers['Content-Encoding'] = self._content_encoding    
+        if self._content_encoding:
+            request.response.headers['Content-Encoding'] = self._content_encoding
         return fp
+
 
 def FsHandler(filepath):
 
@@ -285,7 +273,7 @@ class IpcHandler:
     not ready yet !
     """
 
-    def __init__(self,endpoint):
+    def __init__(self, endpoint):
 
         try:
             # https://pypi.python.org/pypi/requests-unixsocket/
@@ -295,23 +283,23 @@ class IpcHandler:
 
         #'http+unix://%2Ftmp%2Fuwsgi_node_http2.sock/.check'
 
-        endpoint = endpoint.replace('ipc://','').replace('/','%2F')
+        endpoint = endpoint.replace('ipc://', '').replace('/', '%2F')
 
-        self.endpoint = 'http+unix://'+endpoint
+        self.endpoint = 'http+unix://' + endpoint
         self.unixrequests = requests_unixsocket.Session()
 
-    def request(self,method,path,query=None,headers=None,data=None,**kwargs):
+    def request(self, method, path, query=None, headers=None, data=None, **kwargs):
 
         method = method.lower()
-        url = self.endpoint+path
+        url = self.endpoint + path
         params = query or {}
 
-        if data and isinstance(data,list) or isinstance(data,dict):
+        if data and isinstance(data, list) or isinstance(data, dict):
             headers['Content-Type'] = 'application/json'
-            data=json.dumps(data)
+            data = json.dumps(data)
 
-        h = getattr(self.unixrequests,method,None)
-        r = h(url,params=params,data=data,headers=headers,timeout=3)
+        h = getattr(self.unixrequests, method, None)
+        r = h(url, params=params, data=data, headers=headers, timeout=3)
         status = r.status_code
 
         return {
@@ -319,11 +307,11 @@ class IpcHandler:
             'headers': r.headers,
             'content': r.text,
         }
-        
+
 
 class WebsocketHandler:
 
-    def __init__(self,endpoint,app=None):
+    def __init__(self, endpoint, app=None):
 
         try:
             from ws4py.client.threadedclient import WebSocketClient
@@ -337,20 +325,19 @@ class WebsocketHandler:
         self.ws = WebSocketClient(self.endpoint, protocols=['xio'])
         self.ws.received_message = self.onreceive
         self.connected = False
-        
-    def __call__(self,req):
-        return self.request(req.method,req.path,headers=req.headers,query=req.query,data=req.data)
+
+    def __call__(self, req):
+        return self.request(req.method, req.path, headers=req.headers, query=req.query, data=req.data)
 
     def connect(self):
         self.ws.connect()
         self.connected = True
-        #self.ws.run_forever()
-   
+        # self.ws.run_forever()
 
-    def respond(self,method,path,query=None,headers=None,data=None,feedback=None,**kwargs):
-        pass # to be overwrited        
+    def respond(self, method, path, query=None, headers=None, data=None, feedback=None, **kwargs):
+        pass  # to be overwrited
 
-    def request(self,method,path,query=None,headers=None,data=None,feedback=None,**kwargs):
+    def request(self, method, path, query=None, headers=None, data=None, feedback=None, **kwargs):
         if not self.connected:
             self.connect()
 
@@ -361,65 +348,63 @@ class WebsocketHandler:
             'data':    data or '',
             'headers':   headers or {}
         }
-        resp = self.send(message,feedback=feedback)
+        resp = self.send(message, feedback=feedback)
         return {
-            'status':   resp.get('status',200),
-            'headers':  resp.get('headers',{}),
-            'content':  resp.get('content',''),
+            'status':   resp.get('status', 200),
+            'headers':  resp.get('headers', {}),
+            'content':  resp.get('content', ''),
         }
 
-        
+    def send(self, msg, feedback=None):
 
-    def send(self,msg,feedback=None):
-
-        if not isinstance(msg,dict):
-            self.ws.send( msg )
+        if not isinstance(msg, dict):
+            self.ws.send(msg)
         else:
 
             # mode request/response
 
-            id = str( uuid.uuid1() )
-            msg['type'] = 'request' 
+            id = str(uuid.uuid1())
+            msg['type'] = 'request'
             msg['id'] = id
             self._awaiting_requests[id] = None
             if feedback:
                 self._feedbacks[id] = feedback
-     
+
             msg = json.dumps(msg)
-            self.ws.send( msg )
+            self.ws.send(msg)
             timeout = 5
             t0 = time.time()
-            while self._awaiting_requests.get(id)==None:
+            while self._awaiting_requests.get(id) == None:
                 t1 = time.time()
-                s = int(t1-t0)   
-                if s>4: 
-                    print('ws WARNING ... waiting ... since', int(t1-t0)) 
-                if s>timeout:
+                s = int(t1 - t0)
+                if s > 4:
+                    print('ws WARNING ... waiting ... since', int(t1 - t0))
+                if s > timeout:
                     return {
                         'status': 408,
                         'content': '',
                         'headers': {}
                     }
                 time.sleep(0.1)
-                
-            info = self._awaiting_requests.pop(id) 
+
+            info = self._awaiting_requests.pop(id)
             return info
 
-    def onreceive(self,msg):
+    def onreceive(self, msg):
         try:
             msg = json.loads(str(msg))
         except:
-            msg = {}    
+            msg = {}
         type = msg.get('type')
         id = msg.get('id')
-        if type=='response':
+        if type == 'response':
             if id in self._awaiting_requests:
                 self._awaiting_requests[id] = msg
-        elif type=='fragment':
+        elif type == 'fragment':
             feedback = self._feedbacks.get(id)
             if feedback:
                 feedback(msg['content'])
-        elif type=='request':
+        elif type == 'request':
             method = msg['method']
             path = msg['path']
             data = msg.get('data')
@@ -427,8 +412,8 @@ class WebsocketHandler:
             headers = msg.get('headers')
 
             try:
-                assert self.app!=None, Exception('ws client could not respond to request !!! NO APP DEFINED ! ')
-                response = self.app.request(method,path,headers=headers,query=query,data=data,skipjsonencode=True) 
+                assert self.app != None, Exception('ws client could not respond to request !!! NO APP DEFINED ! ')
+                response = self.app.request(method, path, headers=headers, query=query, data=data, skipjsonencode=True)
                 msg = {
                     'id': id,
                     'type': 'response',
@@ -444,19 +429,13 @@ class WebsocketHandler:
                     'status': 500,
                     'content': err
                 }
-            self.ws.send( json.dumps(msg,default=str) )
-        
+            self.ws.send(json.dumps(msg, default=str))
 
 
-bindScheme('xrn',XrnHandler)
-bindScheme('file',FsHandler)
-bindScheme('http',HttpHandler)
-bindScheme('https',HttpHandler)
-bindScheme('ws',WebsocketHandler)
-bindScheme('wss',WebsocketHandler)
-#bindScheme('ipc',IpcHandler)
-
-
-
-
-
+bindScheme('xrn', XrnHandler)
+bindScheme('file', FsHandler)
+bindScheme('http', HttpHandler)
+bindScheme('https', HttpHandler)
+bindScheme('ws', WebsocketHandler)
+bindScheme('wss', WebsocketHandler)
+# bindScheme('ipc',IpcHandler)
