@@ -187,7 +187,7 @@ class HttpHandler:
         content = r.content if not r.encoding else r.text
 
         print('http response ....', status, r.headers, type(r.text))
-
+        #print('http response ....', r.content )
         req.response.status = status
         req.response.headers = r.headers
 

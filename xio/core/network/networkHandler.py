@@ -35,6 +35,7 @@ class NetworkHandler:
         from .ext.dht.service import DhtService
         #import xio
         #bootstrap = xio.env('network')
+        self.dht = None
         try:
             # dht require python3
             dhtbootstrap = xio.env.get('dht')
@@ -42,7 +43,7 @@ class NetworkHandler:
                 self.dht = DhtService(bootstrap=dhtbootstrap)
         except Exception as err:
             print(err)
-            self.dht = None
+
 
         # IPFS
         from .ext.ipfs.connector import Connector

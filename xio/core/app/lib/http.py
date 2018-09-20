@@ -116,26 +116,37 @@ class HttpService:
             if method in ('PUT', 'POST', 'PATCH'):
 
                 import cgi
-                post_input = environ.get('wsgi.input')
-                fs = cgi.FieldStorage(environ['wsgi.input'], environ=environ, keep_blank_values=True)
 
-                if not fs.list:
-                    post_data = fs.value
-                    if headers.get('content_type') == 'application/json':
-                        import json
-                        post_data = json.loads(post_data)
+                # bug with cgi and content-length : https://bugs.python.org/issue27777
+                # todo - handle binary (need to use CONTENT_LENGTH)
+
+                if headers.get('content_type') == 'application/json':
+                    import json
+                    post_input = environ['wsgi.input'].read()
+                    print('----------', post_input)
+                    post_data = json.loads(post_input)
                 else:
-                    for key in fs:
-                        val = fs[key]
-                        if val.filename:
-                            import tempfile
-                            tmpfile = tempfile.TemporaryFile('w')
-                            tmpfile.write(val.file.read())
-                            post_params[key] = (tmpfile, val.filename)
-                        else:
-                            post_params[key] = unquote_plus(val.value)
+                    # warning too many bugs on cgi
+                    fs = cgi.FieldStorage(fp=environ['wsgi.input'], environ=environ, keep_blank_values=True)
 
-                    post_data = post_params
+                    if not fs.list:
+                        post_input = fs.value
+                        if headers.get('content_type') == 'application/json':
+                            import json
+                            print('----------', post_input)
+                            post_data = json.loads(post_input)
+                    else:
+                        for key in fs:
+                            val = fs[key]
+                            if val.filename:
+                                import tempfile
+                                tmpfile = tempfile.TemporaryFile('w')
+                                tmpfile.write(val.file.read())
+                                post_params[key] = (tmpfile, val.filename)
+                            else:
+                                post_params[key] = unquote_plus(val.value)
+
+                        post_data = post_params
 
             context = environ
 
@@ -177,7 +188,7 @@ class HttpService:
             # add header Access-Control-Allow-Origin => to fix
             response.headers['Access-Control-Allow-Origin'] = '*'
             response.headers['Access-Control-Allow-Methods'] = 'GET, HEAD, OPTIONS, POST, PUT, PATCH, DELETE, CONNECT'
-            response.headers['Access-Control-Allow-Headers'] = 'Origin, X-Requested-With, Content-Type, Content-Length, Date, Accept, Authorization, XIO-id, XIO-token, XIO-view, XIO-method, XIO-profile'
+            response.headers['Access-Control-Allow-Headers'] = 'Origin, X-Requested-With, Content-Type, Content-Length, Date, Accept, Authorization, XIO-method, XIO-context'
 
             import inspect
 

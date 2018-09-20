@@ -50,6 +50,7 @@ def resource(handler=None, context=None, about=None, **kwargs):
         handler, basepath = env.resolv(handler)
         if isinstance(handler, Resource):
             handler.__CLIENT__ = True
+            handler._handler_context = context or {}
             return handler
     elif handler:
         # test fallback handler => object introspection
