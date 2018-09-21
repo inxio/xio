@@ -184,6 +184,8 @@ class HttpService:
                 response.content_type = 'application/json'
                 response.content = json.dumps(response.content, indent=4, default=str)
 
+            print('HTTP RESPONSE', response.content)
+
             # if request.OPTIONS:
             # add header Access-Control-Allow-Origin => to fix
             response.headers['Access-Control-Allow-Origin'] = '*'

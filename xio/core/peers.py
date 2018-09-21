@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 #-*- coding: utf-8 -*--
- 
+
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 
-from xio.core.resource import resource,Resource, handleRequest
-from xio.core.request import Request,Response
+from xio.core.resource import resource, Resource, handleRequest
+from xio.core.request import Request, Response
 
 from xio.core.lib.logs import log
 
@@ -33,20 +33,22 @@ PEER_STATUS_READY = 1
 PEER_STATUS_ERROR = 2
 
 PEER_MOD_PUBLIC = 'public'          # enpoint could be forwarded to other node for direct call
-PEER_MOD_PROTECTED = 'protected'    # use nodes as gateway 
+PEER_MOD_PROTECTED = 'protected'    # use nodes as gateway
 PEER_MOD_PRIVATE = 'private'        # private use for node or other localhost apps
 
 
 class Peers:
 
-    def __init__(self,peer=None,db=None):
+    def __init__(self, peer=None, db=None):
+        self.peer = peer
         self.id = peer.id if peer else None
         db = db or xio.db()
         self.db = db.container('peers')
         self.db.truncate()
+        # db for instances
+        self.localresources = xio.db().container('resources')
 
-
-    def register(self,endpoint=None,nodeid=None,type=None,uid=None,id=None,name=None,sub_register=False):
+    def register(self, endpoint=None, nodeid=None, type=None, uid=None, id=None, name=None, sub_register=False):
 
         assert endpoint
         nodeid = nodeid or self.id
@@ -56,94 +58,64 @@ class Peers:
         peername = name if name else None
 
         assert endpoint
-        assert is_string(endpoint) or isinstance(endpoint,Peer) or isinstance(endpoint, collections.Callable)   
+        assert is_string(endpoint) or isinstance(endpoint, Peer) or isinstance(endpoint, collections.Callable)
 
-        log.info('register',endpoint)
+        log.info('register', endpoint)
 
         client = xio.client(endpoint)
-        resp = client.request('ABOUT') 
+        resp = client.request('ABOUT')
         about = resp.content
-        
+
         assert about
-        pprint(about)
-        
+
         peerid = about.get('id')
-        peername = about.get('name', None) 
+        peername = about.get('name', None)
 
         # fix pb peerid missing for sub-services
         if sub_register:
-            # and not peerid: # pb peerid du child ecrasé par le about
-            peername = sub_register # fix for child xrn missing 
-            print(peername)
+            peername = sub_register  # fix for child xrn missing
             assert peerid
-            #peerid = md5(peername)
-        
-        peertype = about.get('type','app').lower()
-         
-        assert peerid  
+
+        peertype = about.get('type', 'app').lower()
+
+        assert peerid
         assert peerid != self.id
-        
-        # handle provides (multi services) 
+
+        # handle provides (multi services)
         if not sub_register:
             provide = resp.content.get('provide')
             if provide:
                 for xrn in provide:
-                    print (xrn)
+                    print(xrn)
                     postpath = xrn.split(':').pop()
                     if not is_string(endpoint):
-                        childendpoint = client.get(postpath) 
-                        #childendpoint = endpoint.resource(postpath) 
-                        
+                        childendpoint = client.get(postpath)
                     else:
-                        childendpoint = endpoint+'/'+postpath
-                        
+                        childendpoint = endpoint + '/' + postpath
+
                     try:
-                        self.register(childendpoint,sub_register=xrn)
+                        self.register(childendpoint, sub_register=xrn)
                     except Exception as err:
-                        log.error('subregister',childendpoint)
+                        log.error('subregister', childendpoint)
                         import traceback
                         traceback.print_exc()
 
-                # skip registering of provider (container)     
-                return 
-        """
-
-        if not is_string(endpoint):
-        
-            # instance
-
-            assert isinstance(endpoint,Peer) or isinstance(endpoint, collections.Callable)   
-            if not peertype:   
-                peertype = endpoint.__class__.__name__.lower()
-                peerid = endpoint.id
-                peername = endpoint.name
-
-
-        import xio
-        import copy
-        
-        log.info('register',endpoint)
-
-        if not peerid:
-            client = xio.client(endpoint)
-            resp = client.request('ABOUT') 
-            assert resp.status == 200
-            peername = resp.content.get('name', None) 
-            peerid = resp.content.get('id')
-            peertype = resp.content.get('type',peertype).lower()
-
-
-
-        """
+                # skip registering of provider (container)  ????
+                return
 
         for peer in self.select(id=peerid):
-            if peer.data.get('nodeid')==nodeid and peer.id==peerid:
-                print(('register ALREADY EXIST', peerid)) 
-                return 
+            if peer.data.get('nodeid') == nodeid and peer.id == peerid:
+                log.warning('register ALREADY EXIST', peerid)
+                return
 
         if not uid:
-            uid = md5( nodeid, peerid )
+            uid = md5(nodeid, peerid)
 
+        # handle local resources for external db (eg redis)
+        if not is_string(endpoint):
+            log.warning('register UNHANDLED', endpoint)
+            self.localresources.put(uid, {'resource': endpoint})
+            endpoint = '~'
 
         data = {
             'uid': uid,
@@ -154,49 +126,42 @@ class Peers:
             'type': peertype.lower(),
             'status': 200
         }
-        self.put(uid,data)
+        pprint(data)
+        self.put(uid, data)
         return self.get(uid)
 
-
-    def unregister(self,peerid):
+    def unregister(self, peerid):
         for peer in self.select(id=peerid, nodeid=self.id):
             self.delete(peer.uid)
 
-
-
-    def get(self,index,**kwargs):
+    def get(self, index, **kwargs):
 
         # lookup by uid
         data = self.db.get(index)
         if data:
-            peer = PeerClient( **data ) if not isinstance(data,PeerClient) else data
-            return peer 
+            peer = PeerClient(self, **data) if not isinstance(data, PeerClient) else data
+            return peer
 
         # lookup by xrn
         if index.startswith('xrn:'):
             rows = self.select(name=index)
-            return rows[0] if rows else None 
-            
+            return rows[0] if rows else None
+
         # lookup by id
         byids = self.select(id=index)
-        return byids[0] if byids else None   
+        return byids[0] if byids else None
 
-
-            
-
-    def select(self,**filter):
+    def select(self, **filter):
         result = []
         for row in self.db.select(filter=filter):
-            result.append( row )
-        return [ PeerClient(**row) for row in result ]
-        
+            result.append(row)
+        return [PeerClient(self, **row) for row in result]
 
-    def put(self,index,peer):
-        self.db.put(index,peer)
+    def put(self, index, peer):
+        self.db.put(index, peer)
 
-    def delete(self,index):
+    def delete(self, index):
         self.db.delete(index)
-
 
     def export(self):
         result = []
@@ -205,35 +170,33 @@ class Peers:
             if not peer.endpoint:
                 continue
 
-            if peer.status not in (200,201): 
+            if peer.status not in (200, 201):
                 continue
 
-            if peer.type=='app' and not peer.endpoint:
+            if peer.type == 'app' and not peer.endpoint:
                 continue
 
-            if peer.type=='app':
-                 mod = PEER_MOD_PROTECTED
-            elif peer.type=='node':
-                if peer.conn_type=='WS' or not is_string(peer.endpoint):
+            if peer.type == 'app':
+                mod = PEER_MOD_PROTECTED
+            elif peer.type == 'node':
+                if peer.conn_type == 'WS' or not is_string(peer.endpoint):
                     mod = PEER_MOD_PROTECTED
                 else:
-                    mod = PEER_MOD_PUBLIC  
+                    mod = PEER_MOD_PUBLIC
             else:
-                mod = PEER_MOD_PUBLIC 
+                mod = PEER_MOD_PUBLIC
 
             info = {
                 'type': peer.type,
                 'uid': peer.uid,
                 'name': peer.name,
                 'id': peer.id,
-                'endpoint': peer.endpoint if mod==PEER_MOD_PUBLIC else '~/'+peer.uid
+                'endpoint': peer.endpoint if mod == PEER_MOD_PUBLIC else '~/' + peer.uid
             }
-             
+
             result.append(info)
-           
+
         return result
-
-
 
     def sync(self):
 
@@ -242,12 +205,12 @@ class Peers:
         # check all peers
 
         maxage = 60
-        
+
         for peer in self.select():
 
             t1 = time.time()
             t0 = peer.checked
-            if not t0 or not maxage or (int(t1)-int(t0) > maxage):
+            if not t0 or not maxage or (int(t1) - int(t0) > maxage):
 
                 result = peer.check()
                 check_status = result.get('status')
@@ -255,7 +218,7 @@ class Peers:
 
                 # be carefull with id _id uid => db use _id
                 index = peer.data['_id']
-                self.db.update(index,{
+                self.db.update(index, {
                     'status': check_status,
                     'time': check_time,
                     'checked': int(time.time()),
@@ -270,7 +233,6 @@ class Peers:
                     '_ttl': 24*60*60,
                 })
                 """
-
 
         """
         # import peers from other node
@@ -312,9 +274,11 @@ class Peers:
 
         """
 
-class PeerClient(Resource): 
 
-    def __init__(self,**data):
+class PeerClient(Resource):
+
+    def __init__(self, peers, **data):
+        self.peers = peers
         self.data = data
         self.id = data.get('id')
         self.name = data.get('name')
@@ -322,27 +286,27 @@ class PeerClient(Resource):
         self.status = data.get('status')
         self.type = data.get('type')
         self.uid = data.get('uid')
-        self.checked = int( data.get('checked',0) )
+        self.checked = int(data.get('checked', 0))
         self.conn_type = data.get('conn_type')
-        Resource.__init__(self) 
+        Resource.__init__(self)
         self.status = data.get('status')
 
-    def check(self): 
-        
+    def check(self):
+
         headers = {
         }
         try:
-            t0 = time.time()     
-            resp = self.request('HEAD','',headers=headers) 
-            t1 = time.time() 
+            t0 = time.time()
+            resp = self.request('HEAD', '', headers=headers)
+            t1 = time.time()
             check_result = {
                 'status': resp.status,
-                'time': int((t1-t0)*1000)
+                'time': int((t1 - t0) * 1000)
             }
         except Exception as err:
             traceback.print_exc()
             check_result = {
-                'status':-1,
+                'status': -1,
                 'error': traceback.format_exc(),
             }
         return check_result
@@ -350,27 +314,25 @@ class PeerClient(Resource):
     def getInfo(self):
         return self.data
 
-
     @handleRequest
-    def request(self,req):
+    def request(self, req):
 
         import xio
 
         context = req.client.context or {}
-        context['xio_id'] = req.client.id if req.client else 0 
-        client = xio.client(self.endpoint,context)
-        print ('????',self.endpoint)
+        context['xio_id'] = req.client.id if req.client else 0
+        if self.endpoint == '~':
+            # get client instance from local storage
+            client = self.peers.localresources.get(self.uid).get('resource')
+        else:
+            client = xio.client(self.endpoint, context)
+        assert client
         try:
-            res = client.request(req.method, req.path, data=req.data,query=req.query,headers=req.headers)
-            if res.status==201 and 'Location' in res.headers:
+            res = client.request(req.method, req.path, data=req.data, query=req.query, headers=req.headers)
+            if res.status == 201 and 'Location' in res.headers:
                 self.client = xio.client(res.headers['Location'])
 
         except Exception as err:
             traceback.print_exc()
             response = Response(-1)
         return res
-
-
-
-
-

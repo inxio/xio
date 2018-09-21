@@ -91,7 +91,7 @@ class Node(App):
 
         # fix peers (default python handler)
         from xio.core.peers import Peers
-        self.peers = Peers(db=memdb)
+        self.peers = Peers(peer=self, db=memdb)
 
         # init container (require loaded services)
         self.containers = Containers(self, db=memdb)
