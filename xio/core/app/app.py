@@ -70,90 +70,6 @@ def app(*args, **kwargs):
     return App.factory(*args, **kwargs)
 
 
-def handleRequest(func):
-
-    return resource.handleRequest(func)
-
-
-def handleAuth(func):
-    @wraps(func)
-    def _(self, req):
-        print('handleAuth', req.path)
-        if req.path.startswith('admin'):
-            req.require('auth', 'xio/ethereum')
-            req.require('scope', 'admin')
-
-        return func(self, req)
-    return _
-
-
-def handleStats(func):
-
-    @wraps(func)
-    def _(self, req):
-        # need explicit configuration => about.quota or about.stats
-        """
-        if req.path.startswith('www/'):
-            statservice = self.get('services/stats')
-            statservice.post({
-                'userid': req.client.id,
-                'path': req.path,
-            })
-        """
-        return func(self, req)
-    return _
-
-
-def handleCache(func):
-
-    @wraps(func)
-    def _(res, req):
-        # need explicit configuration => about.ttl
-
-        if req.GET and req.path:
-            cacheservice = res.get('services/cache')
-            if cacheservice:
-
-                import inspect
-
-                xio_skip_cache = req.query.pop('xio_skip_cache', None)
-
-                uid = req.uid()
-
-                if xio_skip_cache:
-                    print(cacheservice.delete(uid))
-
-                cached = cacheservice.get(uid, {})
-
-                if cached and xio_skip_cache == None and cached.status == 200 and cached.content:
-
-                    info = cached.content
-
-                    print('found cache !!!', info)
-                    response = Response(200)
-                    response.content_type = info.get('content_type')
-                    response.headers = info.get('headers', {})
-                    response.content = info.get('content')
-                    return response
-                else:
-                    result = func(res, req)
-                    response = req.response
-
-                    ttl = req.response.ttl
-                    ttl = 0  # to fix, disable
-                    cache_allowed = ttl and bool(response) and response.status == 200 and not inspect.isgenerator(response.content)
-                    if cache_allowed:
-                        print('write cache !!!', uid, ttl)
-                        headers = dict(response.headers)
-                        cacheservice.put(uid, data={'content': response.content, 'ttl': int(ttl), 'headers': headers})
-                    else:
-                        print('not cachable !!!', ttl, bool(response), response.status)
-                    return result
-
-        return func(res, req)
-    return _
-
-
 class App(peer.Peer):
 
     name = 'lambda'
@@ -318,10 +234,7 @@ class App(peer.Peer):
             if os.path.isdir(wwwstaticdir):
                 self.bind('www/static', resource.DirectoryHandler(wwwstaticdir))
 
-    @handleRequest
-    @handleAuth
-    @handleCache
-    @handleStats
+    @resource.handleRequest
     def render(self, req):
         """
         pb with code in this method not called if we use request ...

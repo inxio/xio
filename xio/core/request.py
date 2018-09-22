@@ -112,12 +112,18 @@ class Request(object):
         self._stack = []  # debug only
         self.stat = None
 
-        # do not work : to fix ...
+        self._server = server
+        self._client = client
+        self._client_context = client_context
+
+        self.init()
+
+    def init(self):
+        # used for rebuild stuff if something changed (eg token)
         # pb1: resource != app != server
         # pb2: resource and/or root seem to be added AFTER init !
-
-        self.server = server or self.context.get('root', self.context.get('resource', None))
-        self.client = ReqClient(self, client_context, peer=client)
+        self.server = self.server or self.context.get('root', self.context.get('resource', None))
+        self.client = ReqClient(self, self._client_context, peer=self._client)
         # assert self.server ?
 
     def __repr__(self):
@@ -169,8 +175,10 @@ class Request(object):
                 raise Exception(402, content)
             return signature
         elif key == 'scope':
+            print('scope?')
+            pprint(self.client.data)
             if not value in self.client.data.get('scope'):
-                raise Exception(401,'scope not allowed')
+                raise Exception(401, 'scope not allowed')
         elif key == 'quota':
 
             stat = self.getStat()
@@ -304,35 +312,13 @@ class Auth:
             self.scheme = scheme.lower()
             self.token = token
 
-    """
-    def require(self,key,value,content=None):
-    
-        if key=='scheme':
-            if self.scheme != value:
-                self.req.response.headers['WWW-Authenticate'] = '%s realm="%s", charset="UTF-8"' % (value,'xio realm')
-                raise Exception(401)
-                
-        elif key=='signature':
-            # quick testcase : if peer able to sign we convert original data
-            # using virtual peer capacity ? eg: req.client.sign(tx) ... direct if _peer else http401
-            #if req.client._peer:
-            #    signed = c.sign(req.client._peer.key.ethereum.private)
-
-            signature = self.req.headers.get('XIO-Signature')
-            if not signature:  
-                self.req.response.headers['WWW-Authenticate'] = '%s realm="%s", charset="UTF-8"' % (value,'xio realm')
-                self.req.response.status = 402
-                raise Exception(402,content)
-            return signature
-    """
-
 
 class ReqClient:
 
     def __init__(self, req, context=None, peer=None):
 
         import xio
-    
+
         self.req = req
         self.id = None
         self.peer = None
@@ -340,7 +326,7 @@ class ReqClient:
         self.context = context
         self.auth = Auth(self)
         self.data = dict()
-        
+
         # if not peer we create a keyless user from token
         if self.auth.token:
 
@@ -354,8 +340,8 @@ class ReqClient:
             self.peer = xio.user(token=self.auth.token)
             self.id = self.peer.id if self.peer else None
             self.data = self.peer.key.tokendata
-            self.data.setdefault('scope',[])
-            if self.id and xio.env.get('adminuser')==self.id:
+            self.data.setdefault('scope', [])
+            if self.id and xio.env.get('adminuser') == self.id:
                 self.data['scope'].append('admin')
 
         self._feedback = req.context.get('feedback')

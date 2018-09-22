@@ -66,6 +66,26 @@ def resource(handler=None, context=None, about=None, **kwargs):
 ABOUT_APP_PUBLIC_FIELDS = ['description', 'links', 'provide', 'configuration', 'links', 'profiles', 'network', 'methods', 'options', 'resources']
 
 
+def getResponse(res, req, func):
+    """
+    call func with req and secure response format
+    todo : put in request ?   eg req.call(func)
+    """
+    try:
+        resp = func(res, req)
+    except Exception as err:
+        args = err.args[0].args if err.args and isinstance(err.args[0], Exception) else err.args
+        if args and isinstance(args[0], int):
+            req.response.status = args[0]
+            resp = args[1] if len(args) > 1 else None
+        else:
+            traceback.print_exc()
+            req.response.status = 500
+            req.response.traceback = str(traceback.format_exc())
+            resp = None
+    return resp
+
+
 def fixAbout(about):
     """
     print('============= FIX ABOUT BEFORE')
@@ -200,70 +220,133 @@ def handleRequest(func):
         if kwargs.get('skiphandler'):
             req.context['skiphandler'] = kwargs.get('skiphandler')
 
-        try:
-            resp = func(self, req)
-        except Exception as err:
-            args = err.args[0].args if err.args and isinstance(err.args[0], Exception) else err.args
-            if args and isinstance(args[0], int):
-                req.response.status = args[0]
-                resp = args[1] if len(args) > 1 else None
-            else:
-                traceback.print_exc()
-                req.response.status = 500
-                req.response.traceback = str(traceback.format_exc())
-                resp = None
+        resp = getResponse(self, req, func)
 
         if not isinstance(resp, Resource):
             req.path = ori_path
             resp = self._toResource(req, resp)
 
         assert isinstance(resp, Resource)
-        #assert resp.status
         assert not isinstance(resp.content, Resource)
+
         return resp
 
     return _
 
 
 def handleAuth(func):
-    """
-    handle
-        -> 401 : WWW-Authenticate for automatic authorization
-        -> 402 : signature request : content must be signed and resend 
-    """
 
     @wraps(func)
-    def _(self, method, *args, **kwargs):
+    def _(self, req):
+        """
+        handle
+            -> 401 : WWW-Authenticate for automatic authorization
+            -> 402 : signature request : content must be signed and resend 
+        """
+        #resp = func(self, req)
+        result = getResponse(self, req, func)
+        resp = req.response
 
-        resp = func(self, method, *args, **kwargs)
+        if self.__CLIENT__ and resp.status in (401, 402, 403):
+            print('...', resp.status, 'recevied by', self)
+            peer = self.context.get('client')
+            if hasattr(peer, 'key') and hasattr(peer.key, 'private'):
 
-        if resp.status == 401:  # debug info
-            print('401 recevied by', self)
-            print(self.context)
+                print('...handleAuth', req.path, 'by', self, peer.key.address)
 
-        peer = self.context.get('client')
-        if hasattr(peer, 'key') and hasattr(peer.key, 'private'):
+                # test handling 401/402 -> @handleAuth
+                if resp.status in (401, 403):
+                    print('401 recevied by', self)
+                    auhtenticate = resp.headers.get('WWW-Authenticate')
+                    if auhtenticate:
+                        scheme = auhtenticate.split(' ').pop(0).split('/').pop()
+                        token = peer.key.generateToken(scheme)
+                        authorization = 'bearer %s' % token.decode()
+                        self._handler_context['authorization'] = authorization
+                        req.headers['Authorization'] = authorization
+                        req.init()
+                        print('...redo call', req.headers)
+                        result = getResponse(self, req, func)
+                        print('...redo call ?', resp)
 
-            # test handling 401/402 -> @handleAuth
-            if resp.status in (401, 403):
-                print('401 recevied by', self)
-                auhtenticate = resp.headers.get('WWW-Authenticate')
-                if auhtenticate:
-                    scheme = auhtenticate.split(' ').pop(0).split('/').pop()
-                    token = peer.key.generateToken(scheme)
-                    self._handler_context['authorization'] = 'bearer %s' % token.decode()
-                    resp = func(self, method, *args, **kwargs)
+                if resp.status == 402:
+                    peer = self.context.get('client')
+                    signed = peer.key.account('ethereum').signTransaction(resp.content)
+                    # do call again
+                    kwargs.setdefault('headers', {})
+                    req.headers['XIO-Signature'] = signed
+                    result = getResponse(self, req, func)
 
-            if resp.status == 402:
-                peer = self.context.get('client')
-                signed = peer.key.account('ethereum').signTransaction(resp.content)
-                # do call again
-                kwargs.setdefault('headers', {})
-                kwargs['headers']['XIO-Signature'] = signed
-                resp = func(self, method, *args, **kwargs)
+        return result
 
-        return resp
+    return _
 
+
+def handleCache(func):
+
+    @wraps(func)
+    def _(res, req):
+        # need explicit configuration => about.ttl
+
+        def _getCacheService():
+            return res.context.get('app', {}).get('services/cache')
+
+        print('----handlecache', res._about)
+        if req.GET:
+            cached = None
+            cacheservice = _getCacheService()
+            if cacheservice:
+                import inspect
+                xio_skip_cache = req.query.pop('xio_skip_cache', None)
+                uid = req.uid()
+
+                if xio_skip_cache:
+                    print(cacheservice.delete(uid))
+
+                cached = cacheservice.get(uid, {})
+
+            if cached and xio_skip_cache == None and cached.status == 200 and cached.content:
+
+                info = cached.content
+
+                print('found cache !!!', info)
+                response = Response(200)
+                response.content_type = info.get('content_type')
+                response.headers = info.get('headers', {})
+                response.content = info.get('content')
+                return response
+            else:
+                result = func(res, req)
+                response = req.response
+
+                ttl = req.response.ttl
+                cache_allowed = ttl and bool(response) and response.status == 200 and not inspect.isgenerator(response.content)
+                if cache_allowed:
+                    print('write cache !!!', uid, ttl)
+                    headers = dict(response.headers)
+                    cacheservice.put(uid, data={'content': response.content, 'ttl': int(ttl), 'headers': headers})
+                else:
+                    print('not cachable !!!', ttl, bool(response), response.status)
+                return result
+
+        return func(res, req)
+    return _
+
+
+def handleQuotas(func):
+
+    @wraps(func)
+    def _(self, req):
+        # need explicit configuration => about.quota or about.stats
+        """
+        if req.path.startswith('www/'):
+            statservice = self.get('services/stats')
+            statservice.post({
+                'userid': req.client.id,
+                'path': req.path,
+            })
+        """
+        return func(self, req)
     return _
 
 
@@ -338,10 +421,10 @@ class Resource(object):
     _about = None
     traceback = None
 
-    def __init__(self, content=None, path='', status=0, headers=None, parent=None, root=None, handler=None, handler_path=None, handler_context=None, about=None, **context):
+    def __init__(self, content=None, path='', status=0, headers=None, parent=None, root=None, handler=None, handler_path=None, handler_context=None, about=None, os=True, **context):
 
         assert not root or isinstance(root, Resource)
-
+        self.os = Resource(os=False) if os else None
         self.path = path
         self.content = content
         self.status = status
@@ -488,10 +571,11 @@ class Resource(object):
         res._handler_path = handler_path
         return res
 
-    @handleAuth  # handling automatic authenticate response for client
     @handleRequest
+    @handleAuth
     @handleHooks
     @handleDelegate
+    #@handleCache
     def request(self, req):
 
         assert isinstance(req, Request)
@@ -563,6 +647,12 @@ class Resource(object):
                 import re
                 rpattern = re.compile(pattern)
                 assert re.match(rpattern, value), Exception(400, 'Wrong format parameter : %s' % name)
+
+        # resource requirements
+        if req.path.startswith('admin'):
+            print('===handleAuth2')
+            req.require('auth', 'xio/ethereum')
+            req.require('scope', 'admin')
 
         result = self._handler(req)
 

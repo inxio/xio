@@ -4,13 +4,7 @@
 from xio.core import resource
 from xio.core.request import Request, Response
 
-from xio.core.app.app import (
-    App,
-    handleRequest,
-    handleCache,
-    handleStats,
-)
-
+from xio.core.app.app import App
 from xio.core.lib.logs import log
 from xio.core.lib.utils import is_string, urlparse, generateuid
 
