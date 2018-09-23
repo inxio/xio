@@ -122,9 +122,8 @@ class Request(object):
         # used for rebuild stuff if something changed (eg token)
         # pb1: resource != app != server
         # pb2: resource and/or root seem to be added AFTER init !
-        self.server = self.server or self.context.get('root', self.context.get('resource', None))
+        self.server = self.server or self.context.get('root', self.context.get('app', self.context.get('resource', None)))
         self.client = ReqClient(self, self._client_context, peer=self._client)
-        # assert self.server ?
 
     def __repr__(self):
         return 'REQUEST %s %s' % (self.xmethod or self.method, repr(self.path))
@@ -156,6 +155,16 @@ class Request(object):
             'context': self.context
         }
 
+    def service(self, name):
+        resource = self.context.get('root')
+        pprint(self.context)
+        if resource and resource.os:
+            resource.debug()
+            service = resource.os.get('services/%s' % name)
+            print('service', name, service)
+            if service.status in (200, 201):
+                return service
+
     def require(self, key, value, content=None):
 
         if key == 'auth':
@@ -180,13 +189,16 @@ class Request(object):
             if not value in self.client.data.get('scope'):
                 raise Exception(401, 'scope not allowed')
         elif key == 'quota':
-
-            stat = self.getStat()
-            if stat:
+            # get relevant service
+            service = self.service('stats')
+            if service:
+                uid = self.uid()
+                stat = service.get(uid)
                 current = int(stat.content or 0)  # .get('hourly')
-                if current > value:
+                print('????curent stat', current, value)
+                if current >= value:
                     raise Exception(429, 'QUOTA EXCEEDED')
-                stat.incr()
+                service.incr(uid)
         else:
             raise Exception('unknow require rule : %s' % key)
 
@@ -226,28 +238,6 @@ class Request(object):
             if infos[2]:
                 quotas['items'] = infos[3]
         return quotas or {}
-
-    def getStat(self):
-        """
-        generate uniq identifier for stats, cache, ...
-        warning about 
-        - userid and/or profile for cache 
-        - qurey sting key orders 
-        """
-        if not self.stat:
-            server = self.context.get('root', self.context.get('resource', None))
-            if server:
-                statsservice = server.get('services/stats')
-                if statsservice:
-                    uid = self.uid()
-                    stat = statsservice.get(uid)
-                    print('---->', stat)
-                    #stat = statsservice.count(path=self.path,userid=self.client.id).content
-                    #stat = statsservice.post(data={'path':self.path,'userid':self.client.id}).content
-
-                    self.stat = stat
-
-        return self.stat
 
     def __getattr__(self, name):
         return self.__dict__[name] if name in self.__dict__ else None

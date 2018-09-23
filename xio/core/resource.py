@@ -57,7 +57,7 @@ def resource(handler=None, context=None, about=None, **kwargs):
         # test fallback handler => object introspection
         # alternative is to add __call__ method on class
         handler = pythonObjectHandler(handler)
-        #raise Exception('UNHANDLED RESOURCE HANDLER (%s)' % handler)
+        # raise Exception('UNHANDLED RESOURCE HANDLER (%s)' % handler)
 
     res = Resource(handler=handler, handler_path=basepath, handler_context=context, about=about, **kwargs)
     res.__CLIENT__ = is_client
@@ -105,15 +105,15 @@ def fixAbout(about):
 
     # v0.1
     """
-    type: operation 
+    type: operation
     method: GET
-    links: 
+    links:
         - ...
     input:
         params:
     context: products
     implement: xrn..
-    icon: fa-barcode 
+    icon: fa-barcode
     """
     oldtype = about.pop('type', None)
     oldmethod = about.pop('method', '')
@@ -242,9 +242,9 @@ def handleAuth(func):
         """
         handle
             -> 401 : WWW-Authenticate for automatic authorization
-            -> 402 : signature request : content must be signed and resend 
+            -> 402 : signature request : content must be signed and resend
         """
-        #resp = func(self, req)
+        # resp = func(self, req)
         result = getResponse(self, req, func)
         resp = req.response
 
@@ -288,64 +288,51 @@ def handleCache(func):
 
         method = req.xmethod or req.method
 
-        def _setCacheService():
-            import xio
-            m = req.xmethod or req.method
-            print('----USING CACHE for ', m, 'of', res)
-            res._about.setdefault('methods', {})
-            res._about['methods'].setdefault(m, {})
-            res._about['methods'][m]['ttl'] = True
-            service = res.os.get('service/cache')
-
-            if not service.content:
-                # tofix: cf services loading in app
-                from xio.core.app.lib.cache import CacheService
-                res.os.put('service/cache', CacheService(res, type='python'))
-                res.os.debug()
-            pprint(res._about)
-            print(service)
-
-        def _getCacheService():
-            return res.os.get('service/cache')
-            # return res.context.get('app', {}).get('services/cache')
-
         xio_skip_cache = req.query.pop('xio_skip_cache', None)
-        usecache = res._about.get('methods', {}).get(method, {}).get('ttl')
+        ttl = res._about.get('ttl') or res._about.get('methods', {}).get(method, {}).get('ttl')
+        usecache = req.GET and ttl
         cached = None
-
         if usecache and not xio_skip_cache:
-            print('----handlecache', res._about)
-            cacheservice = _getCacheService()
-            uid = req.uid()
-            cached = cacheservice.get(uid)
-            if cached and cached.status == 200 and cached.content:
-                info = cached.content or {}
-                result = info.get('content')
-                print('found cache !!!', info)
-                req.response = Response(200)
-                req.response.content_type = info.get('content_type')
-                req.response.headers = info.get('headers', {})
-                #req.response.content = result
-                req.response.ttl = 0  # prevent multi caching
-                print('CACHED RESULT ....', str(req.response.content))
-                return result
 
+            print('----handlecache', res._about)
+            service = req.service('cache')
+            if service:
+                uid = req.uid()
+                cached = service.get(uid)
+                print('----handlecache', cached)
+                if cached and cached.status in (200, 201) and cached.content:
+                    info = cached.content or {}
+                    result = info.get('content')
+                    print('found cache !!!', info)
+                    req.response = Response(200)
+                    req.response.content_type = info.get('content_type')
+                    req.response.headers = info.get('headers', {})
+                    # req.response.content = result
+                    req.response.ttl = 0  # prevent multi caching
+                    print('CACHED RESULT ....', str(req.response.content))
+                    return result
         result = getResponse(res, req, func)
         try:
             response = req.response
-            ttl = int(req.response.ttl)
-            write_cache = ttl and bool(response) and response.status == 200 and not inspect.isgenerator(response.content)
+            # pb if response is a resource
+            if not ttl:
+                if req.response.ttl and isinstance(req.response.ttl, int):
+                    ttl = req.response.ttl
+
+            write_cache = usecache and ttl and bool(response) and response.status == 200 and not inspect.isgenerator(response.content)
             if write_cache:
-                # enable cache for this resource and this method
-                if not usecache:
-                    _setCacheService()
-                cacheservice = _getCacheService()
-                uid = req.uid()
-                print('write cache !!!', uid, ttl, response.content)
-                headers = dict(response.headers)
-                cacheservice.put(uid, {'content': response.content, 'ttl': int(ttl), 'headers': headers})
+                # pb avec cache implicite (ttl setted to app about, not in resource about)
+                #res._about.setdefault('ttl', ttl)
+                #service = req.service('cache')
+                if service:
+                    uid = req.uid()
+                    print(res._about, res)
+                    print('write cache !!!!!!', uid, ttl, response.content)
+                    headers = dict(response.headers)
+                    service.put(uid, {'content': response.content, 'ttl': int(ttl), 'headers': headers})
         except Exception as err:
             print('cache error', err)
+            traceback.print_exc()
         return result
 
     return _
@@ -399,7 +386,7 @@ def handleDelegate(func):
         must_delegate = self._handler and isinstance(self._handler, collections.Callable) and not skiphandler
 
         # fix about + api: if already have about (eg via doctest) we skip handler call if there is not ABOUT in OPTIONS
-        #print ('... DELEGATE? ...',req)
+        # print ('... DELEGATE? ...',req)
         if must_delegate and not self.__CLIENT__ and (req.ABOUT or req.API) and not req.path and self._about and not 'ABOUT' in self._about.get('options'):
             print('... SKIP DELEGATE ...', req)
             must_delegate = False  # pb with xio.client => in client case must_delegate is ALWAY TRUE
@@ -614,8 +601,8 @@ class Resource(object):
         return resp if isinstance(resp, Resource) else self._toResource(req, resp, handler_path)  # put handler_path in response metadata ?
 
     def render(self, req):
-        """ 
-        generic methode for server side public resource delivery 
+        """
+        generic methode for server side public resource delivery
         for app this method add 'www' path prefix + add common feature
         """
         return self.request(req)
@@ -816,8 +803,8 @@ class Resource(object):
     def publish(self, message):
         # merge/clarify/fix req.fullpath, req.path, res.realpath, res.path
         print(self.path, self._handler_path)
-        #basepath = self._handler_path or ''
-        #realpath = basepath+'/'+self.path if self.path else basepath
+        # basepath = self._handler_path or ''
+        # realpath = basepath+'/'+self.path if self.path else basepath
         self._root.publish(self.path, message)
 
     def _handleAbout(self, req):
@@ -851,7 +838,7 @@ class Resource(object):
 
             about.update(wwwabout)
             about['id'] = self.id
-            about['name'] = self.name  
+            about['name'] = self.name
             about['type'] = self.__class__.__name__.lower()
             return about
             """
@@ -931,7 +918,7 @@ class Resource(object):
 
         res = self
 
-        #from logs import colorize,BLUE,YELLOW,RED,CYAN,GREEN
+        # from logs import colorize,BLUE,YELLOW,RED,CYAN,GREEN
         RESET_SEQ = "\033[0m"
         COLOR_SEQ = "\033[1;%dm"
         BOLD_SEQ = "\033[1m"
@@ -1009,5 +996,6 @@ class Resource(object):
         print('\thandler_path :', self._handler_path)
         print('\tabout        :', self._about)
         print('\tchildren     :', list(self._children.keys()))
+        _map(self.os, [])
         _map(self, [])
         print('\n______ /DEBUG ______\n')

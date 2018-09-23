@@ -158,19 +158,19 @@ class App(peer.Peer):
 
         # scheduler
         from .lib.cron import SchedulerService
-        self.put('services/cron', SchedulerService(self))
+        self.os.put('services/cron', SchedulerService(self))
 
         # pub/sub
         from .lib.pubsub import PubSubService
-        self.put('services/pubsub', PubSubService(self))
+        self.os.put('services/pubsub', PubSubService(self))
 
         # stats/quota
         from .lib.stats import StatsService
-        self.put('services/stats', StatsService(self))
+        self.os.put('services/stats', StatsService(self))
 
         # cache
         from .lib.cache import CacheService
-        self.put('services/cache', CacheService(self))
+        self.os.put('services/cache', CacheService(self))
 
         """
         # build resources
@@ -219,7 +219,7 @@ class App(peer.Peer):
                         handler_class = getattr(module, classname)
                         servicehandler = handler_class(app=self, **handler_params)
 
-                    self.bind('services/%s' % name, servicehandler)
+                    self.os.bind('services/%s' % name, servicehandler)
 
         # www/xio
         #sdkdir = os.path.dirname( os.path.realpath(__file__) )+'/ihm'
@@ -450,7 +450,7 @@ class App(peer.Peer):
 
     def schedule(self, *args, **kwargs):
 
-        scheduler = self.get('services/cron')
+        scheduler = self.os.get('services/cron')
 
         if len(args) > 1:
             scheduler.schedule(*args, **kwargs)
