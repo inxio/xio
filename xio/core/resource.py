@@ -740,11 +740,15 @@ class Resource(object):
 
         if name[0] != '_':
 
-            # handling content access (used with app.services and/or not callable wrapped instance) .. what about handler ?
-            if self.content and hasattr(self.content, name):
-                return getattr(self.content, name)
+            if self.__CLIENT__ and self.__XMETHODS__:
+                # for client all methode were binded to requets
+                setattr(self, name, lambda *args, **kwargs: self.request(name.upper(), *args, data=kwargs))
 
-            if self.__XMETHODS__:
+            elif self.content and hasattr(self.content, name):
+                # for SERVER : handling content access (used with app.services and/or not callable wrapped instance) .. what about handler ?
+                return getattr(self.content, name)
+            else:
+                # server fallback ?
                 setattr(self, name, lambda *args, **kwargs: self.request(name.upper(), *args, data=kwargs))
 
         return object.__getattribute__(self, name)

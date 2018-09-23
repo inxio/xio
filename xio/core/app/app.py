@@ -465,7 +465,7 @@ class App(peer.Peer):
         # 1/ self.get('services/pubsub') must be in App
         # 2/ default/fallback handler for these methode must forward to self.server
 
-        pubsubservice = self.get('services/pubsub').content  # why content and not handler ? + conflict res.publish and res.content.publish
+        pubsubservice = self.os.get('services/pubsub').content  # why content and not handler ? + conflict res.publish and res.content.publish
         if pubsubservice:
             print('...app.publish', topic)
             return pubsubservice.publish(topic, *args, **kwargs)
@@ -474,11 +474,11 @@ class App(peer.Peer):
 
         if len(args) > 1:
             topic, callback = args
-            return self.get('services/pubsub').subscribe(topic, callback)
+            return self.os.get('services/pubsub').subscribe(topic, callback)
         else:
             def _wrapper(callback):
                 topic = args[0]
-                return self.get('services/pubsub').subscribe(topic, callback)
+                return self.os.get('services/pubsub').subscribe(topic, callback)
             return _wrapper
 
     def main(self):
