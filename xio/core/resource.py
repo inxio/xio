@@ -14,6 +14,7 @@ import yaml
 import copy
 import json
 import requests
+import inspect
 from pprint import pprint
 
 from .handlers import *
@@ -265,9 +266,7 @@ def handleAuth(func):
                         self._handler_context['authorization'] = authorization
                         req.headers['Authorization'] = authorization
                         req.init()
-                        print('...redo call', req.headers)
                         result = getResponse(self, req, func)
-                        print('...redo call ?', resp)
 
                 if resp.status == 402:
                     peer = self.context.get('client')
@@ -286,54 +285,73 @@ def handleCache(func):
 
     @wraps(func)
     def _(res, req):
-        # need explicit configuration => about.ttl
+
+        method = req.xmethod or req.method
+
+        def _setCacheService():
+            import xio
+            m = req.xmethod or req.method
+            print('----USING CACHE for ', m, 'of', res)
+            res._about.setdefault('methods', {})
+            res._about['methods'].setdefault(m, {})
+            res._about['methods'][m]['ttl'] = True
+            service = res.os.get('service/cache')
+
+            if not service.content:
+                # tofix: cf services loading in app
+                from xio.core.app.lib.cache import CacheService
+                res.os.put('service/cache', CacheService(res, type='python'))
+                res.os.debug()
+            pprint(res._about)
+            print(service)
 
         def _getCacheService():
-            return res.context.get('app', {}).get('services/cache')
+            return res.os.get('service/cache')
+            # return res.context.get('app', {}).get('services/cache')
 
-        print('----handlecache', res._about)
-        if req.GET:
-            cached = None
+        xio_skip_cache = req.query.pop('xio_skip_cache', None)
+        usecache = res._about.get('methods', {}).get(method, {}).get('ttl')
+        cached = None
+
+        if usecache and not xio_skip_cache:
+            print('----handlecache', res._about)
             cacheservice = _getCacheService()
-            if cacheservice:
-                import inspect
-                xio_skip_cache = req.query.pop('xio_skip_cache', None)
-                uid = req.uid()
-
-                if xio_skip_cache:
-                    print(cacheservice.delete(uid))
-
-                cached = cacheservice.get(uid, {})
-
-            if cached and xio_skip_cache == None and cached.status == 200 and cached.content:
-
-                info = cached.content
-
+            uid = req.uid()
+            cached = cacheservice.get(uid)
+            if cached and cached.status == 200 and cached.content:
+                info = cached.content or {}
+                result = info.get('content')
                 print('found cache !!!', info)
-                response = Response(200)
-                response.content_type = info.get('content_type')
-                response.headers = info.get('headers', {})
-                response.content = info.get('content')
-                return response
-            else:
-                result = func(res, req)
-                response = req.response
-
-                ttl = req.response.ttl
-                cache_allowed = ttl and bool(response) and response.status == 200 and not inspect.isgenerator(response.content)
-                if cache_allowed:
-                    print('write cache !!!', uid, ttl)
-                    headers = dict(response.headers)
-                    cacheservice.put(uid, data={'content': response.content, 'ttl': int(ttl), 'headers': headers})
-                else:
-                    print('not cachable !!!', ttl, bool(response), response.status)
+                req.response = Response(200)
+                req.response.content_type = info.get('content_type')
+                req.response.headers = info.get('headers', {})
+                #req.response.content = result
+                req.response.ttl = 0  # prevent multi caching
+                print('CACHED RESULT ....', str(req.response.content))
                 return result
 
-        return func(res, req)
+        result = getResponse(res, req, func)
+        try:
+            response = req.response
+            ttl = int(req.response.ttl)
+            write_cache = ttl and bool(response) and response.status == 200 and not inspect.isgenerator(response.content)
+            if write_cache:
+                # enable cache for this resource and this method
+                if not usecache:
+                    _setCacheService()
+                cacheservice = _getCacheService()
+                uid = req.uid()
+                print('write cache !!!', uid, ttl, response.content)
+                headers = dict(response.headers)
+                cacheservice.put(uid, {'content': response.content, 'ttl': int(ttl), 'headers': headers})
+        except Exception as err:
+            print('cache error', err)
+        return result
+
     return _
 
 
-def handleQuotas(func):
+def handleStats(func):
 
     @wraps(func)
     def _(self, req):
@@ -346,7 +364,7 @@ def handleQuotas(func):
                 'path': req.path,
             })
         """
-        return func(self, req)
+        return getResponse(self, req, func)
     return _
 
 
@@ -574,8 +592,9 @@ class Resource(object):
     @handleRequest
     @handleAuth
     @handleHooks
+    @handleCache
+    @handleStats
     @handleDelegate
-    #@handleCache
     def request(self, req):
 
         assert isinstance(req, Request)
