@@ -209,7 +209,11 @@ class App(peer.Peer):
                         handler_params['xio_id'] = self.id
                         handler_params['xio_token'] = 'FAKE TOKEN'  # tofix
                         import xio
-                        servicehandler = None  # xio.resource(handler_class,handler_params)
+
+                        servicehandler = xio.client(handler_class, handler_params)
+                        print(handler_class, handler_params)
+
+                        #assert servicehandler
                     else:
                         import importlib
                         p = handler_class.split('.')
@@ -219,7 +223,10 @@ class App(peer.Peer):
                         handler_class = getattr(module, classname)
                         servicehandler = handler_class(app=self, **handler_params)
 
-                    self.os.bind('services/%s' % name, servicehandler)
+                    if servicehandler:
+                        self.os.bind('services/%s' % name, servicehandler)
+                    else:
+                        log.warning('unable to load service', service)
 
         # www/xio
         #sdkdir = os.path.dirname( os.path.realpath(__file__) )+'/ihm'

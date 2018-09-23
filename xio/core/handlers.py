@@ -70,7 +70,7 @@ def XrnHandler(xrn):
     else:
         import xio
         user = xio.context.user
-        network = xio.context.network or xio.context.node
+        network = xio.context.node or xio.context.network
         assert user and network
         return user.connect(network).get(xrn)
 
