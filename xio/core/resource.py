@@ -655,7 +655,8 @@ class Resource(object):
                 assert re.match(rpattern, value), Exception(400, 'Wrong format parameter : %s' % name)
 
         # resource requirements
-        if req.path.startswith('admin'):
+        print('...', req.path)
+        if not self.__CLIENT__ and req.fullpath.startswith('admin'):
             print('===handleAuth2')
             req.require('auth', 'xio/ethereum')
             req.require('scope', 'admin')
