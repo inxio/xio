@@ -157,13 +157,10 @@ class Request(object):
 
     def service(self, name):
         resource = self.context.get('root')
-        pprint(self.context)
         if resource and resource.os:
             resource.debug()
             service = resource.os.get('services/%s' % name)
-            print('service', name, service)
-            if service.status in (200, 201):
-                return service
+            return service
 
     def require(self, key, value, content=None):
 

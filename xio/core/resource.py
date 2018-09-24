@@ -49,10 +49,12 @@ def resource(handler=None, context=None, about=None, **kwargs):
         is_client = True
         print('handler', handler)
         handler, basepath = env.resolv(handler)
+        """
         if isinstance(handler, Resource):
             handler.__CLIENT__ = True
             handler._handler_context = context or {}
             return handler
+        """
     elif handler:
         # test fallback handler => object introspection
         # alternative is to add __call__ method on class

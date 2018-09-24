@@ -205,15 +205,9 @@ class App(peer.Peer):
                     remotehandler = ':' in handler_class or '/' in handler_class
                     pythonhandler = not remotehandler and '.' in handler_class
                     if remotehandler:
-                        assert self.id
-                        handler_params['xio_id'] = self.id
-                        handler_params['xio_token'] = 'FAKE TOKEN'  # tofix
+                        assert xio.context.node or xio.context.network
                         import xio
-
                         servicehandler = xio.client(handler_class, handler_params)
-                        print(handler_class, handler_params)
-
-                        #assert servicehandler
                     else:
                         import importlib
                         p = handler_class.split('.')
@@ -224,7 +218,8 @@ class App(peer.Peer):
                         servicehandler = handler_class(app=self, **handler_params)
 
                     if servicehandler:
-                        self.os.bind('services/%s' % name, servicehandler)
+                        # tofix: warning ! bug with self.os.put (eg cache)
+                        self.os.put('services/%s' % name, servicehandler)
                     else:
                         log.warning('unable to load service', service)
 

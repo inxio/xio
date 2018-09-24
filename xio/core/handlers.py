@@ -68,11 +68,41 @@ def XrnHandler(xrn):
         uri = ':'.join(nfo)
         return handler(uri)
     else:
+        return XrnResourceHandler(xrn)
+        """
         import xio
         user = xio.context.user
         network = xio.context.node or xio.context.network
         assert user and network
         return user.connect(network).get(xrn)
+        """
+
+
+class XrnResourceHandler:
+
+    def __init__(self, xrn):
+        self.xrn = xrn
+        self.client = None
+        self._connect()
+
+    def _connect(self):
+        import xio
+        self.user = xio.context.user
+        self.network = xio.context.node or xio.context.network
+        assert self.user and self.network
+        self.client = self.user.connect(self.network)
+
+    def __call__(self, req):
+        import xio
+        # detect xontext change (move into xio.env.trigger for auto context adap ?)
+        if xio.context.user != self.user or xio.context.network != self.network:
+            self._connect()
+
+        req.path = self.xrn + '/' + req.path if req.path else self.xrn
+        res = self.client.request(req)
+        req.response.status = res.status
+        req.response.headers = res.headers
+        return res.content
 
 
 class pythonResourceHandler:
