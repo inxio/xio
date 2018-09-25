@@ -48,7 +48,7 @@ class Request(object):
     PASS = UnhandledRequest
 
     def __init__(self, method, path, query=None, headers=None, data=None, context=None, debug=False, client=None, client_context=None, server=None, **kwargs):
-
+        print('NEW request', client)
         context = context or {}
         headers = headers or {}
 
@@ -333,7 +333,7 @@ class ReqClient:
 
         self.req = req
         self.id = None
-        self.peer = None
+        self.peer = peer
         self._peer = peer  # warning originale peer for testcase (correct id require token based raccount ecover)
         self.context = context
         self.auth = Auth(self)

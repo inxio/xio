@@ -565,7 +565,6 @@ class Resource(object):
                 assert re.match(rpattern, value), Exception(400, 'Wrong format parameter : %s' % name)
 
         # resource requirements
-        print('...', req.path)
         if not self.__CLIENT__ and req.fullpath.startswith('admin'):
             print('===handleAuth2')
             req.require('auth', 'xio/ethereum')
@@ -909,6 +908,7 @@ class Resource(object):
         print('\tpath         :', self.path)
         print('\thandler      :', self._handler)
         print('\thandler_path :', self._handler_path)
+        print('\tcontext      :', self.context)
         print('\tabout        :', self._about)
         print('\tchildren     :', list(self._children.keys()))
         _map(self.os, [])

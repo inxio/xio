@@ -281,10 +281,7 @@ class App(peer.Peer):
                     pythonhandler = not remotehandler and '.' in handler_class
 
                     if remotehandler:
-                        resource = xio.client(handler_class, handler_params)
-                        servicehandler = self.connect(resource)
-                        log.info('=== LOADED SERVICE ', service, servicehandler)
-                        self.debug()
+                        servicehandler = xio.client(handler_class, handler_params, client=self)
                     else:
                         import importlib
                         p = handler_class.split('.')
