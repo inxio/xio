@@ -70,23 +70,7 @@ ABOUT_APP_PUBLIC_FIELDS = ['description', 'links', 'provide', 'configuration', '
 
 
 def getResponse(res, req, func):
-    """
-    call func with req and secure response format
-    todo : put in request ?   eg req.call(func)
-    """
-    try:
-        resp = func(res, req)
-    except Exception as err:
-        args = err.args[0].args if err.args and isinstance(err.args[0], Exception) else err.args
-        if args and isinstance(args[0], int):
-            req.response.status = args[0]
-            resp = args[1] if len(args) > 1 else None
-        else:
-            traceback.print_exc()
-            req.response.status = 500
-            req.response.traceback = str(traceback.format_exc())
-            resp = None
-    return resp
+    return req.send(lambda req: func(res, req))
 
 
 def fixAbout(about):
@@ -237,7 +221,7 @@ def handleRequest(func):
     return _
 
 
-def handleAuth(func):
+def handleAuth(func):  # move to peer ??
 
     @wraps(func)
     def _(self, req):
@@ -280,80 +264,6 @@ def handleAuth(func):
 
         return result
 
-    return _
-
-
-def handleCache(func):
-
-    @wraps(func)
-    def _(res, req):
-
-        method = req.xmethod or req.method
-
-        xio_skip_cache = req.query.pop('xio_skip_cache', None)
-        ttl = res._about.get('ttl') or res._about.get('methods', {}).get(method, {}).get('ttl')
-        usecache = req.GET and ttl
-        cached = None
-        if usecache and not xio_skip_cache:
-
-            print('----handlecache', res._about)
-            service = req.service('cache')
-            if service:
-                uid = req.uid()
-                cached = service.get(uid)
-                print('----handlecache', cached)
-                if cached and cached.status in (200, 201) and cached.content:
-                    info = cached.content or {}
-                    result = info.get('content')
-                    print('found cache !!!', info)
-                    req.response = Response(200)
-                    req.response.content_type = info.get('content_type')
-                    req.response.headers = info.get('headers', {})
-                    # req.response.content = result
-                    req.response.ttl = 0  # prevent multi caching
-                    print('CACHED RESULT ....', str(req.response.content))
-                    return result
-        result = getResponse(res, req, func)
-        try:
-            response = req.response
-            # pb if response is a resource
-            if not ttl:
-                if req.response.ttl and isinstance(req.response.ttl, int):
-                    ttl = req.response.ttl
-
-            write_cache = usecache and ttl and bool(response) and response.status == 200 and not inspect.isgenerator(response.content)
-            if write_cache:
-                # pb avec cache implicite (ttl setted to app about, not in resource about)
-                #res._about.setdefault('ttl', ttl)
-                #service = req.service('cache')
-                if service:
-                    uid = req.uid()
-                    print(res._about, res)
-                    print('write cache !!!!!!', uid, ttl, response.content)
-                    headers = dict(response.headers)
-                    service.put(uid, {'content': response.content, 'ttl': int(ttl), 'headers': headers})
-        except Exception as err:
-            print('cache error', err)
-            traceback.print_exc()
-        return result
-
-    return _
-
-
-def handleStats(func):
-
-    @wraps(func)
-    def _(self, req):
-        # need explicit configuration => about.quota or about.stats
-        """
-        if req.path.startswith('www/'):
-            statservice = self.get('services/stats')
-            statservice.post({
-                'userid': req.client.id,
-                'path': req.path,
-            })
-        """
-        return getResponse(self, req, func)
     return _
 
 
@@ -581,8 +491,6 @@ class Resource(object):
     @handleRequest
     @handleAuth
     @handleHooks
-    @handleCache
-    @handleStats
     @handleDelegate
     def request(self, req):
 

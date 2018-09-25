@@ -6,8 +6,9 @@ import json
 import base64
 from pprint import pprint
 from xio.core.lib.utils import sha1
-
+import traceback
 import sys
+
 if sys.version_info.major == 2:
     from Cookie import SimpleCookie
     from urllib import unquote
@@ -127,6 +128,30 @@ class Request(object):
 
     def __repr__(self):
         return 'REQUEST %s %s' % (self.xmethod or self.method, repr(self.path))
+
+    def send(self, target, *args, **kwargs):
+        """
+        send this request to handler and/or resource
+        """
+        if callable(target):
+            func = target
+        else:
+            # xio.client( 'some xrn')
+            # func = cli.request
+            raise Exception('not implemented yet')
+        try:
+            resp = func(self, *args, **kwargs)
+        except Exception as err:
+            args = err.args[0].args if err.args and isinstance(err.args[0], Exception) else err.args
+            if args and isinstance(args[0], int):
+                self.response.status = args[0]
+                resp = args[1] if len(args) > 1 else None
+            else:
+                traceback.print_exc()
+                self.response.status = 500
+                self.response.traceback = str(traceback.format_exc())
+                resp = None
+        return resp
 
     def _debug(self):
         return {

@@ -82,6 +82,21 @@ class XrnResourceHandler:
 
     def __init__(self, xrn):
         self.xrn = xrn
+        import xio
+        self.client = xio.client(xio.context.node or xio.context.network)
+
+    def __call__(self, req):
+        req.path = self.xrn + '/' + req.path if req.path else self.xrn
+        res = self.client.request(req)
+        req.response.status = res.status
+        req.response.headers = res.headers
+        return res.content
+
+
+class oldXrnResourceHandler:
+
+    def __init__(self, xrn):
+        self.xrn = xrn
         self.client = None
         self._connect()
 
