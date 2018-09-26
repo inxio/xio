@@ -186,10 +186,10 @@ class App(peer.Peer):
 
     def load(self):
         module = self.module
-
+        import xio
         # loading ext first because about can refer on
         if os.path.isdir(self.directory + '/ext'):
-            import xio
+            
             xio.path.append(self.directory + '/ext')
             for childname, child in getAppsFromDirectory(self.directory + '/ext'):
                 child = xio.app(child)
@@ -201,6 +201,10 @@ class App(peer.Peer):
                 self._about = yaml.load(f)
 
         self.name = self._about.get('name')
+        # register local apps in context
+        if self.name and self.name.startswith('xrn:'):
+            xio.register(self.name,self)
+            
         if 'id' in self._about:
             self.id = self._about.get('id')
         else:

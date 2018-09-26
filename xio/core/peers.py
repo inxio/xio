@@ -60,12 +60,11 @@ class Peers:
         assert endpoint
         assert is_string(endpoint) or isinstance(endpoint, Peer) or isinstance(endpoint, collections.Callable)
 
-        log.info('register', endpoint)
+        log.info('register', endpoint, 'by', self.peer)
 
-        client = xio.client(endpoint)
-        resp = client.request('ABOUT')
+        client = xio.client(endpoint, client=self.peer)
+        resp = client.about()
         about = resp.content
-
         assert about
 
         peerid = about.get('id')
@@ -82,26 +81,27 @@ class Peers:
         assert peerid != self.id
 
         # handle provides (multi services)
+        # tofix: move this feature to node.peers
         if not sub_register:
+
             provide = resp.content.get('provide')
             if provide:
                 for xrn in provide:
-                    print(xrn)
-                    postpath = xrn.split(':').pop()
-                    if not is_string(endpoint):
-                        childendpoint = client.get(postpath)
-                    else:
-                        childendpoint = endpoint + '/' + postpath
-
                     try:
+                        # check sub xrn name
+                        assert xrn.startswith(peername + ':'), Exception('invalid xrn')
+                        postpath = xrn.split(':').pop()
+                        if not is_string(endpoint):
+                            childendpoint = client.get(postpath)
+                        else:
+                            childendpoint = endpoint + '/' + postpath
                         self.register(childendpoint, sub_register=xrn)
                     except Exception as err:
-                        log.error('subregister', childendpoint)
-                        import traceback
-                        traceback.print_exc()
+                        log.error('subregister', xrn, err)
+                        #import traceback
+                        # traceback.print_exc()
 
-                # skip registering of provider (container)  ????
-                return
+            # let registering container base (for admin scope only ?)
 
         for peer in self.select(id=peerid):
             if peer.data.get('nodeid') == nodeid and peer.id == peerid:
@@ -320,7 +320,6 @@ class PeerClient(Resource):
         import xio
 
         context = req.client.context or {}
-        context['xio_id'] = req.client.id if req.client else 0
         if self.endpoint == '~':
             # get client instance from local storage
             client = self.peers.localresources.get(self.uid).get('resource')

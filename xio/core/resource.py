@@ -23,10 +23,12 @@ from .request import Request, Response
 from xio.core.lib import utils
 from xio.core import env
 
+from functools import wraps, update_wrapper
+
 is_string = utils.is_string
 
 
-from functools import wraps, update_wrapper
+ABOUT_APP_PUBLIC_FIELDS = ['description', 'links', 'provide', 'configuration', 'links', 'profiles', 'network', 'methods', 'options', 'resources', 'scope']
 
 
 def client(*args, **kwargs):
@@ -49,12 +51,11 @@ def resource(handler=None, context=None, about=None, **kwargs):
         is_client = True
         print('handler', handler)
         handler, basepath = env.resolv(handler)
-        """
+
         if isinstance(handler, Resource):
-            handler.__CLIENT__ = True
-            handler._handler_context = context or {}
-            return handler
-        """
+            resource = client(handler, context, **kwargs)
+            return resource
+
     elif handler:
         # test fallback handler => object introspection
         # alternative is to add __call__ method on class
@@ -64,9 +65,6 @@ def resource(handler=None, context=None, about=None, **kwargs):
     res = Resource(handler=handler, handler_path=basepath, handler_context=context, about=about, **kwargs)
     res.__CLIENT__ = is_client
     return res
-
-
-ABOUT_APP_PUBLIC_FIELDS = ['description', 'links', 'provide', 'configuration', 'links', 'profiles', 'network', 'methods', 'options', 'resources']
 
 
 def getResponse(res, req, func):
@@ -85,10 +83,15 @@ def fixAbout(about):
     if not isinstance(options, list):
         options = [o.strip().upper() for o in options.split(',')]
 
+    # fix scope
+    scope = about.pop('scope', [])
+    if not isinstance(scope, list):
+        scope = [s.strip().lower() for s in scope.split(',')]
+
     about.setdefault('options', options)
+    about.setdefault('scope', scope)
     about.setdefault('methods', {})
     about.setdefault('routes', {})
-
     # v0.1
     """
     type: operation
@@ -231,9 +234,28 @@ def handleAuth(func):  # move to peer ??
             -> 402 : signature request : content must be signed and resend
         """
         # resp = func(self, req)
+
+        # server side
+
+        # resource requirements
+        if not self.__CLIENT__:
+
+            if req.fullpath.startswith('admin'):
+                print('===handleAuth2')
+                req.require('auth', 'xio/ethereum')
+                req.require('scope', 'admin')
+
+            if not req.ABOUT:  # tofix: add node scope for apps registering
+                required_scope = self._about.get('scope')
+                if required_scope:
+                    pass
+                    #req.require('auth', 'xio/ethereum')
+                    #req.require('scope', required_scope)
+
         result = getResponse(self, req, func)
         resp = req.response
 
+        # client side
         if self.__CLIENT__ and resp.status in (401, 402, 403):
             print('...', resp.status, 'recevied by', self)
             peer = self.context.get('client')
@@ -563,12 +585,6 @@ class Resource(object):
                 import re
                 rpattern = re.compile(pattern)
                 assert re.match(rpattern, value), Exception(400, 'Wrong format parameter : %s' % name)
-
-        # resource requirements
-        if not self.__CLIENT__ and req.fullpath.startswith('admin'):
-            print('===handleAuth2')
-            req.require('auth', 'xio/ethereum')
-            req.require('scope', 'admin')
 
         result = self._handler(req)
 

@@ -48,7 +48,7 @@ class Request(object):
     PASS = UnhandledRequest
 
     def __init__(self, method, path, query=None, headers=None, data=None, context=None, debug=False, client=None, client_context=None, server=None, **kwargs):
-        print('NEW request', client)
+
         context = context or {}
         headers = headers or {}
 
@@ -206,9 +206,7 @@ class Request(object):
                 raise Exception(402, content)
             return signature
         elif key == 'scope':
-            print('scope?')
-            pprint(self.client.data)
-            if not value in self.client.data.get('scope'):
+            if not value in self.client.data.get('scope', []):
                 raise Exception(401, 'scope not allowed')
         elif key == 'quota':
             # get relevant service

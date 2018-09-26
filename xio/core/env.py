@@ -98,17 +98,6 @@ class Env:
 
 env = Env()
 
-"""
-def env(key,val=None):
-    envkey = 'XIO_%s' % key.upper()
-    if val==None:
-        return context.get(envkey, os.environ.get(envkey) ) or xioenvdefault.get('xio.'+key)
-    elif is_string(val):
-        os.environ[envkey] = val  
-    else:
-        context[envkey] = val
-"""
-
 
 # XRN RESOLVE
 
@@ -116,7 +105,15 @@ __PATH__ = []
 __LOCAL_APPS__ = {}
 
 
+def register(xrn,app):
+    assert xrn.startswith('xrn:')
+    print ('..registering local app', xrn,app)
+    __LOCAL_APPS__[xrn] = app
+
 def resolv(uri):
+    if uri in __LOCAL_APPS__:
+        return (__LOCAL_APPS__.get(uri),None)
+        
     info = urlparse(uri)
     scheme = info.scheme
     netloc = info.netloc
