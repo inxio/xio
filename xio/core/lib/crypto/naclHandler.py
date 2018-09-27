@@ -60,13 +60,16 @@ class NaclHandler:
 
         # check result
         sig = (str_to_bytes(verify_key_hex), str_to_bytes(encode_hex(signed)))
+        sig = b'-'.join(sig)
+        sig = encode_hex(sig)
         assert self.verify(message, sig)
         return sig
 
     @staticmethod
     def verify(message, sig):  # verify_key_hex, signed):
-        verify_key_hex, signed = sig
-        verifyKey = nacl.signing.VerifyKey(verify_key_hex, encoder=nacl.encoding.HexEncoder)
+        verify_key_hex, signed = str_to_bytes(decode_hex(sig)).split(b'-')
+        verifyKey = nacl.signing.VerifyKey(str_to_bytes(verify_key_hex), encoder=nacl.encoding.HexEncoder)
         unsigned = verifyKey.verify(decode_hex(signed))
-        assert message == unsigned
+        print(message, unsigned)
+        assert str_to_bytes(message) == unsigned
         return True

@@ -22,6 +22,10 @@ except:
 def key(*args, **kwargs):
     return Key(*args, **kwargs)
 
+__HANDLERS__ = {
+    'xio': NaclHandler,
+    'xio/ethereum': ethereum_handler
+}
 
 class Key:
 
@@ -53,11 +57,18 @@ class Key:
         self.address = to_string(self.address)
         self.token = to_string(self.token)
 
-    def account(self, network):
-        if not network in self._accounts:
-            account = ethereum_handler(seed=self.private) if ethereum_handler else None
-            self._accounts[network] = account
-        return self._accounts.get(network)
+    def account(self, scheme=None): 
+        """ to fix scheme vs network ??"""
+        scheme = scheme or 'xio'
+        assert scheme in __HANDLERS__, Exception('unhandled crypto scheme %s' % scheme)
+        if scheme == 'xio':
+            return self
+        elif not scheme in self._accounts:
+            handler = __HANDLERS__.get(scheme)
+            assert handler
+            account = handler(seed=self.private)
+            self._accounts[scheme] = account
+        return self._accounts.get(scheme)
 
     def encrypt(self, message, *args, **kwargs):
         return self.encryption.encrypt(message, *args, **kwargs)
@@ -71,7 +82,82 @@ class Key:
     def verify(self, message, sig):
         return self._handler.verify(message, sig)
 
+
+    def generateToken(self, body=None, scheme=None):
+        """
+        {	
+          "header": {
+            "typ": "JWT",
+            "alg": "HS256"
+          },
+          "body": {
+            "jti": "c84280e6-0021-4e69-ad76-7a3fdd3d4ede",
+            "iat": 1434660338,
+            "exp": 1434663938,
+            "nbf": 1434663938,
+            "iss": "http://myapp.com/",
+            "sub": "users/user1234",
+            "scope": ["self","admins"]
+          }
+        }
+        """
+	
+        h = self.account(scheme)
+
+        print('generateToken', scheme)
+        iat = int(time.time())
+        exp = iat + 3600
+        iss = self.address if not scheme else self.account(scheme).address
+        body = body or  {'sub':to_string(iss)}
+        body.update({
+            "iss": to_string(iss),
+            "jti": to_string(uuid.uuid4()),
+            "iat": iat,
+            "exp": exp,
+        })
+        data ={	
+          "header": {
+            "typ": "JWT",
+            "alg": scheme or 'xio'
+          },
+          "body": body
+        }
+        print(data)
+
+        message = json.dumps(data,sort_keys=True)
+        sig = h.sign(message)
+        data['sig'] = sig
+        datajson = json.dumps(data)
+        token = base64.urlsafe_b64encode(datajson.encode())
+        
+        return token
+
+    def recoverToken(self, token, scheme=None):
+        
+        datajson = base64.urlsafe_b64decode(token)
+        data = json.loads(datajson)
+        scheme = data.get('header').get('alg')
+        assert scheme
+        h = self._handler if not scheme else self.account(scheme)
+        assert h
+        body = data.get('body')
+        sig = data.pop('sig')
+        message = json.dumps(data,sort_keys=True)
+        # check recover feature
+        if hasattr(h,'recover'):
+            recovered_id = h.recover(message,sig)
+            assert recovered_id
+            assert recovered_id == body.get('iss')
+        else:
+            assert h.verify(message, sig)
+        return data
+
+
+
+    """
+        
     def generateToken(self, scheme=None):
+	
         h = self._handler if not scheme else self.account(scheme)
         ttl = int(time.time()) + 3600
         print('generateToken', scheme)
@@ -97,3 +183,6 @@ class Key:
         message = b'%s/%s' % (str_to_bytes(data.get('id')), str_to_bytes(str(data.get('expire'))))
         assert self.verify(message, sig)
         return data
+
+    """
+        

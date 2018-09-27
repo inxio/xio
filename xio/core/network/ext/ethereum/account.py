@@ -70,26 +70,14 @@ class Web3Handler(_Account):
         self.address = self._web3.toChecksumAddress(self.address)
 
     def sign(self, message):
-        # web3 is too unstable lib
-        # http://web3py.readthedocs.io/en/latest/web3.eth.account.html#sign-a-message
         from eth_account.messages import defunct_hash_message
         message_hash = defunct_hash_message(text=message)
         signed_message = self._web3.eth.account.signHash(message_hash, private_key=self.private)
-        return (
-            signed_message.get('v'),
-            signed_message.get('r'),
-            signed_message.get('s'),
-        )
-        """
-        print (signed_message)
-        sig = self._account.sign(message_text=message)
-        v = sig.v
-        r = sig.r.hex()
-        s = sig.s.hex()
-        return (v,r,s)
-        """
+        return signed_message.signature.hex()
 
-    def recover(self, message, sig):
-        (v, r, s) = sig
-        address = self._web3.eth.account.recoverMessage(text=message, vrs=(v, r, s))
+    @staticmethod
+    def recover(message, sig):
+        from eth_account.messages import defunct_hash_message
+        message_hash = defunct_hash_message(text=message)
+        address = web3.Web3('').eth.account.recoverHash(message_hash, signature=sig)
         return address
