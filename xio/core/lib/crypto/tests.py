@@ -87,11 +87,21 @@ class TestCases(unittest.TestCase):
 
     def test_ethereum(self):
         key = Key(seed=TEST_SEED)
-        ethereumaccount = key.account('ethereum')
+        ethereumaccount = key.account('xio/ethereum')
         if ethereumaccount:
             assert ethereumaccount.private.lower() == TEST_ETHEREUM_PRIVATE
             assert ethereumaccount.address.lower() == TEST_ETHEREUM_ADDRESS
 
+    def test_jwt_token(self):
+    
+        key = Key(seed=TEST_SEED)
+        
+        token = key.generateToken({'scope':'ok'})
+        assert key.recoverToken(token).get('body').get('iss')==key.address==TEST_ADDRESS
+
+        token = key.generateToken({'scope':'ok'},scheme='xio/ethereum')
+        print(key.recoverToken(token))
+        assert key.recoverToken(token).get('body').get('iss').lower()==TEST_ETHEREUM_ADDRESS
 
 if __name__ == '__main__':
 
