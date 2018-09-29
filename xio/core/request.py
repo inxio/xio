@@ -190,8 +190,13 @@ class Request(object):
     def require(self, key, value, content=None):
 
         if key == 'auth':
-            print('req.require', value, '=>', self.client.auth.scheme)
+
             if not self.client.auth.scheme or not self.client.auth.token or not self.client.id:
+
+                print('req.require auth', value, '=>', self.client.auth.scheme)
+                print(self.client.auth.token)
+                print(self.client.data)
+                print(self.client.id)
                 self.response.headers['WWW-Authenticate'] = '%s realm="%s", charset="UTF-8"' % (value, 'xio realm')
                 raise Exception(403)
         elif key == 'signature':
@@ -315,7 +320,8 @@ class Auth:
             authorization = client.context.get('authorization')
 
         if not authorization:
-            authorization = self.req.cookie.get('XIO-AUTH')
+            token = self.req.cookie.get('XIO-AUTH')
+            authorization = 'bearer ' + token if token else None
 
         if authorization:
             scheme, token = authorization.split(' ')
@@ -339,17 +345,23 @@ class ReqClient:
 
         # if not peer we create a keyless user from token
         if self.auth.token:
-
             if self.auth.scheme == 'basic':
                 login, password = base64.urlsafe_b64decode(self.auth.token).split(b':')
                 if login == b'seed':
                     user = xio.user(seed=password)
                     self.auth.scheme = 'bearer'
                     self.auth.token = user.key.generateToken('xio/ethereum')
-
-            self.peer = xio.user(token=self.auth.token)
-            self.id = self.peer.id if self.peer else None
-            self.data = self.peer.key.tokendata
+            try:
+                # prevent uncoverable token
+                self.peer = xio.user(token=self.auth.token)
+                self.id = self.peer.id
+                self.data = self.peer.key.tokendata
+            except Exception as err:
+                import traceback
+                traceback.print_exc()
+                print('UNCOVERABLE TOKEN', err)
+                self.id = None
+                self.data = {}
             self.data.setdefault('scope', [])
             if self.id and xio.env.get('adminuser') == self.id:
                 self.data['scope'].append('admin')

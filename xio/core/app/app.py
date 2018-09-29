@@ -302,8 +302,8 @@ class App(peer.Peer):
                         log.warning('unable to load service', service)
 
         # www/xio
-        #sdkdir = os.path.dirname( os.path.realpath(__file__) )+'/ihm'
-        #self.bind('www/xio', resource.DirectoryHandler(sdkdir) )
+        sdkdir = os.path.dirname( os.path.realpath(__file__) )+'/www'
+        self.bind('www/xio', resource.DirectoryHandler(sdkdir) )
 
         # create default 'www' (required for ABOUT call which fail if not www)
         if not 'www' in self._children:
@@ -313,6 +313,7 @@ class App(peer.Peer):
             wwwstaticdir = self.directory + '/www/static'
             if os.path.isdir(wwwstaticdir):
                 self.bind('www/static', resource.DirectoryHandler(wwwstaticdir))
+
 
     @handleRequest
     @handleCache

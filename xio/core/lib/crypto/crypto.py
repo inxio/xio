@@ -24,8 +24,9 @@ def key(*args, **kwargs):
 
 __HANDLERS__ = {
     'xio': NaclHandler,
-    'xio/ethereum': ethereum_handler
+    'ethereum': ethereum_handler
 }
+
 
 class Key:
 
@@ -42,7 +43,7 @@ class Key:
             self.public = None
             self.token = token
             self.tokendata = self.recoverToken(token)
-            self.address = self.tokendata.get('id')
+            self.address = self.tokendata.get('body').get('sub')
             self.encryption = None
         else:
             self._handler = handler_cls(private=priv, seed=seed)
@@ -57,9 +58,13 @@ class Key:
         self.address = to_string(self.address)
         self.token = to_string(self.token)
 
-    def account(self, scheme=None): 
+    def account(self, scheme=None):
         """ to fix scheme vs network ??"""
+
         scheme = scheme or 'xio'
+        if '/' in scheme:
+            base, scheme = scheme.split('/')
+            assert base == 'xio'
         assert scheme in __HANDLERS__, Exception('unhandled crypto scheme %s' % scheme)
         if scheme == 'xio':
             return self
@@ -82,10 +87,9 @@ class Key:
     def verify(self, message, sig):
         return self._handler.verify(message, sig)
 
-
-    def generateToken(self, body=None, scheme=None):
+    def generateToken(self, scheme=None, body=None):
         """
-        {	
+        {
           "header": {
             "typ": "JWT",
             "alg": "HS256"
@@ -101,63 +105,67 @@ class Key:
           }
         }
         """
-	
+        scheme = scheme or 'xio'
         h = self.account(scheme)
 
         print('generateToken', scheme)
         iat = int(time.time())
         exp = iat + 3600
         iss = self.address if not scheme else self.account(scheme).address
-        body = body or  {'sub':to_string(iss)}
+        body = body or {'sub': to_string(iss)}
         body.update({
             "iss": to_string(iss),
             "jti": to_string(uuid.uuid4()),
             "iat": iat,
             "exp": exp,
         })
-        data ={	
-          "header": {
+        header = {
             "typ": "JWT",
-            "alg": scheme or 'xio'
-          },
-          "body": body
+            "alg": scheme
         }
-        print(data)
+        header = json.dumps(header)
+        body = json.dumps(body, sort_keys=True)
+        sig = h.sign(body)
+        token = b'.'.join((
+            base64.urlsafe_b64encode(header.encode()),
+            base64.urlsafe_b64encode(body.encode()),
+            base64.urlsafe_b64encode(sig.encode())
+        ))
 
-        message = json.dumps(data,sort_keys=True)
-        sig = h.sign(message)
-        data['sig'] = sig
-        datajson = json.dumps(data)
-        token = base64.urlsafe_b64encode(datajson.encode())
-        
         return token
 
     def recoverToken(self, token, scheme=None):
-        
-        datajson = base64.urlsafe_b64decode(token)
-        data = json.loads(datajson)
-        scheme = data.get('header').get('alg')
+        token = str_to_bytes(token)
+        headerstr, bodystr, sig = [base64.urlsafe_b64decode(part) for part in token.split(b'.')]
+
+        header = json.loads(headerstr)
+        body = json.loads(bodystr)
+        sig = sig.decode('utf-8')
+
+        print(header, body, sig)
+        scheme = header.get('alg')
         assert scheme
         h = self._handler if not scheme else self.account(scheme)
         assert h
-        body = data.get('body')
-        sig = data.pop('sig')
-        message = json.dumps(data,sort_keys=True)
+
         # check recover feature
-        if hasattr(h,'recover'):
-            recovered_id = h.recover(message,sig)
+        if hasattr(h, 'recover'):
+            recovered_id = h.recover(bodystr.decode('utf-8'), sig)
+            print(recovered_id)
             assert recovered_id
             assert recovered_id == body.get('iss')
         else:
-            assert h.verify(message, sig)
-        return data
-
-
+            assert h.verify(bodystr, sig)
+        return {
+            'header': header,
+            'body': body,
+            'sig': sig,
+        }
 
     """
-        
+
     def generateToken(self, scheme=None):
-	
+
         h = self._handler if not scheme else self.account(scheme)
         ttl = int(time.time()) + 3600
         print('generateToken', scheme)
@@ -185,4 +193,3 @@ class Key:
         return data
 
     """
-        
