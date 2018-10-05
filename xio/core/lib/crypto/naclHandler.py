@@ -70,6 +70,5 @@ class NaclHandler:
         verify_key_hex, signed = str_to_bytes(decode_hex(sig)).split(b'-')
         verifyKey = nacl.signing.VerifyKey(str_to_bytes(verify_key_hex), encoder=nacl.encoding.HexEncoder)
         unsigned = verifyKey.verify(decode_hex(signed))
-        print(message, unsigned)
         assert str_to_bytes(message) == unsigned
         return True

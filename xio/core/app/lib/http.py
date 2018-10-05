@@ -91,6 +91,7 @@ class HttpService:
         if not environ or not callable(environ.get):  # fix bug /run/services
             return
         try:
+            environ['xio.wsgi.app'] = self.app
             method = environ.get('REQUEST_METHOD', 'GET')
             path = environ.get('PATH_INFO', '/')
             if path[0] != '/':

@@ -189,7 +189,7 @@ class App(peer.Peer):
         import xio
         # loading ext first because about can refer on
         if os.path.isdir(self.directory + '/ext'):
-            
+
             xio.path.append(self.directory + '/ext')
             for childname, child in getAppsFromDirectory(self.directory + '/ext'):
                 child = xio.app(child)
@@ -203,8 +203,8 @@ class App(peer.Peer):
         self.name = self._about.get('name')
         # register local apps in context
         if self.name and self.name.startswith('xrn:'):
-            xio.register(self.name,self)
-            
+            xio.register(self.name, self)
+
         if 'id' in self._about:
             self.id = self._about.get('id')
         else:
@@ -301,19 +301,30 @@ class App(peer.Peer):
                     else:
                         log.warning('unable to load service', service)
 
-        # www/xio
-        sdkdir = os.path.dirname( os.path.realpath(__file__) )+'/www'
-        self.bind('www/xio', resource.DirectoryHandler(sdkdir) )
+        # www/xio/sdk
+        sdkdir = os.path.dirname(os.path.realpath(xio.__file__)) + '/www/sdk'
+        self.bind('www/xio/sdk', resource.DirectoryHandler(sdkdir))
+        # www/xio/admin
+        try:
+            from xio.core.app.ext.admin.app import app as adminapp
+            self.bind('www/xio/admin', adminapp.get('www'))  #
+        except:
+            pass
 
         # create default 'www' (required for ABOUT call which fail if not www)
         if not 'www' in self._children:
             self.put('www', None)
 
         if self.directory:
+
+            wwwdir = self.directory + '/www'
+            if os.path.isdir(wwwdir):
+                self.bind('www', resource.DirectoryHandler(wwwdir))
+
+            # to fix cousion between static and www
             wwwstaticdir = self.directory + '/www/static'
             if os.path.isdir(wwwstaticdir):
                 self.bind('www/static', resource.DirectoryHandler(wwwstaticdir))
-
 
     @handleRequest
     @handleCache
@@ -621,8 +632,8 @@ class App(peer.Peer):
 
                 pprint(self.render('ABOUT').content)
             else:
-
                 pprint(self.render('ABOUT', args.param).content)
+
         elif args.cmd == 'api':
 
             path = args.param or ''

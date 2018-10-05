@@ -108,7 +108,6 @@ class Key:
         scheme = scheme or 'xio'
         h = self.account(scheme)
 
-        print('generateToken', scheme)
         iat = int(time.time())
         exp = iat + 3600
         iss = self.address if not scheme else self.account(scheme).address
@@ -142,7 +141,6 @@ class Key:
         body = json.loads(bodystr)
         sig = sig.decode('utf-8')
 
-        print(header, body, sig)
         scheme = header.get('alg')
         assert scheme
         h = self._handler if not scheme else self.account(scheme)
@@ -151,7 +149,6 @@ class Key:
         # check recover feature
         if hasattr(h, 'recover'):
             recovered_id = h.recover(bodystr.decode('utf-8'), sig)
-            print(recovered_id)
             assert recovered_id
             assert recovered_id == body.get('iss')
         else:
