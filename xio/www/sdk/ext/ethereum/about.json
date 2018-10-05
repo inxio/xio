@@ -1,0 +1,9 @@
+{
+    "name": "ethereum",
+    "version": "1.0.0", 
+    "requirements": [
+        "lib/web3.min.js",
+        "ethereum.js"
+    ]
+}
+        

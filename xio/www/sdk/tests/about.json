@@ -1,0 +1,29 @@
+{
+    "name": "SDK_TESTS",
+    "version": "1.0.0", 
+    "requirements": [
+    ],
+    "user": {
+        "required": false,
+        "link": "#login"
+    },
+    "sitemap": [
+        {
+            "label": "CORE",
+            "path": "#core"
+        },
+        {
+            "label": "TAGS",
+            "path": "#tags"
+        },
+        {
+            "label": "A propos",
+            "path": "#about",
+            "slot": "footer"
+        }
+    ],
+    "footer": {
+        "text": "Some footer text"
+    }
+}
+        

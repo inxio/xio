@@ -1,0 +1,104 @@
+
+
+
+<template id="template-user" >
+    <div style="border: solid 1px #F80">
+        {{type}} {{id}}
+        <p>
+           balance: {{balance.label}} 
+        </p>
+        <button onclick="testuser(this)">refresh</button>
+        {{#name}}
+            <p>
+            name: {{name}}
+            level: {{level}}
+            url:  {{about.url}}
+            </p>
+        {{/name}}
+
+    </div>
+</template>
+
+
+
+
+<script>
+    (function() {
+
+        var doc = document.currentScript.ownerDocument;
+        
+        var template = doc.querySelector('#template-user');
+        
+        testuser = function(el) {
+            var user = $(el).closest('xio-user')[0]
+            user.refresh().then( function(e) {
+                console.log(user.about)
+                user.render() 
+            })
+        }
+
+
+        window.customElements.define('xio-user', class extends HTMLElement {
+            constructor() {
+                super();
+            }
+            connectedCallback() {
+                var self = this
+                this.user = xio.context.user
+                if (this.user)
+                    this.about = {
+                        'id': this.user.id
+                    }
+                else
+                    this.about = {
+                        'id': '??' //this.user.id
+                    }
+                app.on('user.connected',function(user,network) {
+                    self.user = user
+                    self.about = {
+                        'id': self.user.id
+                    }
+                    self.render()
+                    self.refresh()
+
+                })
+                app.on('user.transaction',function(transaction) {
+                    self.user = user
+                    self.render()
+                })
+
+                this.render()
+                if (this.user && xio.context.network)
+                    this.refresh()
+
+            }
+           
+            refresh() {
+                var self = this
+                this.network = xio.context.network
+
+                // set global currency
+                xio.context.currency = 'EUR'
+
+                return this.network.aboutUser(this.user.id).then(function(resp) {
+
+                    self.about = resp.content
+                    
+                    console.log(self.about)
+                    self.render()
+                })
+
+            }
+            render() {
+                
+                var html = $(template).render(this.about) 
+
+                $(this).html( html );
+            }
+
+        })
+
+    })();
+</script>
+
+

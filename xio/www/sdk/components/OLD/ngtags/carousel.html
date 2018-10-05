@@ -1,0 +1,163 @@
+<!--
+
+app.angular.directive('carousel', function($timeout,$q) {
+    return {
+      restrict: 'E',
+      transclude: true,
+      controller: ['$scope','$element','$q',function ($scope,$element,$q) {
+          this.container = $element.find('.isotope')
+          this.iso = null
+          this.animate = null
+          var self = this
+          this.init = function() {
+              this.iso = $( this.container ).iso({
+                  'itemSelector': '.item',
+                  'masonry': {
+                      'gutter': 10,
+                      //'columnWidth': '.grid-sizer'
+                  },
+              }) 
+              
+              console.log(this.container)
+              console.log(this.iso)
+              //this.iso.iso.shuffle()
+              //this.iso.filter('oo')
+              $timeout(function(){
+                self.iso.refresh()
+              },0)
+              this.run()
+          }
+          this.run = function() {
+            if (self.animate=='shuffle') {
+              self.iso.iso.shuffle()
+              setTimeout(self.run, 5000);
+            }
+          }
+      }],
+      link: function ($scope, $element, $attrs, $ctrl) {
+          $ctrl.animate = $attrs.animate
+          $ctrl.init()
+          $ctrl.run()
+      },
+      template: `
+      <div class="carousel isotope" ng-transclude>
+      </div>
+      `
+    }
+});  
+
+-->
+<style>
+xio-carousel {
+    width: 100%;
+    display: block;
+    border: solid 10px #000;
+}
+noxio-carousel > * {
+    width: 100px;
+    height: 50px;
+    border: solid 10px #000;
+}
+</style>
+<template>
+    <div class="carousel isotope">
+        
+    </div>
+</template>
+
+
+<script>
+  (function() {
+    var doc = document.currentScript.ownerDocument;
+    var template = doc.querySelector('template');
+
+    window.customElements.define('xio-carousel', class extends HTMLElement {
+        constructor() {
+            super();
+        }
+        connectedCallback() {
+            var self = this
+            this.animate = $(this).attr('animate') || 'shuffle'
+            if (!this._children) {
+                this._children = $(this).children() // bug multiple connectedCallback
+            }
+            
+            var html = $(template).render({})
+            $(this).html( html )
+
+            this.container = $(this).find('.isotope')
+            this.tags = []
+
+
+            this._children.each( function(i,el) {
+                $(this).addClass('item')
+                var tags = $(this).data('xio-tags')
+                if (tags) {
+                    $(this).addClass(tags)
+                    tags = tags.split(' ')
+                    $.each(tags,function(k,v) {
+                        if (self.tags.indexOf(v) === -1) {
+                            self.tags.push(v)
+                        }
+                    })
+                }
+                self.container.append(this)
+            })
+
+
+            $.each(this.tags, function(i,tag) {
+                self.container.append('<div class="item '+tag+'">'+tag+'</div>')
+            })
+            //alert(self.tags)
+            
+            //$html.find('.carousel').html( this.innerHTML );
+            
+            //$(this).html( $html.html() )
+            //this.container = $(this).find('.isotope')
+            //alert(this.container)
+            this.init()
+        }
+        init() {
+            //alert('init carousel')
+            var self = this
+            this.iso = $( this.container ).iso({
+              'itemSelector': '.item',
+              'masonry': {
+                  'gutter': 10,
+              },
+            }) 
+            this.iso.refresh()
+
+            if (!this.running) {
+                this.running = true
+                var run = function() {
+                    //self.iso.iso.shuffle()
+                    self.run()
+                    setTimeout(run, 5000);
+                }
+                //run()
+            }
+        }
+        run() {
+            if (this.animate=='shuffle') {
+
+                if (this.tags) {
+                    if (!this.c || this.c>=this.tags.length) {
+                        this.c = 0;
+                    }
+                    //var tag = this.tags[Math.floor(Math.random()*this.tags.length)]
+
+                    var tag = this.tags[this.c]
+                    console.log(this.c,tag)
+                    console.log(this.tags)
+                    this.c++;
+
+                    this.iso.filter('.'+tag)
+                } else {
+                    this.iso.iso.shuffle()
+                }
+            }
+        }
+    })
+})();
+</script>

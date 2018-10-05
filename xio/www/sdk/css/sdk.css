@@ -1,0 +1,84 @@
+
+html, body {
+    height: 100%;
+}
+
+html {
+    overflow-y: scroll;
+}
+
+
+/* ISOTOPE */
+
+.isotope {
+	width: 100% !important;	
+	height: auto;	
+}
+
+.item {
+	cursor: pointer;	
+}
+
+
+/* DEV,DEBUG */
+body:not(.xio-debug) .xio-debug {
+    display: None;
+}
+body.xio-debug .xio-debug {
+    display: initial;
+}
+body.xio-debug .item {
+    border: solid 1px #F80;
+}
+/* DEV,DEBUG */
+body:not(.xio-dev) .xio-dev {
+    display: None;
+}
+body.xio-dev .xio-dev {
+    display: initial;
+}
+
+
+/* HTML */
+
+dl {
+    margin-top: 1em;
+    margin-bottom: 1em;
+    padding: 0px;
+}
+
+dt:before {
+  content: "";
+  display: block;
+}
+dt, dd {
+    display: inline;
+    padding-top: 1em;
+}
+dt:after {
+  content: " : ";
+}
+
+dt {
+	font-weight: bold;
+}
+
+
+
+
+pre {
+    cursor: default;
+    white-space: pre-wrap;       /* Since CSS 2.1 */
+    white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+    white-space: -pre-wrap;      /* Opera 4-6 */
+    white-space: -o-pre-wrap;    /* Opera 7 */
+    word-wrap: break-word;       /* Internet Explorer 5.5+ */
+}
+
+code {
+    margin: 0px;
+    padding: 0px;
+    font-size: 0.9em !important;
+    word-break: break-all;
+}
+

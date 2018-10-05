@@ -1,0 +1,41 @@
+
+<template id="tpl-test">
+    <div>test ok</div>
+</template>
+
+
+<script>
+    /*
+    https://github.com/webcomponents/webcomponentsjs/issues/676
+    */
+
+    (function(window, document, undefined) {
+        // https://github.com/webcomponents/hello-world-element/blob/master/hello-world.html
+        alert( document._currentScript )
+        console.log(document.currentScript)
+        var doc =  document.currentScript.ownerDocument;
+
+        console.log( doc )
+        /*
+        var c = ( document._currentScript || document.currentScript )
+        console.log(c.ownerDocument)
+        alert(c)
+        */
+
+        
+        var template = doc.querySelector('#tpl-test').innerHTML;
+        //alert(document.currentScript.ownerDocument.querySelector('template').outerHTML)
+        
+
+        window.customElements.define('xio-test', class extends HTMLElement {
+            constructor() {
+                super();
+            }
+            connectedCallback() {
+               
+                this.innerHTML = template
+            }
+            
+        })
+    })(window, document);
+</script>

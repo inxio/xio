@@ -1,0 +1,34 @@
+{
+    "name": "xio",
+    "version": "1.0.0", 
+    "requirements": [
+    ],
+    "user": {
+        "required": true,
+        "link": "#login"
+    },
+    "sitemap": [
+        {
+            "label": "App",
+            "path": "#home"
+        },
+        {
+            "label": "Debug",
+            "path": "#debug"
+        },
+        {
+            "label": "Services",
+            "path": "#services"
+        },
+        {
+            "label": "Peers",
+            "path": "#peers"
+        },
+        {
+            "label": "Login",
+            "path": "#login"
+        }
+    ]
+  
+}
+        

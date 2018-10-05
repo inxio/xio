@@ -1,0 +1,177 @@
+
+<template>
+
+    <header id="xio-app-header">
+        <nav id="xio-app-nav" class="navbar navbar-toggleable-md fixed-top">
+            <div class="container ">
+                <a class="navbar-brand" href="#">
+                    <img src="sdk/images/icon.png" height="36" class="d-inline-block align-top" alt="" > {{app.about.name}} 
+                </a>
+
+                <ul class="nav nav-pills mr-auto ">
+                  {{#app.layout.slot.header.links}}
+                    <li class="nav-item"><a class="nav-link" href="{{path}}" >{{label}}</a> </li> 
+                  {{/app.layout.slot.header.links}}
+                </ul>
+                      
+                <ul class="nav float-xs-right">
+
+                    {{#app.user.id}}
+
+
+                    
+                        {{#app.about.search}}
+                            <xio-search></xio-search>
+                        {{/app.about.search}}
+                    
+                      <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" data-toggle="dropdown" data-nx-binded="app.user.id">{{app.user.id}}</a>
+                        <div class="dropdown-menu" >
+                          {{#app.layout.slot.user.links}}
+                            <a class="dropdown-item" href="{{path}}">{{label}}</a>
+                          {{/app.layout.slot.user.links}}
+                          <div class="dropdown-divider"></div>
+                          <a class="dropdown-item" href="javascript:app.logout()">LOGOUT</a>
+                        </div>
+                      </li>
+                    {{/app.user.id}}
+                    {{^app.user.id}}
+                      {{#app.about.user.link}}
+                      <li class="nav-item"><a class="nav-link btn btn-primary btn-sm" href="{{app.about.user.link}}" >CONNECT</a> </li> 
+                      {{/app.about.user.link}}
+                    {{/app.user.id}}
+                </ul>
+            </div>
+        </nav>
+        {{#app.user.id}}
+        <nav id="xio-app-toolbar" class="navbar navbar-toggleable-md fixed-top" >
+            <div class="container ">
+                
+                <ul class="nav nav-pills mr-auto ">
+                  {{#app.layout.slot.toolbar.links}}
+                    <li class="nav-item"><a class="nav-link" href="{{path}}" >{{label}}</a> </li> 
+                  {{/app.layout.slot.toolbar.links}}
+                </ul>
+                      
+                <ul class="nav float-xs-right">
+                  {{#app.layout.slot.toolbar.button}}
+                    <li class="nav-item"><a class="nav-link" href="{{path}}" >{{label}}</a> </li> 
+                  {{/app.layout.slot.toolbar.button}}
+                </ul>
+                <xio-search class="xio-dev"></xio-search>
+            </div>
+        </nav>
+        {{/app.user.id}}
+    </header>
+
+
+  
+
+
+    <div style="padding-top: 100px; padding-bottom: 100px;" class="container">  
+
+        <section id="landing">
+            landing
+            <xio-onboarding>
+            </xio-onboarding>
+        </section>
+
+        <slot>
+        </slot>
+
+
+
+    </div>
+
+    <div id="appmodal" class="modal fade"  tabindex="-1" role="dialog">
+
+
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" >Confirm action</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <p class="description">
+            </p>
+            <p class="amount">
+            </p>
+          </div>
+          <div class="modal-footer">
+            <button id="modalCancel" type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            <button id="modalConfirm" type="button" class="btn btn-primary">Confirm</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+
+    <footer id="xio-app-footer">
+        <nav  class="navbar navbar-toggleable-md  fixed-bottom">
+
+
+            <div class="container">
+
+                <div style="display: inline-block;vertical-align: middle; text-align: center; display: none" data-xio-if="app.status.loading">
+                  <i class="fa fa-refresh fa-spin"  style="vertical-align: middle; opacity: 0.5">
+                  </i> LOADING ...
+                </div> 
+
+                <span class="navbar-text mr-auto text-muted">
+                 {{{app.about.footer.text}}} 
+                </span>
+
+
+
+                </ul>
+                <ul class="nav nav-pills float-xs-right">
+                    {{#app.layout.slot.footer.links}}
+                      <li class="nav-item"><a class="nav-link" href="{{path}}">{{label}}</a> </li> 
+                    {{/app.layout.slot.footer.links}}
+                    
+                </ul>
+            </div>
+        
+        </nav>
+    </footer>
+
+  
+
+</template>
+
+
+
+
+<script>
+  (function() {
+    var doc = document.currentScript.ownerDocument;
+    var template = doc.querySelector('template');
+
+    window.customElements.define('xio-app', class extends HTMLElement {
+        constructor() {
+            super();
+        }
+        connectedCallback() {
+            this.template = $('<div/>').append( $(template).html() )
+            this.template.find('slot').html( this.innerHTML ); // bug slot with multiple $('xio-app').render
+            this.render()
+        }
+        render() {
+
+            var html = this.template.render({'app':app})
+            $(this).html( html );
+
+            $(this).find('section[id]').hide()
+
+            var self = this
+
+        }
+    })
+  })();
+</script>
+
+

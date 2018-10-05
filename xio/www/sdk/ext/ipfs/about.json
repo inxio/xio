@@ -1,0 +1,9 @@
+{
+    "name": "ipfs",
+    "version": "1.0.0", 
+    "requirements": [
+        "lib/ipfs.min.js",
+        "ipfs.js"
+    ]
+}
+        

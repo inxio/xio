@@ -1,0 +1,346 @@
+
+
+<template id="template-resource" >
+
+    <div class="resource">
+
+        <div style="display: flex">
+
+            <div class="cover">
+                {{name}}
+                {{type}}
+                                <b>{{path}}</b>
+            </div> 
+            <div class="view-rows">
+                {{id}}
+                {{name}}
+            </div>    
+            <div class="header">
+                
+            </div> 
+        </div>
+
+    </div>
+
+    <div class="children isotope view view-grid">
+        
+    </div>
+
+</template>
+
+<!--
+<template id="notemplate-store-header" >
+    <h3>
+        {{name}}
+        <br/><small>{{about.description}}</small>
+    </h3>
+    <p>{{pricing}} {{pricing}} {{cost}} EUR
+    </p>
+    <button data-inxio-request-method=".refresh">refresh</button>
+    <button data-inxio-request-method=".about">DEBUG</button>
+
+    {{#options}}
+        <button class="btn btn-primary" data-inxio-request-method="{{.}}">{{.}}</button>
+    {{/options}}
+
+</template>
+
+-->
+
+
+
+<template id="template-resource-header" >
+    <div >
+        <!--
+        <div class="generic">
+            <h1>{{endpoint}} {{path}}</h1>
+            <pre>
+                id: {{id}}
+                name: {{name}}
+                type: {{type}}
+                status: {{status}}
+            </pre>
+        </div>
+        -->
+        <div class="specific">
+            {{#path}}<h1>{{path}}</h1>{{/path}}
+            <dl style="padding:1em">
+                {{#id}}
+                    <dt>id</dt><dd>{{id}}</dd>
+                {{/id}}
+                {{#name}}
+                    <dt>name</dt><dd>{{name}}</dd>
+                {{/name}}
+                {{#_balance}}
+                    <dt>balance</dt><dd>{{_balance}}</dd>
+                {{/_balance}}
+                {{#about.description}}
+                    <dt>description</dt><dd>{{about.description}}</dd>
+                {{/about.description}}
+                {{#type}}
+                    <dt>type</dt><dd>{{type}}</dd>
+                {{/type}}
+                {{#expire}}
+                    <dt>expire</dt><dd>{{expire}}</dd>
+                {{/expire}}                
+                {{#pricing}}
+                    <dt>pricing</dt><dd>{{pricing}} {{cost}}</dd>
+                {{/pricing}}
+                {{#status}}
+                    <dt>status</dt><dd>{{status}}</dd>
+                {{/status}}
+                {{#owner}}
+                    <dt>owner</dt>
+                    <dd>
+                         <dl style="padding-left:1em">
+                            {{#owner.id}}
+                                <dt>id</dt><dd>{{owner.id}}</dd>
+                            {{/owner.id}}
+                            {{#owner.name}}
+                                <dt>name</dt><dd>{{owner.name}}</dd>
+                            {{/owner.name}}
+                        </dl>
+                    </dd>
+                {{/owner}}
+                {{#provider}}
+                    <dt>provider</dt><dd>{{provider}}</dd>
+                {{/provider}}
+                {{#seller}}
+                    <dt>seller</dt>
+                    <dd>
+                         <dl style="padding-left:1em">
+                            {{#seller.id}}
+                                <dt>id</dt><dd>{{seller.id}}</dd>
+                            {{/seller.id}}
+                            {{#seller.name}}
+                                <dt>name</dt><dd>{{seller.name}}</dd>
+                            {{/seller.name}}
+                        </dl>
+                    </dd>
+                {{/seller}}
+                {{#buyer}}
+                    <dt>buyer</dt>
+                    <dd>
+                         <dl style="padding-left:1em">
+                            {{#buyer.id}}
+                                <dt>id</dt><dd>{{buyer.id}}</dd>
+                            {{/buyer.id}}
+                            {{#buyer.name}}
+                                <dt>name</dt><dd>{{buyer.name}}</dd>
+                            {{/buyer.name}}
+                        </dl>
+                    </dd>
+                {{/buyer}}
+                {{#worker}}
+                    <dt>worker</dt>
+                    <dd>
+                         <dl style="padding-left:1em">
+                            {{#worker.id}}
+                                <dt>id</dt><dd>{{worker.id}}</dd>
+                            {{/worker.id}}
+                            {{#worker.name}}
+                                <dt>name</dt><dd>{{worker.name}}</dd>
+                            {{/worker.name}}
+                        </dl>
+                    </dd>
+                {{/worker}}
+                {{#handler}}
+                    <dt>handler</dt>
+                    <dd>
+                         <dl style="padding-left:1em">
+                            {{#handler.id}}
+                                <dt>id</dt><dd>{{handler.id}}</dd>
+                            {{/handler.id}}
+                            {{#handler.name}}
+                                <dt>name</dt><dd>{{handler.name}}</dd>
+                            {{/handler.name}}
+                        </dl>
+                    </dd>
+                {{/handler}}
+            </dl>
+                {{#offers.length}}OFFERS
+                    <ul>
+                    {{#offers}}
+                        <li><button class="btn btn-sm btn-primary" data-inxio-request-method="PURCHASE" data-inxio-request-query="offerid={{.}}">PURCHASE {{.}} {{cost}} {{unit}}</button></li>    
+                    {{/offers}}
+                    </ul>
+                {{/offers.length}}
+        </div>
+        <div>
+            {{#options}}
+                <button class="btn btn-sm btn-primary" data-inxio-request-method="{{.}}">{{.}}</button>
+            {{/options}}
+        </div>
+        <div class="xio-dev" style="border: solid 1px #F80">
+
+            <button data-inxio-request-method="ABOUT">ABOUT</button>
+            <button data-inxio-request-method="API">API</button>
+            <button data-inxio-request-method=".html">HTML</button>
+            <button data-inxio-request-method=".about">DEBUG</button>
+            <!--
+            <button data-inxio-request-method="TEST">TEST</button>
+            <button data-inxio-request-method=".refresh">refresh</button>
+            -->
+            <button data-inxio-view="grid">GRID</button>
+            <button data-inxio-view="rows">ROWS</button>
+        </div>
+
+    </div>
+</template>
+
+<template id="template-resource-children" >
+
+    <xio-resource class="item" name="{{name}}" path="{{@id}}" >
+        
+    </xio-resource>
+
+</template>
+
+
+<template id="template-resource-children-serviceOrders" >
+
+        <div class="item full" >
+            <div class="card">
+                 <div class="card-block">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <dl>
+                              <dt>id</dt>
+                              <dd>{{identifier}}</dd>
+                              <dt>type</dt>
+                              <dd>{{about.type}}</dd>
+                              <dt>service</dt>
+                              <dd>{{orderedItem.name}}</dd>
+                              <dt>seller</dt>
+                              <dd>{{seller}}</dd>
+                              <dt>orderDate</dt>
+                              <dd>{{orderDate}}</dd>
+                            </dl>
+                        </div>
+                        <div class="col-md-6">
+                            <dl>
+
+                              <dt>orderNumber</dt>
+                              <dd>{{orderNumber}}</dd>
+                              <dt>orderStatus</dt>
+                              <dd>{{orderStatus}}</dd>
+                              <dt>paymentStatus</dt>
+                              <dd>{{paymentStatus}}</dd>
+                              <dt>Network Fee</dt>
+                              <dd>{{about.fee1}}</dd>
+                              <dt>Ethereum Fee</dt>
+                              <dd>{{about.fee2}}</dd>
+                              <dt>totalPaid</dt>
+                              <dd>{{about.paid}}</dd>
+                            </dl>
+                           
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+</template>
+
+
+<template id="template-resource-request" >
+    <div class="item selected" >
+        <div class="card">
+            <form  data-inxio-request-method="{{method}}"  data-inxio-request-path="{{path}}" data-inxio-request-query="{{query}}">
+            
+                <div class="card-header">
+                    <stong>{{method}}</strong> {{path}}
+                </div>
+
+                <div class="card-block">
+                        {{#input.description}}
+
+                           <p>{{input.description}}</p>
+                            {{{input.html}}}
+                            <hr/>
+
+                        {{/input.description}}
+
+                        {{#ihm:urlinput}}
+                        
+                            <xio-input name="{{name}}" type="{{name}}" required="{{required}}"  placeholder="{{description}}">
+                            </xio-input>
+
+                        {{/ihm:urlinput}}
+
+                        {{#input}} 
+                        
+                            {{#body}} 
+                              <input type="text" class="form-control form-control-sm" name="__body__" placeholder="put data here" value="{{value}}"/>
+                            {{/body}} 
+                            
+                            {{#params}} 
+
+                            <xio-input name="{{name}}" type="{{type}}" required="{{required}}" readonly="{{readonly}}" placeholder="{{description}}" value="{{value}}">
+                                {{#options}} 
+                                    <option value="{{value}}">{{name}}</option>
+                                {{/options}} 
+                            </xio-input>
+                            
+                            {{/params}} 
+                        {{/input}} 
+                        
+                   
+                </div>
+                <div class="card-footer">
+                    <button type="submit" class="btn btn-sm btn-primary" value="" >SUBMIT</button> 
+                </div>
+
+            </form>
+        </div>
+    </div> 
+</template>
+
+
+
+<template id="template-resource-response" >
+    <div class="item selected"  >
+
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-header endpoint">
+                {{#error}}HTTP {{status}}
+                {{/error}}
+                {{^error}}HTTP {{status}}{{/error}}</strong>
+                
+                <small>{{reason}}</small>
+
+                {{#ihm.content_type}}<span class="label label-default">{{ihm.content_type}}</span>{{/ihm.content_type}}
+                <!--
+                <a href="#" onclick="openOperationInPopup()" class="btn btn-sm btn-default" style="color: #FFF"><i class="fa fa-link "> </i>mshow headers</a>
+                -->
+                {{#ihm.fromcache}}
+                    <span class="label label-warning" onclick="withoutCache()" > <i class="fa fa-refresh "> </i> from cache</span>
+                {{/ihm.fromcache}}
+
+                </h6>
+                <div id="subheader" class="subheader" >
+
+                    <ul>
+                    {{#headers}}
+                        <li>{{name}} : {{value}}</li>
+                    {{/headers}}
+                    </ul>
+
+
+                </div>
+            </div>
+
+            <div class="card-block">
+
+                <pre><code>{{content}}</code></pre> 
+
+            </div>
+        
+        </div>
+
+
+    </div>
+</template>
+
+

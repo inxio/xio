@@ -1,0 +1,50 @@
+
+<template>
+    <form action="#">
+
+        <div class="input-group">
+            <input name="keyword" type="text"  /> 
+            <button class="btn btn-primary " type="button">
+                <span class="fa fa-search" > </span> 
+            </button>
+             
+        </div>
+
+    </form>
+</template>
+
+
+<script>
+    (function() {
+        var doc = document.currentScript.ownerDocument;
+        var template = $(doc.querySelector('template').innerHTML);
+
+        window.customElements.define('xio-search', class extends HTMLElement {
+            constructor() {
+                super();
+            }
+            connectedCallback() {
+                var self = this
+                var html = $(template).render(app)
+                $(this).html( html.html() )
+                $(this).find('button').click( function() {
+                    self.submit()
+                })
+                $(this).find('input').on('keypress', function (e) {
+                     if(e.which === 13){
+                        self.submit()
+                     }
+               });
+                $(this).find('form').submit( function() {
+                    self.submit()
+                })
+            }
+            submit() {
+                var keyword = $(this).find('input').val()
+                if (keyword)
+                    app.search(keyword)
+            }
+            
+        })
+    })();
+</script>

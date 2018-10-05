@@ -1,0 +1,961 @@
+
+<style>
+    xio-resource {
+        display: block;
+    }
+    xio-resource .cover {
+        width: 120px;
+        height: 100px;
+        border: solid 1px #ccc;
+    }
+    xio-resource .header {
+        display: none;
+    }
+    xio-resource .children {
+        display: none;
+    }
+    
+    xio-resource.item.selected,
+    xio-resource .item.selected
+     {
+        width: 100%;
+        height: auto;
+    }
+    xio-resource.item.selected .header {
+        display: block;
+    }
+    xio-resource.item.selected .children {
+        display: block;
+    }
+   
+    .item.full {
+        width: 100%;
+        height: auto;
+    }
+  
+
+    .view-grid, 
+    .view-rows
+        { display: none }
+
+
+    .view.view-grid .view-grid:not(.view)
+    { 
+        display: block;
+        width: 20%;
+        height: 200;
+    }
+    .view.view-rows .item:not(.selected) .view-rows 
+    { 
+        display: block;
+        width: 100%;
+        height: auto
+    }
+
+    .view-rows .item {
+        width: 100%;
+        height: auto;
+        border: solid 1px #F80;
+    }
+
+</style>
+
+<template id="template-resource" >
+
+    <div class="resource">
+
+        <div style="display: flex">
+
+            <div class="cover">
+                {{name}}
+                {{type}}
+                                <b>{{path}}</b>
+            </div> 
+            <div class="view-rows">
+                {{id}}
+                {{name}}
+            </div>    
+            <div class="header">
+                
+            </div> 
+        </div>
+
+    </div>
+
+    <div class="children isotope view view-grid">
+        
+    </div>
+
+</template>
+
+<!--
+<template id="notemplate-store-header" >
+    <h3>
+        {{name}}
+        <br/><small>{{about.description}}</small>
+    </h3>
+    <p>{{pricing}} {{pricing}} {{cost}} EUR
+    </p>
+    <button data-inxio-request-method=".refresh">refresh</button>
+    <button data-inxio-request-method=".about">DEBUG</button>
+
+    {{#options}}
+        <button class="btn btn-primary" data-inxio-request-method="{{.}}">{{.}}</button>
+    {{/options}}
+
+</template>
+
+-->
+
+
+
+<template id="template-resource-header" >
+    <div >
+        <!--
+        <div class="generic">
+            <h1>{{endpoint}} {{path}}</h1>
+            <pre>
+                id: {{id}}
+                name: {{name}}
+                type: {{type}}
+                status: {{status}}
+            </pre>
+        </div>
+        -->
+        <div class="specific">
+            {{#path}}<h1>{{path}}</h1>{{/path}}
+            <dl style="padding:1em">
+                {{#id}}
+                    <dt>id</dt><dd>{{id}}</dd>
+                {{/id}}
+                {{#name}}
+                    <dt>name</dt><dd>{{name}}</dd>
+                {{/name}}
+                {{#_balance}}
+                    <dt>balance</dt><dd>{{_balance}}</dd>
+                {{/_balance}}
+                {{#about.description}}
+                    <dt>description</dt><dd>{{about.description}}</dd>
+                {{/about.description}}
+                {{#type}}
+                    <dt>type</dt><dd>{{type}}</dd>
+                {{/type}}
+                {{#expire}}
+                    <dt>expire</dt><dd>{{expire}}</dd>
+                {{/expire}}                
+                {{#pricing}}
+                    <dt>pricing</dt><dd>{{pricing}} {{cost}}</dd>
+                {{/pricing}}
+                {{#status}}
+                    <dt>status</dt><dd>{{status}}</dd>
+                {{/status}}
+                {{#owner}}
+                    <dt>owner</dt>
+                    <dd>
+                         <dl style="padding-left:1em">
+                            {{#owner.id}}
+                                <dt>id</dt><dd>{{owner.id}}</dd>
+                            {{/owner.id}}
+                            {{#owner.name}}
+                                <dt>name</dt><dd>{{owner.name}}</dd>
+                            {{/owner.name}}
+                        </dl>
+                    </dd>
+                {{/owner}}
+                {{#provider}}
+                    <dt>provider</dt><dd>{{provider}}</dd>
+                {{/provider}}
+                {{#seller}}
+                    <dt>seller</dt>
+                    <dd>
+                         <dl style="padding-left:1em">
+                            {{#seller.id}}
+                                <dt>id</dt><dd>{{seller.id}}</dd>
+                            {{/seller.id}}
+                            {{#seller.name}}
+                                <dt>name</dt><dd>{{seller.name}}</dd>
+                            {{/seller.name}}
+                        </dl>
+                    </dd>
+                {{/seller}}
+                {{#buyer}}
+                    <dt>buyer</dt>
+                    <dd>
+                         <dl style="padding-left:1em">
+                            {{#buyer.id}}
+                                <dt>id</dt><dd>{{buyer.id}}</dd>
+                            {{/buyer.id}}
+                            {{#buyer.name}}
+                                <dt>name</dt><dd>{{buyer.name}}</dd>
+                            {{/buyer.name}}
+                        </dl>
+                    </dd>
+                {{/buyer}}
+                {{#worker}}
+                    <dt>worker</dt>
+                    <dd>
+                         <dl style="padding-left:1em">
+                            {{#worker.id}}
+                                <dt>id</dt><dd>{{worker.id}}</dd>
+                            {{/worker.id}}
+                            {{#worker.name}}
+                                <dt>name</dt><dd>{{worker.name}}</dd>
+                            {{/worker.name}}
+                        </dl>
+                    </dd>
+                {{/worker}}
+                {{#handler}}
+                    <dt>handler</dt>
+                    <dd>
+                         <dl style="padding-left:1em">
+                            {{#handler.id}}
+                                <dt>id</dt><dd>{{handler.id}}</dd>
+                            {{/handler.id}}
+                            {{#handler.name}}
+                                <dt>name</dt><dd>{{handler.name}}</dd>
+                            {{/handler.name}}
+                        </dl>
+                    </dd>
+                {{/handler}}
+            </dl>
+                {{#offers.length}}OFFERS
+                    <ul>
+                    {{#offers}}
+                        <li><button class="btn btn-sm btn-primary" data-inxio-request-method="PURCHASE" data-inxio-request-query="offerid={{.}}">PURCHASE {{.}} {{cost}} {{unit}}</button></li>    
+                    {{/offers}}
+                    </ul>
+                {{/offers.length}}
+        </div>
+        <div>
+            {{#options}}
+                <button class="btn btn-sm btn-primary" data-inxio-request-method="{{.}}">{{.}}</button>
+            {{/options}}
+        </div>
+        <div class="xio-dev" style="border: solid 1px #F80">
+
+            <button data-inxio-request-method="ABOUT">ABOUT</button>
+            <button data-inxio-request-method="API">API</button>
+            <button data-inxio-request-method=".html">HTML</button>
+            <button data-inxio-request-method=".about">DEBUG</button>
+            <!--
+            <button data-inxio-request-method="TEST">TEST</button>
+            <button data-inxio-request-method=".refresh">refresh</button>
+            -->
+            <button data-inxio-view="grid">GRID</button>
+            <button data-inxio-view="rows">ROWS</button>
+        </div>
+
+    </div>
+</template>
+
+<template id="template-resource-children" >
+
+    <xio-resource class="item" name="{{name}}" path="{{@id}}" >
+        
+    </xio-resource>
+
+</template>
+
+
+<template id="template-resource-children-serviceOrders" >
+
+        <div class="item full" >
+            <div class="card">
+                 <div class="card-block">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <dl>
+                              <dt>id</dt>
+                              <dd>{{identifier}}</dd>
+                              <dt>type</dt>
+                              <dd>{{about.type}}</dd>
+                              <dt>service</dt>
+                              <dd>{{orderedItem.name}}</dd>
+                              <dt>seller</dt>
+                              <dd>{{seller}}</dd>
+                              <dt>orderDate</dt>
+                              <dd>{{orderDate}}</dd>
+                            </dl>
+                        </div>
+                        <div class="col-md-6">
+                            <dl>
+
+                              <dt>orderNumber</dt>
+                              <dd>{{orderNumber}}</dd>
+                              <dt>orderStatus</dt>
+                              <dd>{{orderStatus}}</dd>
+                              <dt>paymentStatus</dt>
+                              <dd>{{paymentStatus}}</dd>
+                              <dt>Network Fee</dt>
+                              <dd>{{about.fee1}}</dd>
+                              <dt>Ethereum Fee</dt>
+                              <dd>{{about.fee2}}</dd>
+                              <dt>totalPaid</dt>
+                              <dd>{{about.paid}}</dd>
+                            </dl>
+                           
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+</template>
+
+
+<template id="template-resource-request" >
+    <div class="item selected" >
+        <div class="card">
+            <form  data-inxio-request-method="{{method}}"  data-inxio-request-path="{{path}}" data-inxio-request-query="{{query}}">
+            
+                <div class="card-header">
+                    <stong>{{method}}</strong> {{path}}
+                </div>
+
+                <div class="card-block">
+                        {{#input.description}}
+
+                           <p>{{input.description}}</p>
+                            {{{input.html}}}
+                            <hr/>
+
+                        {{/input.description}}
+
+                        {{#ihm:urlinput}}
+                        
+                            <xio-input name="{{name}}" type="{{name}}" required="{{required}}"  placeholder="{{description}}">
+                            </xio-input>
+
+                        {{/ihm:urlinput}}
+
+                        {{#input}} 
+                        
+                            {{#body}} 
+                              <input type="text" class="form-control form-control-sm" name="__body__" placeholder="put data here" value="{{value}}"/>
+                            {{/body}} 
+                            
+                            {{#params}} 
+
+                            <xio-input name="{{name}}" type="{{type}}" required="{{required}}" readonly="{{readonly}}" placeholder="{{description}}" value="{{value}}">
+                                {{#options}} 
+                                    <option value="{{value}}">{{name}}</option>
+                                {{/options}} 
+                            </xio-input>
+                            
+                            {{/params}} 
+                        {{/input}} 
+                        
+                   
+                </div>
+                <div class="card-footer">
+                    <button type="submit" class="btn btn-sm btn-primary" value="" >SUBMIT</button> 
+                </div>
+
+            </form>
+        </div>
+    </div> 
+</template>
+
+
+
+<template id="template-resource-response" >
+    <div class="item selected"  >
+
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-header endpoint">
+                {{#error}}HTTP {{status}}
+                {{/error}}
+                {{^error}}HTTP {{status}}{{/error}}</strong>
+                
+                <small>{{reason}}</small>
+
+                {{#ihm.content_type}}<span class="label label-default">{{ihm.content_type}}</span>{{/ihm.content_type}}
+                <!--
+                <a href="#" onclick="openOperationInPopup()" class="btn btn-sm btn-default" style="color: #FFF"><i class="fa fa-link "> </i>mshow headers</a>
+                -->
+                {{#ihm.fromcache}}
+                    <span class="label label-warning" onclick="withoutCache()" > <i class="fa fa-refresh "> </i> from cache</span>
+                {{/ihm.fromcache}}
+
+                </h6>
+                <div id="subheader" class="subheader" >
+
+                    <ul>
+                    {{#headers}}
+                        <li>{{name}} : {{value}}</li>
+                    {{/headers}}
+                    </ul>
+
+
+                </div>
+            </div>
+
+            <div class="card-block">
+
+                <pre><code>{{content}}</code></pre> 
+
+            </div>
+        
+        </div>
+
+
+    </div>
+</template>
+
+
+
+
+<script>
+    (function() {
+
+        var doc = document.currentScript.ownerDocument;
+        
+        var template = doc.querySelector('#template-resource');
+        
+        var templates = {}
+
+        window.customElements.define('xio-resource', class extends HTMLElement {
+            constructor() {
+                super();
+                var self = this
+                $(this).find('template').each(function() {
+                    templates[ $(self).attr('id') ] = this
+                    self.t = this
+                })
+                
+            }
+            connectedCallback() {
+
+                this.name = $(this).attr('name') || '?'
+                this.selected = $(this).hasClass('selected') 
+
+                this.rootcontainer = $(this).parent().parent()
+                this.container = $(this).parent()
+                this.parentResource = $(this).parents('xio-resource').first()[0]
+                this.template = template
+
+                //if (this.t)
+                //    this.template = this.t
+
+                //if ( $(this).attr('path')=='/store')
+                //    alert('connectedCallback store '+this.container.html())
+                
+                this.render()
+            }
+            render(filter) {
+
+                this.about = null
+                this.path = $(this).attr('path') || '/'
+                this.server = app.server
+
+                //if (this.path=='/store')
+                //    alert('render store')
+  
+                var self = this
+
+                var data = this.data || {
+                    'endpoint': this.endpoint,
+                    'name': this.name,
+                    'path': this.path
+                }
+                data._debug = json2html(data)
+                
+                var html = $(this.template).render(data) 
+
+                $(this).html( html );
+               
+                this.initIso(filter)
+
+                if (this.selected) {
+                    this.show()
+                }
+
+            }
+
+            initIso(filter) {
+                //if (this.iso)
+                //    return
+                var self = this
+                //console.log('init iso',filter)
+                this.iso = $(this).find('.children').iso({
+                    itemSelector: '.item',
+                    filter: filter
+                })
+                
+                //
+                this.iso.selectItem = function(item) {
+                    var resource = item[0]
+                    item.addClass('selected')
+                    self.iso.filter('.selected')
+                    resource.show()
+                }
+                this.iso.unSelectItem = function(item) {
+                    var resource = item[0]
+                    resource.hide()
+                    item.removeClass('selected')
+                    self.iso.filter()
+                }
+            }
+
+            show() {
+                var self = this
+                console.log('SHOW',this.endpoint,this.path)
+
+                this.getAbout().then( function (about) {  
+
+                    about._path = self.path
+
+                    var tpl = about.template        
+
+                    // handle specific template    
+                    if (about.type) {
+                        var tpl = doc.getElementById('template-'+about.type)
+                    }
+
+                    if (tpl) {
+
+                        /* custom template */
+                        var html = $(tpl).render(about) 
+                        $(self).html( html );
+                        self.initIso()
+                        
+                    } else {
+                        /* default template */
+                        self.renderHeader()
+                        $(self).find('.header').show()
+                        $(self).find('.children').show()
+                    }
+
+                    // custom children elements ?
+                    if (about.contains) {
+                        return self.renderContent() // html first
+                    }
+                    // is it an operation ?
+                    if (about['methods'] && about['methods']['POST'])
+                        self.renderRequest('POST')
+                    else if (about['methods'] && about['methods']['GET'])
+                        self.renderRequest('GET')
+                    else
+                        self.renderContent()
+                })
+            }   
+            hide() {
+                
+                $(this).find('.header').hide()
+                $(this).find('.children').hide()
+                //$(this).iso().refresh() // refresh du parent
+            }  
+            /*
+            clear() {
+                this.iso.clear()
+                this.container.nextAll().remove()
+            }
+            */
+
+            request(method,path,data) {
+                console.log('...resourcerequest >>'+method+' '+path)
+                return this.server.request( method,path,data )  
+            }
+            
+            renderHeader() {
+                var self = this
+
+                this.getAbout().then( function (about) {  
+
+                    var tpl = doc.querySelector('#template-resource-header');
+
+                    // handle specific template   
+                    var specifictpl = null
+                    if (about.type) {
+                        var specifictpl = doc.getElementById('template-'+about.type+'-header')
+                    }
+
+                    if (!specifictpl) {
+                        var specifictpl = self.t
+                    }
+
+                    var html = $(tpl).render(about)
+                    var div = $(self).find('.header')
+                    $(div).html(html).show()
+
+                    if (specifictpl) {
+                        //alert(specifictpl.outerHTML)
+                        //console.log('----------------------',specifictpl)
+                        //console.log('----------------------',about)
+                        var html = $(specifictpl).render(about)
+                        $(div).find('.specific').html(html)
+                    } 
+
+
+                    $(self).find('.resource').find('button[data-inxio-request-method]').click(function() {
+                        var method = $(this).data('inxio-request-method')
+                        var query = $(this).data('inxio-request-query')
+                        if (method=='.html') {
+                            return self.renderContent()
+                        } else if (method=='.about') {
+                            return self.renderDebug()
+                        }
+                        self.renderRequest(method,query)
+                    })
+                    $(self).find('.resource').find('button[data-inxio-view]').click(function() {
+                        var view = $(this).data('inxio-view')
+                        self.renderView(view)
+                    })
+                })
+            }
+            renderDebug() {
+                var self = this
+
+                this.iso.clear()
+
+                this.getAbout().then( function(data) {
+                    var html = json2html(data)
+                    html = '<div class="item">'+html+'</div>'
+                    self.iso.push(html)
+                })
+
+            }
+
+
+            getAbout(path) {
+                var self = this
+                path = path || self.path
+                if (this.about) {
+                    return $.Deferred().resolve( this.about )
+                }
+
+                return this.request('ABOUT',path).then( function(resp) {
+                    console.log('################ getAbout ',path,resp.content)
+                    var data = resp.content
+                    data = xio.tools.about(data)
+                    console.log(data)
+                    self.about = data
+                    return data
+                })
+            }
+            
+            getContent(path) {
+                
+                var self = this
+
+                var d = this.getAbout().then(function (data) { 
+
+                    var children = []
+
+                    if (data['resources']) {
+
+                        for (var childname in data['resources']) {
+
+                            children.push({
+                                'name': childname,
+                            })
+                        }
+                    }
+
+                    return self.request('GET',path).then(function (resp) { 
+                        console.log('***** getChildren',self.path,resp)
+                        for (var i in resp.content) {
+                            children.push(resp.content[i])
+                        }
+                        console.log('***** getChildren',self.path,children)
+                        return children
+                    })  
+                })  
+                
+                return d
+            }
+            renderView(view) {
+                //console.log(templates)
+                this.view = view
+                this.iso.setView(view)
+                this.renderContent()
+            }
+            relayout(method) {
+                this.iso.iso.layout()
+                // parent propagation
+                if (this.parentResource)
+                    this.parentResource.relayout()
+            }
+            renderContent(filter) {
+                var self = this
+
+                filter = filter || {}
+
+                //var div = $('<div class="isotope" style="border: solid 3px #090; padding:10px"></div>')
+                //this.rootcontainer.append(div)
+                //this.iso = $(div).iso({itemSelector: '.item',})
+
+                var view = view || 'grid'
+               
+                this.iso.clear()
+                this.iso.push('<div class="item full">loading</div>')
+                return this.getContent(self.path).then( function(data) {
+                    self.iso.clear()
+                    console.log('===== RENDER CHILDREN',self.path,filter,data)
+                    console.log('===== BEFORE FIX DATA',data)
+
+                    // fix data
+                    var basepath = self.path || '/'
+                    if (basepath.startsWith('/')) 
+                        basepath = basepath.slice(1) // skip '/'
+
+                    ////////////////////////////////////////////////////////////////////////// TOFIX ... use relative/absolute @id for auto build path ?
+                    
+
+                    $(data).each(function() {
+
+                        if (!this['@id']) {
+                            // prior to xrn ?
+                            //if (this['name'] && this['name'].startsWith('xrn:')) {
+                            //    this['@id'] = this['name']   
+                            //} else 
+                            if (this['id']) {
+                                this['@id'] = this['id']
+                            } else if (this['_id']) {
+                               this['@id'] = this['_id']     
+                            } else if (this['name']) {
+                               this['@id'] = this['name']     
+                            }
+                        }
+                        var id = this['@id']
+                       
+                        if (!this['name'])
+                            this['name'] = this['@id']
+       
+                        if (basepath && !this['@id'].startsWith(basepath))
+                            this['@id'] = basepath+'/'+id 
+                        else
+                            this['@id'] = id  
+
+
+                    })    
+
+                    //xio.log.debug('===== AFTER FIX DATA',data)     
+
+                    if (!$.isEmptyObject(filter)) {
+                        console.log('data',data)
+                        console.log('filter',filter)
+                        var filtered = []
+                        $(data).each(function(k,v) {
+                            //if (v.name.indexOf(filter.q)!=-1)
+                            //    filtered.push(v)
+
+                            var check = true
+                            for (var key in filter) {
+                                check = check && (v[key]==filter[key])
+                            }
+                            if (check)
+                                filtered.push(v)
+
+                        })
+                        data = filtered
+                        console.log('filtered',filtered)
+                    }            
+
+                    ///////////// template lookup
+
+                    // custom template    
+                    if (self.about.contains) {
+                        var template = doc.querySelector('#template-resource-children-'+self.about.contains);
+                    }
+                    // default template
+                    if (!template) {
+                        var template = doc.querySelector('#template-resource-children');
+                    }
+
+                    $(data).each(function(k,v) {
+                        var html = $(template).render(v)
+                        
+                        // attach data to element
+                        var $el = $(html) //[0].outerHTML )
+                        $el[0].data = v
+
+                        // push element
+                        self.iso.push($el) 
+                    })
+                    //var html = $(template).render(data)
+                    //self.iso.push(html) 
+                    
+                    
+                    self.iso.on('select', function(item) {
+                        var resource = item[0]
+                        resource.show()
+                    })
+                    self.iso.on('unselect', function(item) {
+                        var resource = item[0]
+                        resource.hide()
+                    })
+                    self.iso.enhance()
+
+                    // fix pb layout parent
+                    //self.parentResource.iso.iso.layout()
+                    self.relayout()
+                })
+
+            }
+
+            renderRequest(method,query) {
+
+                var self = this
+                this.iso.clear()
+
+                var path = ''
+
+                var ori_action = method // bug, on perd action dans la method ci dessous
+                return this.getAbout().then( function (about) {
+
+                    var data = {}
+                    //var api = about['api']
+                    //var config = api['/'][method] || {}
+                    var config = about.methods[method] || {}
+                    xio.log.debug('==========> getResourceRequest API', method, query)
+                    
+                    
+                    /* ckwa ?
+                    // fix "METHOD :PATH"
+                    var nfo = action.split(' ')
+                    action = nfo[0]
+                    var postpath = nfo[1]
+                    if (postpath)
+                        path = path+'/'+postpath
+                    */
+
+                    // gestion urlparams
+                    var url_input = []
+                    var p = path.split('/')
+                    $(p).each( function(index,val) {
+                        if (val.startsWith(':')) {
+                            url_input.push( {'name': val} )
+                        } 
+                    })
+                    data['ihm:urlinput'] = url_input
+                    data['path'] = path
+                    data['method'] = method
+                    data['query'] = query
+                    data['input'] = config['input'] 
+
+                    xio.log.debug(data)
+
+                    var input_params = []
+
+                    if (data['input'] && data['input']['params']) {
+                        $(data['input']['params']).each( function(index,val) {
+                            var name = val['name']
+                            if (name.startsWith(':')) {
+                                //data['ihm:urlinput'] = val    
+                            } else {
+                                // pb avec value car disparait du formulaire si existe (cas d'une op a moitié configuré coté serveur, dans ce cas ca doit disparaitre de la liste des input de about !)
+                                //if (val['default']) data['input']['params'][index]['value'] = val['default']    
+                                if (val['type'])
+                                    val['ihm_type_'+val['type']] = true    
+                                else
+                                    val['ihm_type_text'] = true   
+
+                                if (about['data'] && about['data'][val['name']]) {
+                                    val['value'] = about['data'][val['name']]       
+                                }  
+                                input_params.push(val)      
+                            } 
+
+                        })
+                        data['input']['params'] = input_params
+                    }
+
+                    // fill template
+
+                    var template = doc.querySelector('#template-resource-request');
+                    var html = $(template).render(data)
+                    
+                    self.iso.push(html)
+
+                    var $form = $(self.iso.container).find('form')
+                    
+                    $form.submit(function(e) {
+                        e.preventDefault();
+                        
+                        var form = this
+                        var method = $(form).data('inxio-request-method');
+                        var path = $(form).data('inxio-request-path') || self.path;
+                        var query = $(form).data('inxio-request-query');
+
+                        $form.closest('.item').siblings().remove()
+                        xio.log.debug('REQUEST '+method+' '+path)
+
+                        if (query)
+                            var payload = xio.tools.parseQuery( query ); 
+                        else
+                            var payload = { };
+
+                        $.each( $(form).serializeArray(), function() {
+                            payload[this.name] = this.value;
+                        }); 
+                        // fix url input
+                        var _payload = { };
+                        for (var name in payload) {
+                            if (name.startsWith(':')) {
+                                var value = payload[name]
+                                path = path.replace(name, value);
+                            } else {
+                                _payload[name] = payload[name];
+                            }
+                        }; 
+
+                        if (payload['__body__']) {
+                            payload = payload['__body__']    
+                        }
+                        
+                        return self.renderResponse(method,path,payload) // to fix payload & query merged
+                    })
+
+                    // auto submit for GET
+                    if (method=='ABOUT')
+                        $form.submit()
+                    if (method=='GET' && (!data['input'] || !data['input']['params'] ))
+                        $form.submit()
+                })
+
+            }
+
+            renderResponse(method,path,payload) {
+                var self = this
+
+                xio.log.debug('REQUEST '+method+' '+path+' '+payload)
+                return this.request(method,path,payload).then( function(resp) {
+
+                    xio.log.debug('RESPONSE ',resp)
+                    if (resp.headers) {
+                        //fix des headers
+                        resp['ihm'] = {}
+                        resp['ihm']['fromcache'] = resp['headers']['xio_cache_ttl']
+                        resp['ihm']['content_type'] = resp['headers']['Content-Type']
+
+                        var headers = []
+                        for (var k in resp['headers']) {
+                            headers.push({'name': k, 'value': resp['headers'][k]})    
+                        }
+                        resp['headers'] = headers
+                    }
+
+
+                    if (typeof resp['content'] != 'string')
+                        resp['content'] = JSON.stringify(resp['content'] , undefined, 4);
+
+                    //alert( JSON.stringify(resp))
+                    var template = doc.querySelector('#template-resource-response');
+                    var html = $(template).render(resp)
+
+                    self.iso.push(html)
+                })
+
+            }
+
+
+
+            
+        })
+
+    })();
+</script>
+
+

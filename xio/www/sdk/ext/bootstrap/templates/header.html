@@ -1,0 +1,30 @@
+<nav class="navbar navbar-light bg-faded rounded navbar-toggleable-md">
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#containerNavbarCenter" aria-controls="containerNavbarCenter" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <a class="navbar-brand" href="#">
+      <img src="{{app.about.logo}}" width="30" height="30" class="d-inline-block align-top" alt="" ng-if="app.about.logo"> {{app.about.title}}</a>
+
+  <div class="collapse navbar-collapse" id="containerNavbarCenter">
+    <ul class="navbar-nav mr-auto" >
+      <li class="nav-item" ng-repeat="item in app.about.nav">
+        <a class="nav-link" href="{{app.nav.hashbang}}{{item.path}}">{{item.title}}</a>
+      </li>
+    </ul>
+
+    <ul class="navbar-nav float-xs-right" >
+      <li class="nav-item dropdown" ng-if="app.user">
+        <a class="nav-link dropdown-toggle" href="http://example.com" id="dropdown05" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">{{app.user.name}}</a>
+        <div class="dropdown-menu" aria-labelledby="dropdown05">
+          <a ng-repeat="item in app.user.nav" class="dropdown-item" href="#{{item.path}}">{{item.title}}</a>
+          <a class="dropdown-item" href="#" ng-click="app.user.logout()">Logout</a>
+        </div>
+      </li>
+      <li class="nav-item dropdown" ng-if="!app.user">
+        <a class="nav-link" href="#!/login">Login</a>
+        
+      </li>
+    </ul>
+    
+  </div>
+</nav>

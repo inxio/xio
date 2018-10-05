@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="fr">
+    <head>
+        <title>xio</title>
+        <meta charset="utf-8">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <meta content="width=device-width, initial-scale=1" name="viewport" />
+        
+        <script language="javascript" src="/xio/sdk/bootstrap.js"></script>
+
+    </head>
+   
+    <body>
+        <xio-app>
+
+            <xio-page id="core" > 
+                <hr/>includes attribute
+                <xio-section include="includes/test.html"></xio-section>
+                <hr/>includes tags
+                <xio-section>
+                    <xio-include src="includes/test.html"></xio-include>
+                    <xio-include src="includes/test.json"></xio-include>
+                </xio-section>
+                <hr/>data inline
+                <xio-section>
+                    <xio-data>[{"label": "item1"},{"label": "item2"}]</xio-data>
+                    <xio-code>
+                        console.log('------------')
+                        console.log(app)
+                        console.log(this.nx)
+                    </xio-code>
+                </xio-section>
+                <hr/>data included attribute
+                
+                <xio-section>
+                    <xio-data include="includes/test.json"></xio-data>
+                </xio-section>
+
+                <hr/>data included element
+                <xio-section>
+                    <xio-data >
+                        <xio-include src="includes/test.json"></xio-include>
+                    </xio-data>
+                </xio-section>
+            </xio-page>
+
+            <xio-page id="tags"> 
+                <hr/>
+                <xio-button><code>alert('ok')</code></xio-button>
+                <hr/>
+                <xio-breadcrumb path="some/path/for/breadcrumb"></xio-breadcrumb>
+                <xio-breadcrumb basehref="#mylink=" path="some/path/for/breadcrumb"></xio-breadcrumb>
+                <xio-breadcrumb handler="alert" path="some/path/for/breadcrumb"><xio-breadcrumb>
+            </xio-page>
+
+
+        </xio-app>
+    </body>
+</html>

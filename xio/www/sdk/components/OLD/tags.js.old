@@ -1,0 +1,415 @@
+(function() {
+
+
+class NXElement extends HTMLElement {
+    
+    constructor() {
+        super();   
+        this.nx = {}    
+    }
+
+    connectedCallback() {
+        var self = this
+        setTimeout(function() {
+
+            var d1 = self.getData()
+
+            $.when(d1).then(function(r1) {
+                self.render()
+            })
+        },0)
+    }
+
+    getContent() {
+        var self = this
+        var result = null
+        if (this.nx.include===undefined) {
+            var src = $(this).attr('include')
+            if (include) {
+                var result = $.Deferred(); 
+                app.load(src, function(content) {
+                    this.nx.include = content
+                    result.resolve(content)
+                })
+            } 
+        } else {
+            var result = this.nx.include
+        }
+        return $.when(result)
+    }
+
+    getTemplate() {
+        var self = this
+        if (this.nx.template===undefined) {
+            var template = $(this).attr('template')
+            if (template) {
+                //var result = app.load(template, function(content) {
+                var result = $.get( src ).then( function(content) {     //app.load(template, function(content) {
+                    this.nx.template = content
+                    return content
+                })
+            } else {
+                var result = 'no template'
+            }
+        } else {
+            var result = this.nx.template
+        }
+        return $.when(result)
+    }
+
+    getData() {
+        var self = this
+        if (this.nx.data===undefined) {
+            this.nx.data = $(this).children('nx-data')[0].data
+        } else {
+            var data = this.nx.data
+        }
+        return $.when(data)
+    }
+
+
+    render() {
+        console.log('RENDER =====================================',this)
+        var self = this
+
+        var d1 = this.getTemplate()
+        var d2 = this.getData()
+        return $.when( d1, d2).done(function ( template, data ) {
+            var html = $(template).render(data)
+            console.log('template ============',template)
+            console.log('data ============',data)
+            console.log('html ============',html)
+            $(self).html(html)
+        })
+    }
+    
+    
+}
+
+
+
+
+window.customElements.define('nx-page', class extends HTMLElement {
+    template() {
+        return `
+            <template>
+                <div class="page-header header-filter clear-filter header-small" data-parallax="true" style="background-image: url('assets/backgrounds/back1.jpg');">
+                    <div class="container inxio">
+                        <div class="row">
+                            <div class="col-md-8 ml-auto mr-auto">
+                                <div class="brand">
+                                    <h1 class="inxio-title">
+                                       <small>{{title}}</small>
+                                    </h1>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!--
+                <div class="main main-raised">
+                    <div class="container">
+                        <div class="row slot">
+                            
+                        </div>
+                    </div>
+                </div>
+                -->
+                <div class="container slot">
+                </div>
+            </template>
+        `
+    } 
+    constructor() {
+        super();
+        //console.log('============ constructor', this.innerHTML)
+        this.iso = null
+    }
+    connectedCallback() {
+
+        //var self = this
+        //onsole.log('============ connectedCallback', this)
+        console.log('============ connectedCallback', $(this).attr('id'))
+        this.render()
+    }
+    wrap() {
+        var self = this
+        var inner = this.innerHTML
+        var html = $(this.template()).render({
+            'app':app,
+            'title': $(this).attr('title')
+        })
+        $(this).html( html )
+        $(this).find('.slot').html(inner)
+    }
+    render() {
+        var self = this
+        var include = $(this).attr('include')
+        var template = $(this).attr('template')
+        if (include) {
+            return app.load(include, function(content) {
+                $(self).html( content )
+                if ($(self).attr('id')!='about') {
+                    self.wrap()
+                } 
+                self.enhance()
+            })
+        } 
+        if (template) {
+            return app.load(template, function(content) {
+                $(self).html( content )
+                self.wrap()
+                self.enhance()
+            })
+        }
+
+        self.wrap()
+        self.enhance()
+
+    }
+    enhance() {
+        var self = this
+        var diviso = $(this).find('.isotope')
+        console.log('============ enhance', $(this).attr('id'), diviso.length)
+        if (diviso.length>0 && app.ext.isotope) {
+            alert('iso '+$(this).attr('id'))
+            this.iso = $(this).find('.isotope').iso({
+                itemSelector: '.item',
+                filter: '',
+                masonry: {
+                    gutter: 10
+                }
+            })
+            console.log('==================== iso ?',this.iso)
+            this.iso.on('select', function(item) {
+                console.log('select',item)
+            })
+            this.iso.on('unselect', function(item) {
+                console.log('unselect',item)
+            })
+        }
+
+
+    }
+})
+
+
+
+window.customElements.define('nx-include', class extends HTMLElement {
+    constructor() {
+        super();
+    }
+    connectedCallback() {
+        var self = this
+        this.src = $(this).attr('src')
+        if (this.src) {
+            //app.log.info('including '+this.src)
+            console.log('including '+this.src)
+            app.load(this.src, function(content) {
+                $(self).replaceWith(content)
+            })
+        }
+
+    }
+    
+})
+
+
+window.customElements.define('nx-gallery', class extends HTMLElement {
+
+    constructor() {
+        super();
+    }
+    connectedCallback() {
+        var topic = $(this).attr('topic')
+        
+        var topicdata = null
+        $(app.data.topics).each(function(){
+            if (this.topic==topic)
+                topicdata = this
+        })
+
+        if (topicdata) {
+            var logos = topicdata.logos
+            var title = topicdata.title
+        } else {
+            var logos = $(this).attr('logos').split(' ')
+            var title = $(this).attr('title')
+        }
+        var data = {
+            'title': title,
+            'logos': logos
+        }
+        var template = `
+            <template>
+                <div class="container">
+                    {{#title}}
+                       <h1 class="nx-title"><small>{{title}}</small></h1>
+                    {{/title}}
+                   <div class="d-flex justify-content-between">
+                        {{#logos}}
+                           <div class="nx-background nx-block-s" style="background-image: url('assets/logos/{{.}}.png');" > </div>
+                        {{/logos}}
+                        {{#icons}}
+                            <div 
+                                class="item nx-background nx-block-s {{topic}}" 
+                                style="border: solid 1px rgba(255,255,255,0.2); background-color: rgba(255,255,255,0.1);" 
+                                > 
+                                <i class="fa fa-{{.}}" style="font-size: 4rem"> </i>
+                            </div>
+                        {{/icons}}
+                    </div>
+                </div>
+            </template>
+        `
+        var html = $(template).render(data)
+        
+        $(this).html( html )
+    }
+    
+})
+
+
+window.customElements.define('nx-carousel', class extends HTMLElement {
+    template() {
+        return `
+            <template>
+                <div class="container isotope" style="height:250px">
+                    <div class="grid-sizer nx-block-s"></div>
+                    {{#.}}
+                        <div class="item {{topic}}" style="width: 100%; height:50px">
+                            <h1 class="nx-title" ><small style="color: #fff">{{title}}</small></h1>
+                        </div>
+                        {{#logos}}
+                            <div 
+                                class="item nx-background nx-block-s {{topic}}" 
+                                style="border: solid 1px rgba(255,255,255,0.2); background-color: rgba(255,255,255,0.1); background-image: url('assets/logos/{{.}}.png');" 
+                                > 
+                            </div>
+                        {{/logos}}
+                        {{#icons}}
+                            <div 
+                                class="item nx-background nx-block-s {{topic}}" 
+                                style="border: solid 1px rgba(255,255,255,0.2); background-color: rgba(255,255,255,0.1);" 
+                                > 
+                                <i class="fa fa-{{.}}" style="font-size: 4rem"> </i>
+                            </div>
+                        {{/icons}}
+                    {{/.}}
+                </div>
+            </template>
+        `
+    } 
+    constructor() { // style="background-color: rgba(255,255,255,0.4); background-image: url('assets/logos/{{.}}.png');" 
+        super();
+        this.data = app.data.topics
+
+    }
+    connectedCallback() {
+        var self = this
+        var title = $(this).attr('title')
+        
+        var template = this.template()
+        var html = $(template).render(this.data)
+
+        this.i = 0
+        this.topics = []
+        $(this.data).each( function() {
+            self.topics.push(this.topic)
+        })
+        
+        $(this).html( html )
+        this.iso = $(this).find('.isotope').iso({
+            itemSelector: '.item',
+            filter: '',
+            masonry: {
+                gutter: 20,
+                columnWidth: '.grid-sizer'
+            }
+        })
+        $(this).click(function() {
+            self.play()
+        })
+        app.schedule('carousel', 5, function() {
+            //self.play()
+        })
+        this.iso.filter('.'+this.topics[this.i])
+        window.setTimeout(function() {
+            self.iso.refresh()
+
+        }, 0);
+    }
+    play() {
+        console.log('play',this)
+        this.i = this.i + 1
+        if (this.i>=this.topics.length)
+            this.i = 0
+        this.iso.filter('.'+this.topics[this.i])
+    }
+    
+})
+
+
+window.customElements.define('nx-section', class extends HTMLElement {
+    
+    constructor() {
+        super();
+    }
+    connectedCallback() {
+        // totdo
+    }
+    
+})
+
+window.customElements.define('nx-storeitem', class extends NXElement {
+
+    getTemplate() {
+        //return app.load('templates/storeitem.html')
+        return $.get('templates/storeitem.html').then(function (content) {
+            //alert(content)
+            return content
+        })
+        return `
+            <template><a href="#store/{{id}}" alt="{{id}}"><h1>ok storitem {{id}} {{label}}</h1></a></template>
+        `
+    }
+
+    render() {
+        var self = this
+        super.render().then( function() {
+            // post rendering
+        })
+    }
+
+
+    show() {
+        $(this).addClass('focus')
+        $(this).find('.header').removeClass('hidden')
+    }
+    
+})
+
+window.customElements.define('nx-data', class extends HTMLElement {
+    
+    constructor() {
+        super();        
+    }
+    connectedCallback() {
+        this.data = null
+        this.raw = this.textContent
+        //alert(this.raw)
+        try {
+            this.data = JSON.parse( this.raw )
+        } catch(e) {
+            $(this).attr('error',e)
+        }
+        
+        $(this).html('<script type="application/json">'+this.raw+'</script>')
+    }
+    
+})
+
+
+
+
+})();

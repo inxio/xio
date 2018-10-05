@@ -1,0 +1,73 @@
+<!--
+
+app.tags.bind('item', {
+  restrict: 'E',
+  transclude: true,
+  link: function ($scope, $element, $attrs, $ctrl) {
+    //$element.addClass('item2')
+    $scope.background = $attrs['logo']
+    if ($attrs['logo']) {
+      $element.find('div').addClass('background') 
+      $element.find('div').css( "background-image","url(img/logos/"+$attrs['logo']+".png")
+    }
+  },
+  template: `
+    <div class="item" ng-transclude>
+    </div>
+  `
+});
+
+-->
+<style>
+xio-card .card, 
+xio-card .cover {
+    width: 200px;
+    height: 200px !important;
+    border: solid 1px #F80;
+}
+
+
+xio-card .cover {
+    text-align: center;
+    vertical-align: middle;
+    background-repeat: no-repeat;
+    background-size: contain;
+    background-position: center center;
+    background-clip: border-box;
+}
+
+</style>
+<template>
+    <div class="card">
+        <div class="cover">z
+        </div>    
+    </div>
+</template>
+
+
+<script>
+(function() {
+    var doc = document.currentScript.ownerDocument;
+    var template = doc.querySelector('template');
+    window.customElements.define('xio-card', class extends HTMLElement {
+        constructor() {
+            super();
+        }
+        connectedCallback() {
+            var self = this
+            var about = $(this).attr('about');
+
+            var html = $(template).render({})
+            
+            $(html).find('.cover').html(this.innerHTML)
+            
+            //$card.html( this.innerHTML );
+            //$card.css( "background-image","url(img/logos/"+about+".png")
+            //alert(html)
+            $(this).html(html)
+            $(this).find('.cover').css( "background-image","url(img/logos/"+about+".png")
+        }
+        
+    })
+})();
+</script>
