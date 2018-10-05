@@ -83,7 +83,7 @@
 
         // logs
         this.log = xio.log
-        this.log.level = 'INFO'
+        this.log.level = null
 
         // user
         this.user = null 
@@ -296,7 +296,6 @@
                 // name is confuse : requirement could be file
                 self.load(name, function() {
                     nb_requirements_loaded += 1
-                    console.log('??', name,nb_requirements_loaded,nb_requirements)
                     if (nb_requirements_loaded>=nb_requirements) {
                         d.resolve(true)
                     }     

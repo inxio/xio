@@ -1,4 +1,9 @@
 
+- pb gestion fichier .tpl (pas chargé car pas .html)
+
+- pb de gestion de template par defaut (eg: getTemplate d'une section)
+
+
 - pb des connectedcallback
     => a eviter car un contenu peut etre transformé via les template (eg app.content)
     => utilier render qui garantit un post templating + la gestion de rendu deja fait

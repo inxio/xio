@@ -12,29 +12,62 @@ class XIOElement extends HTMLElement {
             console.log($(self).closest('body').html())
             return $(self).parent().closest('.xio-element')[0]
         }
+        this.debug = $(this).hasClass('debug')
     }
 
     connectedCallback() {
         var self = this
-        console.log('connectedCallback =====================================',this.nodeName,this.id)
+        this.log('connectedCallback')
+        window.setTimeout(function() {
+            self._init()
+        })
+    }
+
+    init() {
+        // to be overwrited
+    }
+
+    _init() {
+        var self = this
         this.nx.parent = $(this).parent().closest('.xio-element')[0]
-        //console.log('connectedCallback PARENT =====================================',this.nx.parent)
         if (this.nx.parent)
             this.nx.parent.nx.children.push(this)
 
+        if ($(this).hasClass('xio-element')) {
+            return
+        }
+        this.log('init')
+
         $(this).addClass('xio-element')
 
-        this.debug = $(this).hasClass('debug')
+        var d = this.init()
 
-        if (this.nx.RENDER_ON_CLOSE) {
-            
-        } else {
-            window.setTimeout(function() {
-                self._render()
+        return $.when( d ).then( function() {
+            self.log('load')
+            var d1 = self.getData()
+            var d2 = self.getTemplate()
+            var d3 = self.getContent()
+
+            return $.when(d1,d2,d3).done(function(data,template,content) {
+                self.nx.data = data
+                self.nx.template = template
+                self.nx.content = content
+
+                self.log('LOADED',self.nx)
+                return self._render()
             })
-        }
-
+        })
     }
+
+
+
+
+    log(msg) {
+        var args = $.makeArray(arguments)
+        args.unshift('===================================== #'+this.nodeName)
+        console.log.apply(this,args)
+    }
+
 
     on(topic,callback) {
         if (!this.nx.events[topic])
@@ -44,7 +77,7 @@ class XIOElement extends HTMLElement {
 
     emit(topic,data) {
         var self = this
-        console.log('pub',topic)
+        self.log('publish',topic)
         if (this.nx.events[topic])
             $(this.nx.events[topic]).each(function(){
                 this(self,data)
@@ -65,31 +98,11 @@ class XIOElement extends HTMLElement {
         this.render()
     }
 
-    _load() {
-        var self = this
-
-        if (this.debug)
-            console.log('LOAD =====================================',this)
-
-        var d1 = self.getData()
-        var d2 = self.getTemplate()
-        var d3 = self.getContent()
-
-        return $.when(d1,d2,d3).done(function(data,template,content) {
-
-            //if (self.debug)
-            console.log('LOADED =====================================',self.nodeName,self.id,data,template,content)
-
-            self.nx.data = data
-            self.nx.template = template
-            self.nx.content = content
-        })
-    }
 
     getContent() {
         var self = this
         var result = null
-        var src = $(this).attr('include')
+        var src = $(this).attr('content')
         if (src) {
             return app.load(src).then(function(content) { 
                 // handle json (cf cio-include)
@@ -104,28 +117,45 @@ class XIOElement extends HTMLElement {
     }
 
     getTemplate() {
-        if (this.template)
-            return this.template
         var self = this
         var src = $(this).attr('template')
         if (src) {
-            return app.load(src).then(function(content) { 
-                return content
+            return app.load(src).then(function(template) { 
+                return template
             })
         }
     }
 
     getData() {
-        if (this.data)
-            return this.data
-
         var self = this
-        var data = null
-
-        return data
+        var src = $(this).attr('data')
+        if (src) {
+            return app.load(src).then(function(data) { 
+                return data
+            })
+        }
     }
 
-    _render(data) {
+    _render() {
+        this.log('RENDER')
+        var self = this
+        var content = self.nx.content
+        var template = self.nx.template
+        var data = self.nx.data || {}
+        data['app'] = app
+        if (template) {
+            var $template = $('<div>'+template+'</div>') // pb avec find .slot si tag template
+            $template.find('.slot').html(content)
+        } else {
+            var $template = $('<template>'+content+'</template>')
+        }
+        var html = $template.render(data)
+        self.nx.rendered = html
+        $(self).html(html)
+        self.emit('rendered')
+    }
+
+    old_render(data) {
         var self = this
 
         if (this.nx.rendered) {
@@ -237,7 +267,7 @@ window.customElements.define('xio-page', class extends XIOElement {
 
 window.customElements.define('xio-section', class extends XIOElement {
 
-    getTemplate() {
+    nogetTemplate() {
         return `<section class="slot"></section>`
     } 
     
@@ -248,8 +278,7 @@ window.customElements.define('xio-section', class extends XIOElement {
 
 window.customElements.define('xio-data', class extends XIOElement {
 
-    constructor() {
-        super();   
+    init() {  
         this.nx.RENDER_ON_CLOSE = true
     }
 
