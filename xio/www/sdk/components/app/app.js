@@ -119,13 +119,21 @@ var template_app = `<header id="xio-app-header">
 `;
 
 
+
+
 window.customElements.define('xio-app', class extends XIOElement {
 
     getTemplate() {
         return template_app
     }
-    connectedCallback() {
-      // prevent auto rendering
+    init() {
+        $(this).hide()
+    }
+    render() {
+        var self = this
+        return super.render().then( function() {
+            $(self).show()
+        })
     }
     
 })

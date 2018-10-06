@@ -117,7 +117,7 @@ window.customElements.define('xio-code', class extends XIOElement {
         var code = $(this).text()
         var h = Function(code);
         //$(this.html() = 
-        var element = this.nx.parent()
+        var element = this.nx.parent
         h.call(element)   
     }
 }) 
