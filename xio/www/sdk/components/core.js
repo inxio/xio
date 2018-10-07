@@ -17,12 +17,15 @@ class XIOElement extends HTMLElement {
 
     connectedCallback() {
         var self = this
-        this.log('connectedCallback')
-        //window.setTimeout(function() {
-            self._init().then(function() {
-                self.render()
-            })
-        //})
+        if (app._ready) {
+            this.log('connectedCallback')
+            //window.setTimeout(function() {
+                self._init().then(function() {
+                    return self.render()
+                })
+            //},0)
+        }
+
     }
 
     init() {

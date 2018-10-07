@@ -238,15 +238,9 @@
         this.log.info('init app')
 
         // capture body
-        //this.body = $('body')
-
-        this.root = $('xio-app').first() // xio-app
-        
-        if (!this.root) {
-            this.root = $('body').find('.xio-element').first()
-        }
-        this.root.hide()
-        //this.body = $('body').clone()
+        this.root = $('xio-app, xio-page, xio-section').first()
+        if (this.root)
+            this.root.css('visibility', 'hidden');
         //$('body').html('<div style="display: table; width:100%; height:100%"><div style="display: table-cell; vertical-align: middle; "><div style="width:40%; margin-left: auto; margin-right: auto;text-align: center">loading ...</div></div></div>')
 
 
@@ -346,6 +340,7 @@
                 self.log.error(e)
             }
             self.log.info('APP READY.')
+            self._ready = true
             self.publish('ready')
             self.run()
         })
@@ -370,7 +365,6 @@
         this.prop('mobile', this.device.mobile)
         this.prop('user', (this.user && this.user.id) )
 
-
         // render
         
         var data = {
@@ -379,7 +373,7 @@
         }
 
         return this.root.render(data).then(function() {
-
+            self.root.css('visibility', 'visible');
             self.root.show()
 
             if (!path) {
@@ -810,7 +804,6 @@
 
 
 })();
-
 
 
 

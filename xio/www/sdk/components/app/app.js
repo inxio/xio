@@ -119,8 +119,6 @@ var template_app = `<header id="xio-app-header">
 `;
 
 
-
-
 window.customElements.define('xio-app', class extends XIOElement {
 
     getTemplate() {
