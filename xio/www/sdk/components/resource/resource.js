@@ -130,12 +130,11 @@
    
     window.customElements.define('xio-resource', class extends XIOElement {
 
-        constructor() {
-            super();
-            this.template = resource_template
+        init() {
+            this.nx.template = resource_template
             this.debug = true
             this.server = app.server
-            this.basepath = '/xio/admin/root' //'xio/ext/admin/root'
+            this.basepath = $(this).attr('src') || '/xio/admin/root' //'xio/ext/admin/root'
             this.about = {}
         }
 
@@ -150,7 +149,10 @@
         render(req) {
             console.log('###### resource render ',req)
             var self = this
-            this.path = req['path'] || ''
+
+            this.path = ''
+            if (req)
+                this.path = req.path
 
 
             return this.request('ABOUT',this.path).then( function(resp) {

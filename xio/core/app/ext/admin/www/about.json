@@ -9,8 +9,8 @@
     },
     "sitemap": [
         {
-            "label": "App",
-            "path": "#home"
+            "label": "www",
+            "path": "#www"
         },
         {
             "label": "Debug",

@@ -503,10 +503,15 @@
     XioUi.prototype.load = function (src,callback) {
         var self = this
 
+        // handle xio server resource
+
         var filename = src.split('/').pop()
         var info = filename.split('.')
         if (info.length==1) {
-            if (src.startsWith('sdk/components')) {
+            if (src.charAt(0)=='/') {
+                var type='unknow'
+            }
+            else if (src.startsWith('sdk/components')) {
                 var type='component'
                 var src = src.split('/').pop()
             } else {
@@ -516,6 +521,8 @@
         } else {
             var type = info.pop()
         }
+
+
 
         this.log.info('loading ... '+src)
 
@@ -600,6 +607,15 @@
                 //alert(src)
                 return $.get( src ).then( function(content) {
                     //alert('loaded '+content)
+                    self._loaded[src].status = 200
+                    self._loaded[src].content = content
+                    if (callback)
+                        callback(content)
+                    return content
+                })
+            } 
+            else if (type=='unknow') {
+                return $.get( src ).then( function(content) {
                     self._loaded[src].status = 200
                     self._loaded[src].content = content
                     if (callback)

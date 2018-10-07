@@ -75,7 +75,9 @@ class XIOElement extends HTMLElement {
         var result = null
         var src = $(this).attr('content')
         if (src) {
+            
             return app.load(src).then(function(content) { 
+
                 // handle json (cf cio-include)
                 if (content instanceof Object)
                     content = $.trim( JSON.stringify(content) )
