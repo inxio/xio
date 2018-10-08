@@ -254,7 +254,6 @@
         // about app
 
         var global_requirements = [
-            'sdk/components/app',
             'sdk/components/input',
             'sdk/components/resource',
             'sdk/components/onboarding',
@@ -782,40 +781,48 @@
             return true;
         }
 
-        // step1 : find element
-        var el = $('#'+path.split('/')[0])
-        console.log(el)
-        
-        // step2 : custom handler (post rendering before show)
+        // step1 : find route handler + element
+        var p = path.split('/')
         var route = this.routes.getHandler(path)
         if (route) {
-            if (el.length) {
-                el.render().then(function() {
-                    try {
-                        result = route.handler(data)
-                        return $.when(result).then(function(data) {
-                            self.show(el)
-                        })
-                    } catch(e) {
-                        console.log('DATA ERROR',e)
-                        return
-                    }
-                })
-            } else {
-                result = route.handler(data)
-                return $.when(result).then(function(data) {
-                    self.show(el)
-                })
-            }
-        } 
+            // render by element
+            console.log(route)
+            var handler = route.handler
+            var postpath = route.postpath
+            var context = route.context
+        } else {
+            // render by element
+            var el = $('#'+p[0])
+            var handler = el[0]
+            var postpath = p.slice(1).join('/')
+            var context = {}
+        }
+        
 
+        if (!handler) {
+            // fallback ??
+            return
+        }
+
+        // step2 : build req
+        
+        var req = xio.request('GET',postpath,data,{},context)
+        req.fullpath = req.path
+        
         // default handling
-
+        console.log('====== #',handler,'RENDER ',req) 
+        if (handler.render)
+            var result = handler.render(req)
+        else
+            var result = handler(req)
+        return $.when(result)
+        /*
         return $.when(data).then(function(data) {
             console.log('RENDER ELEM = ',el)
             console.log('RENDER DATA = ',data)
             return el.render(data)
         })
+        */
     }
 
 
@@ -830,7 +837,7 @@ $(document).ready( function() {
 })
 
 $(window).bind( 'hashchange', function(e) { 
-    console.log('hashchange ...', location.hash)
+    //console.log('hashchange ...', location.hash)
     var hash = location.hash
     app.render(hash)
 });

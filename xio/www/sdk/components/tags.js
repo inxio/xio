@@ -49,7 +49,7 @@ window.customElements.define('xio-breadcrumb', class extends XIOElement {
             'breadcrumb': breadcrumb,
             'handler': this.handler
         }
-        console.log(this.data)
+        
         
         this.template = `<nav aria-label="breadcrumb">
           <ol class="breadcrumb">
