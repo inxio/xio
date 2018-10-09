@@ -181,6 +181,9 @@
                 if (part.charAt(0)==':') {
                     urlparams.push(part)
                     part = '([^\/]*?)'
+                } else if (part=='*') {
+                    urlparams.push(part)
+                    part = '(.*?)'
                 }
                 pattern.push(part)
             }
@@ -198,7 +201,6 @@
                 var m = rpattern.exec(path)
                 
                 for (var i = 0; i < urlparams.length; i++) {
-                    
                     params[urlparams[i]] = m[i+1]
                 }
                 params[urlparams[0]] = m[1]
@@ -210,7 +212,7 @@
                     'handler': info.handler,
                     'hook': info.hook,
                     'context': params,
-                    'postpath': postpath
+                    'postpath': params['*'] || postpath
                 }
             }           
         }
