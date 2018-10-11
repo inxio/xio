@@ -17,6 +17,10 @@
             "path": "#tags"
         },
         {
+            "label": "WEBSOCKET",
+            "path": "#websocket"
+        },
+        {
             "label": "A propos",
             "path": "#about",
             "slot": "footer"

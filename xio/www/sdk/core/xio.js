@@ -543,6 +543,7 @@
 
 
     websocketHandler = function(endpoint) {
+        var self = this
         this._endpoint = endpoint
 		this.url = endpoint;
 		this.connected = false;
@@ -559,55 +560,55 @@
 				callback();
 			}
 		}
+
 		this.connect = function( callback ) {
-		    if (!this.connected) {
-		        this.log('connecting websocket...')
+		    if (!self.connected) {
+		        console.log('connecting websocket...')
                 var wshandler = "MozWebSocket" in window ? 'MozWebSocket' : ("WebSocket" in window ? 'WebSocket' : null);
                 if (wshandler == null) {
                     alert("Your browser doesn't support Websockets.");
                     return;   
                 }
-		        this.ws = new window[wshandler](this.url); //new WebSocket(this.url);
-		        this.ws.parent = this
-                var self = this
-		        this.ws.onopen = function(e) { 
-					this.parent.connected = true;
-					xio.log.debug('websocket connected to '+this.parent.url);
+		        var ws = new window[wshandler](self.url); //new WebSocket(this.url);
+		        ws.onopen = function(e) { 
+					self.connected = true;
+					console.log('websocket connected to '+self.url);
 					if (callback) {
-						callback(this);
+						callback(self);
 					}
 				}
-		        this.ws.onmessage = function(e) { 
-		            this.parent.log('RECEIVE <<< '+e.data); 
+		        ws.onmessage = function(e) { 
+		            console.log('RECEIVE <<< '+e.data); 
 		            var data = JSON.parse(e.data);
 		            var type = data['type'];
 					var action = data['action']
 					var msg = data['msg'];
 				    var id = data['id']
 					if (type=='response') {
-						var callback = this.parent._requests[id]
-						callback( data )
+						var d = self._requests[id]
+                        d.resolve( data )
 					} else if (type=='fragment') {
-						var feedback = this.parent._feedbacks[id]
+						var feedback = self._feedbacks[id]
 						if (feedback) 
                             feedback( msg )
 					} else if (type=='feedback') {
-						var feedback = this.parent._feedbacks[id]
+						var feedback = self._feedbacks[id]
 						if (feedback) 
                             feedback( msg )
 					} else if (type=='channel') {
-						var callback = this.parent._channels[id]
+						var callback = self._channels[id]
 						if (callback) 
                             callback( msg )
 					} 
 		      
 		        };
-		        this.ws.onerror = function(e) { xio.log.debug('ERROR '+e); };
-		        this.ws.onclose = function() { 
-                    this.parent.connected = false; 
+		        ws.onerror = function(e) { xio.log.debug('ERROR '+e); };
+		        ws.onclose = function() { 
+                    self.connected = false; 
                     xio.log.debug('disconnected');
 
                 };
+                self.ws = ws
 		    } 
 		}
 
@@ -615,29 +616,31 @@
 		this.send = function(msg) {
             msg = JSON.stringify( msg);
 		    //this.log('SEND >>> '+msg);
-		    this.ws.send(msg);
+		    return this.ws.send(msg);
 		}
 
 		this.log = function(msg) {
 		    xio.log.debug('xiowebsocket '+this.url+' '+msg)
 		}
-		this.get = 	function(path,params,callback,errback,feedback) 	{ return this.request('GET',path,params,callback,errback,feedback) } 
-		this.post = function(path,params,callback,errback,feedback) 	{ return this.request('POST',path,params,callback,errback,feedback) }
 
-		this.request = function(method,path,params,headers,callback,errback,feedback) {
+		this.request = function(method,path,params,headers) {
 
+            var d = $.Deferred(); 
 
+            headers = headers || {}
+            params = params || {}
 
-            if (!this.connected) {
-                xio.log.debug('must reconnect for request')
-                var self = this;
-                return this.connect(function(){
-                    self.request(method,path,params,headers,callback,errback,feedback)
+            console.log(self)
+
+            if (!self.connected) {
+                alert('must reconnect for request')
+                return self.connect(function(){
+                    self.request(method,path,params,headers)
                 })
             }
 
             if (headers['XIO-method']=='SUBSCRIBE') {
-                this._channels[path] = params['callback']
+                self._channels[path] = params['callback']
                 params = {}
             }
 
@@ -661,17 +664,9 @@
                 headers: headers,
                 data: data
 			};
-			this._requests[uid] = callback
-            this._feedbacks[uid] = feedback
-
-
-		    this.send( msg );
-
-
-			xio.log.debug('REQUEST '+method+' '+path+' '+params)
-			//xio.log.debug(callback);
-			//xio.log.debug(headers);
-		    //callback()
+			this._requests[uid] = d
+            this.send( msg )
+            return d.promise()
 		}
 		return this
 	}

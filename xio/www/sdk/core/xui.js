@@ -105,8 +105,9 @@
         //this.services = new AppServices(this)
         this.routes = new xio.routes()
         this.contracts = {} 
-
-        this._events = {
+        this.topics = {
+        }
+        this.events = {
             'ready': []
         }
         
@@ -340,7 +341,7 @@
             }
             self.log.info('APP READY.')
             self._ready = true
-            self.publish('ready')
+            self.emit('ready')
             self.run()
         })
 
@@ -685,33 +686,45 @@
         if (this._ready) {
             callback()
         } else {
-            this._events['ready'].push(callback)
+            this.events['ready'].push(callback)
         }
     }
 
     XioUi.prototype.publish = function (topic,data) {
         this.log.debug('publish '+topic,data)  
-        for (i in this._events[topic]) {
+        for (i in this.topics[topic]) {
             try {
-                var callback = this._events[topic][i]
+                var callback = this.topics[topic][i]
                 callback(data) 
             } catch(error) {
                 this.log.error(error);
             }
-
         }
     }
     XioUi.prototype.subscribe = function (topic,callback) {
         this.log.debug('subscribe '+topic,callback)
-        if (!this._events[topic])
-            this._events[topic] = []     
-        this._events[topic].push(callback)
+        if (!this.topics[topic])
+            this.topics[topic] = []     
+        this.topics[topic].push(callback)
     }
-    XioUi.prototype.on = function (topic,callback) {
-        this.log.debug('on '+topic,callback) 
-        if (!this._events[topic])
-            this._events[topic] = []     
-        this._events[topic].push(callback)
+    XioUi.prototype.on = function(event,callback) {
+        if (!this.events[event]) {
+            this.events[event] = []
+        }
+        this.events[event].push(callback)
+    }
+
+    XioUi.prototype.emit = function(event,data) {
+        if (this.events[event]) {
+            $(this.events[event]).each(function(){
+                try {
+                    console.log('emit',event,data)
+                    this(data)
+                } catch(error) {
+                    this.log.error(error);
+                }
+            })
+        }
     }
 
     XioUi.prototype.renderFallback = function (path,data) {
@@ -815,7 +828,9 @@
             var result = handler.render(req)
         else
             var result = handler(req)
-        return $.when(result)
+        return $.when(result).then(function() {
+            self.emit('render',req)
+        })
         /*
         return $.when(data).then(function(data) {
             console.log('RENDER ELEM = ',el)

@@ -88,7 +88,7 @@ window.customElements.define('xio-button', class extends XIOElement {
         if (!this.id) {
             this.id = app.uuid()
             this.code = $(this).text()
-            this.label = 'go'
+            this.label = $(this).attr('label') || 'GO'
             this.data = {
                 'label': this.label,
                 'code': this.code

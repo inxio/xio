@@ -23,10 +23,34 @@
         console.log(req.data)
         alert('route3 postpath='+req.path)
     })
+
+
+    // test events app
+
+    app.on('render', function(req) {
+        //alert('render '+req.path)
+    })
     </script>
    
     <body>
         <xio-app>
+
+            <xio-page id="websocket"> 
+                <hr/>
+                <xio-button label="CONNECT">
+                    <code>
+                    console.log('CONNECT')
+                    window.ws = xio.app('ws://127.0.0.1:8484')
+                    console.log(ws)
+                    window.ws._handler.connect()
+                    </code>
+                </xio-button>
+                <xio-button label="HELLO">
+                    <code>
+                    window.ws.get('hello')
+                    </code>
+                </xio-button>            
+            </xio-page>
 
             <xio-page id="core" > 
                 <hr/>includes attribute
@@ -83,6 +107,7 @@
                 <xio-breadcrumb basehref="#mylink=" path="some/path/for/breadcrumb"></xio-breadcrumb>
                 <xio-breadcrumb handler="alert" path="some/path/for/breadcrumb"><xio-breadcrumb>
             </xio-page>
+            
 
 
         </xio-app>

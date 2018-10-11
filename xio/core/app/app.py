@@ -408,6 +408,15 @@ class App(peer.Peer):
         }
 
     def run(self, loop=True, **options):
+
+        self.start(**options)
+        if loop:
+            import time
+            while True:
+                time.sleep(0.1)
+
+    def start(self, use_wsgi=False, **options):
+    
         import xio
         http = options.get('http', xio.env.get('http', 8080))
         ws = options.get('ws', xio.env.get('ws'))
@@ -419,15 +428,7 @@ class App(peer.Peer):
             self.put('etc/services/ws', {'port': int(ws)})
         if debug:
             log.setLevel('DEBUG')
-
-        self.start()
-        if loop:
-            import time
-            while True:
-                time.sleep(0.1)
-
-    def start(self, use_wsgi=False):
-
+            
         self._started = time.time()
 
         for name, res in list(self.get('etc/services')._children.items()):
