@@ -191,7 +191,7 @@ class XIOElement extends HTMLElement {
 
 
 
-window.customElements.define('xio-app', class extends XIOElement {
+class XIOCoreApp extends XIOElement {
 
     getTemplate() {
         return `<header id="xio-app-header">
@@ -321,7 +321,7 @@ window.customElements.define('xio-app', class extends XIOElement {
         })
     }
     
-})
+}
 
 
 

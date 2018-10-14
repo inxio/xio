@@ -113,8 +113,7 @@ class Peers:
 
         # handle local resources for external db (eg redis)
         if not is_string(endpoint):
-            log.warning('register UNHANDLED', endpoint)
-            self.localresources.put(uid, {'resource': endpoint})
+            self.localresources.put(uid, {'endpoint': endpoint})
             endpoint = '~'
 
         data = {
@@ -322,10 +321,9 @@ class PeerClient(Resource):
         context = req.client.context or {}
         if self.endpoint == '~':
             # get client instance from local storage
-            client = self.peers.localresources.get(self.uid).get('resource')
-        else:
-            client = xio.client(self.endpoint, context)
-        assert client
+            endpoint = self.peers.localresources.get(self.uid).get('endpoint')
+            client = xio.client(endpoint, context)
+
         try:
             res = client.request(req.method, req.path, data=req.data, query=req.query, headers=req.headers)
             if res.status == 201 and 'Location' in res.headers:

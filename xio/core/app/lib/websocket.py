@@ -39,7 +39,6 @@ class Wshandler:
         self.send_event.set()
 
     def close(self):
-        print('CLOSE CONNECTION')
         self.connected = False
 
     def __call__(self):
@@ -102,10 +101,12 @@ class WebsocketService:
     def onconnected(self, ws):
         self.app.publish('onWsConnected', ws)
         self.app.put('run/websockets/%s' % ws.uid, ws)
+        self.app.peers.register(ws)
 
     def ondisconnected(self, ws=None):
         self.app.publish('onWsDisconnected', ws)
         self.app.delete('run/websockets/%s' % ws.uid)
+        # self.app.peers.unregister(ws)
 
     def __call__(self, environ, start_response=None):
         """
@@ -238,6 +239,14 @@ class WebsocketSession:
         return self(req)
 
     def __call__(self, req):
+        print('WS CLIENT CALL', req)
+
+        # fix pb register
+        if req.ABOUT and not req.path:
+            return {
+                'type': 'websocket',
+                'id': self.uid
+            }
 
         message = {
             'method':   req.method,
@@ -247,7 +256,7 @@ class WebsocketSession:
             'headers':    req.headers,
         }
         resp = self.send(message)
-        req.response.code = resp.get('status')
+        req.response.status = resp.get('status')
         req.response.headers = resp.get('headers') or {}
         req.response.content = resp.get('content')
         return req.response

@@ -259,8 +259,8 @@
             'sdk/components/resource',
             'sdk/components/onboarding',
             'ethereum',
-            'bootstrap'
         ]
+
 
         var d2 = $.getJSON( this.nav.basepath+'about.json').then( function( data ) {
             
@@ -277,6 +277,10 @@
                 self.about.requirements.push(src)
             }) 
             
+
+            // rendering ext
+            var rendering_engine = self.about.rendering || 'bootstrap'
+            self.about.requirements.push(rendering_engine)
             
             // load requirements
             var nb_requirements = self.about.requirements.length
@@ -384,8 +388,7 @@
                 } 
             } 
             console.log('RUN SHOW ',path)
-            self.render(path)
-
+            self.emit('run')
         })
     }
     XioUi.prototype.redirect = function (href) {
@@ -788,11 +791,13 @@
         this.nav.setPath(path)
 
         // handle language
+        /*
         if (!path && data.lang) {
             app.nav.language = data.lang
             app.run('#')
             return true;
         }
+        */
 
         // step1 : find route handler + element
         var p = path.split('/')
@@ -813,6 +818,7 @@
         
 
         if (!handler) {
+            console.log('... no handler') 
             // fallback ??
             return
         }
