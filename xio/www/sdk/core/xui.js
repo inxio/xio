@@ -786,18 +786,19 @@
             location.replace(path);
         } 
 
-        this.log.info('====== APP RENDER '+path,data) 
+        console.log('====== APP RENDER '+path,data) 
 
         this.nav.setPath(path)
 
         // handle language
-        /*
+
         if (!path && data.lang) {
             app.nav.language = data.lang
             app.run('#')
+            alert('?')
             return true;
         }
-        */
+
 
         // step1 : find route handler + element
         var p = path.split('/')

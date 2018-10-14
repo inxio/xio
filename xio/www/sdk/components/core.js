@@ -191,7 +191,7 @@ class XIOElement extends HTMLElement {
 
 
 
-class XIOCoreApp extends XIOElement {
+class XIOElementApp extends XIOElement {
 
     getTemplate() {
         return `<header id="xio-app-header">

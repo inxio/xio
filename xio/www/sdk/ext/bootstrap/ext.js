@@ -5,7 +5,7 @@ console.log('init bootstrap ')
 
 
 
-window.customElements.define('xio-app', class extends XIOCoreApp {
+window.customElements.define('xio-app', class extends XIOElementApp {
 
     getTemplate() {
         return `<header id="xio-app-header">
@@ -125,15 +125,7 @@ window.customElements.define('xio-app', class extends XIOCoreApp {
         </footer>
         `;
     }
-    init() {
-        $(this).hide()
-    }
-    render() {
-        var self = this
-        return super.render().then( function() {
-            $(self).show()
-        })
-    }
+    
     
 })
 
