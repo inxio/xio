@@ -132,6 +132,17 @@ window.customElements.define('xio-app', class extends XIOElementApp {
 
 
 
+window.customElements.define('xio-page', class extends XIOElementPage {
+
+    getTemplate() {
+        return `<div class="page slot">
+                       page
+                    </div>
+        `
+    } 
+    
+
+})
 
 
 
