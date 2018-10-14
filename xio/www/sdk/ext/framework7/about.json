@@ -1,0 +1,12 @@
+{
+    "name": "framework7",
+    "version": "1.0.0", 
+    "requirements": [
+        "lib/framework7.min.js",
+        "lib/framework7.min.css",
+        "lib/framework7.rtl.min.css",
+        "f7.js",
+        "ext.js"
+    ]
+}
+     

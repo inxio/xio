@@ -1,0 +1,144 @@
+<div>
+
+
+
+<template tag="app" replace="true">
+    <div>
+
+        <div class="statusbar-overlay"></div>
+
+        <div class="panel-overlay"></div>
+
+
+        <div class="views">
+
+          <div class="view view-main">
+
+            <div class="navbar">
+
+                <div class="navbar-inner">
+
+                    <div class="left">
+                        <!--
+                        <a href="?about" class="link icon-only"><i class="icon fa fa-info"></i></a>
+                        <a href="?index" class="link icon-only"><i class="icon fa fa-home"></i></a>
+                        -->
+                    </div>
+                    <div class="center sliding"><span id="inxio-app-title">inxio.net</span> <span></span></div>
+                    <div class="right">
+                      <a href="javascript:logout()"  class="link icon-only" ><span id="user-login-info"></span><i class="icon fa fa-user"></i></a> 
+                    </div>
+                </div>
+                <div class="subnavbar" >
+                  <!-- Search Bar -->
+                  <form id="search" data-search-list=".list-block-search" data-search-in=".item-title" class="searchbar searchbar-init">
+                    <div class="searchbar-input">
+                      <input type="search" placeholder="Search"><a href="#" class="searchbar-clear"></a>
+                    </div><a href="#" class="searchbar-cancel">Cancel</a>
+
+                  </form>
+
+                  <div class="searchbar-overlay"></div>
+                </div>
+
+            </div>
+
+            <div class="pages navbar-through toolbar-through">
+
+                <div data-page="index" class="page">
+
+                    <div class="page-content hide-bars-on-scroll">
+                        index
+                    </div>
+
+                </div>
+
+
+            </div>
+          </div>
+        </div>
+
+
+    </div>
+
+
+</template>
+
+<template tag="header" replace="true">
+      <nav class="navbar navbar-light bg-faded rounded navbar-toggleable-md">
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#containerNavbarCenter" aria-controls="containerNavbarCenter" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <a class="navbar-brand" href="#">{{app.about.title}}</a>
+        <div class="collapse navbar-collapse" id="containerNavbarCenter">
+          <ul class="navbar-nav mr-auto" >
+            <li class="nav-item" ng-repeat="item in app.about.nav">
+              <a class="nav-link" href="#{{item.path}}">{{item.title}}</a>
+            </li>
+          </ul>
+
+          <ul class="navbar-nav float-xs-right" >
+            <li class="nav-item dropdown" ng-if="app.user">
+              <a class="nav-link dropdown-toggle" href="http://example.com" id="dropdown05" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">{{app.user.login}}</a>
+              <div class="dropdown-menu" aria-labelledby="dropdown05">
+                <a ng-repeat="item in app.user.nav" class="dropdown-item" href="#{{item.path}}">{{item.title}}</a>
+                <a class="dropdown-item" href="#/logout">Logout</a>
+              </div>
+            </li>
+            <li class="nav-item dropdown" ng-if="!app.user">
+              <a class="nav-link" href="#/login">Login</a>
+              
+            </li>
+          </ul>
+          
+        </div>
+      </nav>
+</template>
+
+<template tag="breadcrumb">
+      <nav class="breadcrumb">
+        <a class="breadcrumb-item" href="#">Home</a>
+        <a class="breadcrumb-item" href="#">Library</a>
+        <a class="breadcrumb-item" href="#">Data</a>
+        <span class="breadcrumb-item active">Bootstrap</span>
+    </nav>
+</template>
+
+<template tag="card" replace="true">
+
+    <div class="card">
+        <div class="card-header" ng-if="app.user">
+                    card header
+        </div>
+        <div class="card-block" ng-transclude>
+            
+        </div>
+
+    </div>
+    
+</template>
+
+
+<template tag="statusbar">
+
+    <div class="container">
+        status bar
+
+    </div>
+    
+</template>
+
+<template tag="footer">
+    <nav class="navbar fixed-bottom navbar-light bg-faded">
+      <a class="navbar-brand" href="#">Fixed bottom</a>
+    </nav>
+        
+</template>
+
+</div>
+
+
+
+
+
+
