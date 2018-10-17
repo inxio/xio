@@ -1,0 +1,13 @@
+{
+    "name": "mobile",
+    "version": "1.0.0", 
+    "requirements": [
+        "lib/hammer.min.js", 
+	    "lib/js-offcanvas.pkgd.min.js",
+        "lib/js-offcanvas.min.css",
+        "ext.js"
+
+    ]
+}
+
+
