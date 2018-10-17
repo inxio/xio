@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 
 import os
@@ -21,7 +21,7 @@ import xio
 
 
 
-from xio.core.lib.env import getDefaultEnv, setDefaultEnv
+from xio.core.env import getDefaultEnv, setDefaultEnv
 
 if __name__ == '__main__':
 
@@ -72,6 +72,9 @@ if __name__ == '__main__':
         setDefaultEnv(data)
         sys.exit()
 
+    if action=='run':
+	    app = xio.app()
+	    app.run(ws=8484)
 
     if action=='test':
         import os

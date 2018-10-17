@@ -1,5 +1,44 @@
 (function(){
     
+    AppTagHandler = function(name) {
+        this.name = name
+        this.handler = null
+        return this
+    } 
+    AppTagHandler.prototype.bind = function (cls) {
+        this.handler = cls
+    }
+    
+
+    AppTag = function(name) {
+        this.name = name
+        this.handler = null
+        this._handlers = {}
+        return this
+    } 
+    AppTag.prototype.bind = function (cls) {
+        this.handler = cls
+        window.customElements.define(this.name, cls)
+    }
+    AppTag.prototype.type = function (type) {
+        var self = this
+        if (this._handlers[type]==null)
+            this._handlers[type] = new AppTagHandler(type)
+        return this._handlers[type]
+    }
+
+
+    AppTags = function() {
+        this._tags = {}    
+        return this
+    }
+    AppTags.prototype.get = function (tagname) {
+        var nodename = tagname.toUpperCase()
+        if (this._tags[nodename]==null)
+            this._tags[nodename] = new AppTag(tagname)
+        var tag = this._tags[nodename]
+        return tag
+    }
 
     AppExts = function(app) {
         this._app = app    
@@ -94,13 +133,16 @@
                 return $.get( self.nav.basepath+path)
             }
         }
+        this._tags = new AppTags()
+        this.tag = function(tagname) {
+            return this._tags.get(tagname)
+        }
         this.cache = {}
         this._loaded = {}
         
         // ihm
         this._ready = false
         this.ext = new AppExts(this)
-        //this.tags = new AppTags(this)
         //this.templates = new AppTemplates(this)
         //this.services = new AppServices(this)
         this.routes = new xio.routes()
@@ -259,6 +301,8 @@
             'sdk/components/resource',
             'sdk/components/onboarding',
             'ethereum',
+            'bootstrap',
+
         ]
 
 
@@ -276,11 +320,6 @@
             $.each(global_requirements, function( i,src ) { 
                 self.about.requirements.push(src)
             }) 
-            
-
-            // rendering ext
-            var rendering_engine = self.about.rendering || 'bootstrap'
-            self.about.requirements.push(rendering_engine)
             
             // load requirements
             var nb_requirements = self.about.requirements.length
