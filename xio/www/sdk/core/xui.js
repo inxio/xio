@@ -1,30 +1,41 @@
 (function(){
     
-    AppTagHandler = function(name) {
-        this.name = name
-        this.handler = null
-        return this
-    } 
-    AppTagHandler.prototype.bind = function (cls) {
-        this.handler = cls
-    }
-    
+    class AppTagHandler {
 
-    AppTag = function(name) {
-        this.name = name
-        this.handler = null
-        this._handlers = {}
-        return this
-    } 
-    AppTag.prototype.bind = function (cls) {
-        this.handler = cls
-        window.customElements.define(this.name, cls)
+        constructor(name) {
+            this.name = name
+            this.handler = null
+            this.events = {}
+        }
+
+        bind(handler) {
+            this.handler = handler
+            return this
+        }
+
     }
-    AppTag.prototype.type = function (type) {
-        var self = this
-        if (this._handlers[type]==null)
-            this._handlers[type] = new AppTagHandler(type)
-        return this._handlers[type]
+
+    class AppTag extends AppTagHandler {
+
+        constructor(name) {
+            super(name)
+            this.handlers = {}
+        }
+        type(name) {
+            if (this.handlers[name]==null)
+                this.handlers[name] = new AppTagHandler(name)
+            return this.handlers[name]
+        }
+        bind(handler) {
+            super.bind(handler)
+            window.customElements.define(this.name, handler)
+            return this
+        }
+        on(event,callback) {
+            if (!this.events[event])
+                this.events[event] = []
+            this.events[event].push(callback)
+        }
     }
 
 
@@ -39,6 +50,7 @@
         var tag = this._tags[nodename]
         return tag
     }
+
 
     AppExts = function(app) {
         this._app = app    

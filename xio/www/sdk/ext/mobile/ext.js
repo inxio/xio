@@ -9,10 +9,18 @@ $(window).scroll(function () {
     }
 });
 */
+
+
+
+
 app.tag('xio-app').type('mobile').bind( class {
 
     init(el) {
         this.el = el
+    }
+
+    render() {
+        alert('mobile render !!!')
     }
 
     getTemplate() {
@@ -110,6 +118,11 @@ app.tag('xio-app').type('mobile').bind( class {
     
 
     
+})
+
+
+app.tag('xio-app').on('rendered', function() {
+    alert('rendered xio app')
 })
 
 

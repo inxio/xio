@@ -72,7 +72,10 @@ class XIOElement extends HTMLElement {
         this.nx.initialized = true
         $(this).addClass('xio-element')
         var d = this.init()
-        return $.when( d )
+        return $.when( d ).then(function() {
+            if (self.nx.handler && self.nx.handler.init)
+                return self.nx.handler.init(self)
+        })
     }
 
 
@@ -101,7 +104,7 @@ class XIOElement extends HTMLElement {
     _getContent() {
         var self = this
         var result = null
-        var src = $(this).attr('content')
+        var src = $(this).attr('src')
         if (src) {
             
             return app.load(src).then(function(content) { 
@@ -153,7 +156,7 @@ class XIOElement extends HTMLElement {
     }
 
 
-    render() {
+    render(req) {
         var self = this
         // force element init (eg xio-app)
         return this._init().then( function() {
@@ -179,6 +182,12 @@ class XIOElement extends HTMLElement {
                 var html = $template.render(data)
                 self.nx.rendered = html
                 $(self).html(html)
+                
+
+            }).then(function(){
+                if (self.nx.handler && self.nx.handler.render)
+                    return self.nx.handler.render(req)
+            }).then(function(){
                 self.emit('rendered')
             })
 
@@ -203,9 +212,13 @@ class XIOElement extends HTMLElement {
 
     emit(topic,data) {
         var self = this
-        self.log('publish',topic)
+        self.log('emit',topic)
         if (this.nx.events[topic])
             $(this.nx.events[topic]).each(function(){
+                this(self,data)
+            })
+        if (app.tag(this.nodeName).events[topic])
+            $(app.tag(this.nodeName).events[topic]).each(function(){
                 this(self,data)
             })
     }
