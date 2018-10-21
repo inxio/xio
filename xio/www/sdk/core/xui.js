@@ -487,46 +487,6 @@
             return false;
         })
 
-        // handle form
-        $(el).find('form').submit(function(e) {
-            e.preventDefault();
-            try {
-                alert('??form')
-                var form = $(this);
-                var method = form.data('xio-method') || 'POST'
-                var path = form.data('xio-path') || ''
-                var callback = form.data('xio-callback')
-                var payload = { };
-                $.each( form.serializeArray(), function() {
-                    payload[this.name] = this.value;
-                }); 
-                // get first resource ?
-                var nxelement = $(this).closest('.xio-resource')
-                var nxresource = nxelement[0]
-
-                var req = xio.request(method,path,payload,{},{'submited':true})
-                return nxresource.render(req)
-
-                alert('SUBMIT '+method+' to '+nxresource.nodeName)
-                var d = nxresource.render(req)
-                if (callback) {
-                    d.then( function(resp) {
-                        console.log(nxresource)
-                        return nxresource[callback](resp)
-                    })
-                }
-                return d;
-            } catch(error) {
-                console.log(error);
-            }
-            return false;
-        })
-
-        // handle multi submit
-        $(el).find('form button[data-xio-method]').click(function() { 
-            var method = $(this).data('xio-method')
-            $(this).closest('form').data('xio-method',method).submit()
-        })
     }
     XioUi.prototype.prop = function (key,value) {
         if (value==undefined)

@@ -1,7 +1,7 @@
 
 (function() {
 
-    var template = `<template>
+    var template = `
         {{#type_hidden}}
             <input type="hidden" class="form-control form-control-sm" name="{{name}}" value="{{value}}" />
         {{/type_hidden}}
@@ -38,11 +38,11 @@
             </div>
         </div>
         {{/type_hidden}}
-    </template>`
+    `
     
-    window.customElements.define('xio-input', class extends HTMLElement {
-        constructor() {
-            super();
+    app.tag('xio-input').bind( class extends XIOElement {
+
+        init() {
             this.name = $(this).attr('name')
 
             var type = $(this).attr('type') || 'text'
@@ -53,11 +53,12 @@
             this.required = false
             this.readonly = $(this).attr('readonly')=='true'
         }
-        connectedCallback() {
-            //alert(this.template)
+
+        getTemplate() {
+            return template
+        }
+        getData() {
             this.required = this.getAttribute('required')
-            
-            // 
             var options = []
             $(this).find('option').each(function(k,v) {
                 options.push({
@@ -76,12 +77,59 @@
             if (this.readonly)
                 data.readonly = 'readonly'
             data['type_'+this.type] = true
-            
-            var html = $(template).render(data)
+            console.log(data)
+            return data
+        }
 
-            $(this).html( html )
+        
+    })
+
+
+
+    app.tag('xio-form').bind( class extends XIOElement {
+
+        getTemplate() {
+            return `
+            <form>
+                <header>header
+                </header>
+                <section class="slot">
+                </section>
+                <footer>
+                    <button type="submit" >go</button>
+                    <xio-button type="submit" label="submit"></xio-button>
+                </footer>
+            </form>
+        `
+        }
+
+        render() {
+            var self = this
+            super.render().then(function() {
+                $(self).find('form').submit( function(e) {
+                    e.preventDefault();
+                    try {
+                        self.submit()
+                    } catch(e) {
+                        self.log.error('ERROR',e)
+                    }
+                    return false;
+                })
+                
+            })
+        }
+
+        submit() {
+            var form = $(this).find('form');
+            var data = { };
+            $.each( form.serializeArray(), function() {
+                data[this.name] = this.value;
+            }); 
+            this.emit('submit',data)
         }
         
     })
+
+
 })();
 

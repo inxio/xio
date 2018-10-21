@@ -16,7 +16,7 @@ class XIOElement extends HTMLElement {
             console.log($(self).closest('body').html())
             return $(self).parent().closest('.xio-element')[0]
         }
-        this.debug = $(this).hasClass('debug')
+        
     }
 
     connectedCallback() {
@@ -64,6 +64,7 @@ class XIOElement extends HTMLElement {
     _init() {
         var self = this
         this.nx.parent = $(this).parent().closest('.xio-element')[0]
+        this.nx.debug = $(this).hasClass('debug')
         if (this.nx.parent)
             this.nx.parent.nx.children.push(this)
 
@@ -218,17 +219,20 @@ class XIOElement extends HTMLElement {
         this.nx.events[topic].push(callback)
     }
 
-    emit(topic,data) {
+    emit(event,data) {
         var self = this
-        self.log('emit',topic)
-        if (this.nx.events[topic])
-            $(this.nx.events[topic]).each(function(){
-                this(self,data)
+        self.log('emit',event)
+        if (this.nx.events[event])
+            $(this.nx.events[event]).each(function(){
+                this.apply(self, [data])
             })
-        if (app.tag(this.nodeName).events[topic])
-            $(app.tag(this.nodeName).events[topic]).each(function(){
-                this(self,data)
+        if (app.tag(this.nodeName).events[event])
+            $(app.tag(this.nodeName).events[event]).each(function(){
+                this.apply(self, [data])
             })
+        // handle jquery event ---- bug infinit loop
+        //alert('?')
+        //$(this).trigger( event, [data]);
     }
 
     _refresh() {
@@ -453,7 +457,6 @@ window.customElements.define('xio-data', class extends XIOElement {
 
 
 
-
 window.customElements.define('xio-include', class extends XIOElement {
 
     render() {
@@ -471,4 +474,39 @@ window.customElements.define('xio-include', class extends XIOElement {
     
 })
 
+/*
 
+window.customElements.define('xio-script', class extends XIOElement {
+
+    render() {
+        var code = $(this).text()
+        var h = Function(code);
+        //$(this.html() = 
+        var element = this.nx.parent
+        h.call(element)   
+    }
+}) 
+
+
+*/
+
+window.customElements.define('xio-script', class extends XIOElement {
+
+    render() {
+        var self = this
+        $(this).hide()
+        this.event = $(this).attr('on')
+        this.code = $.trim( this.innerHTML )
+        this.handler = Function(this.code);
+        
+        if (event) {
+            this.nx.parent.on(this.event, function(data) {
+                self.handler.apply(this,data)   
+            })
+        } else {
+            self.handler.apply(this.nx.parent) 
+        }
+
+    }
+    
+})

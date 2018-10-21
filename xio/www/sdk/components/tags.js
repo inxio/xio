@@ -78,8 +78,6 @@ window.customElements.define('xio-breadcrumb', class extends XIOElement {
 })
 
 
-
-
 window.customElements.define('xio-button', class extends XIOElement {
 
     render() {
@@ -90,6 +88,9 @@ window.customElements.define('xio-button', class extends XIOElement {
             this.action = $(this).attr('action') || $(this).find('code').text()
             this.code = this.action
             this.label = $(this).attr('label')
+            this.type = $(this).attr('type')
+            if (!this.type)
+                this.type = 'button'
             this.icon = $(this).attr('icon')
             this.options = []
             $(this).find('option').each( function() {
@@ -117,12 +118,13 @@ window.customElements.define('xio-button', class extends XIOElement {
                 'label': this.label,
                 'icon': this.icon,
                 'code': this.code,
-                'options': this.options
+                'options': this.options,
+                'type': this.type
             }
 
             this.template = `<div>
                 {{^options.length}}
-                    <button class="`+this.class+`" data-action="auto">
+                    <button class="`+this.class+`" type="{{type}}" data-action="auto">
                         <i class="fa fa-{{icon}}"> </i> {{label}}
                     </button>
                 {{/options.length}}
@@ -147,38 +149,30 @@ window.customElements.define('xio-button', class extends XIOElement {
             $(this).html(html)
         }
 
-        $(this).find('button[data-action]').click(function(e) {
-            e.preventDefault(); 
-            e.stopPropagation();
-            var action = $(this).data('action')
-            if (action=='auto') {
-                var code = $("code[data-id='"+self.id+"']").text()
-                //alert(code)
-                var h = Function(code);
-                h()   
-            } else {
-                alert(action)
-            }
+        if (this.type!='submit') {
+            $(this).find('button[data-action]').click(function(e) {
+                //e.preventDefault(); 
+                //e.stopPropagation();
+                var action = $(this).data('action')
+                if (action=='auto') {
+                    var code = $("code[data-id='"+self.id+"']").text()
+                    //alert(code)
+                    var h = Function(code);
+                    h()   
+                } else {
+                    alert(action)
+                }
 
-            return false;
-        })
+                //return false;
+            })
+        }
+
   
 
 
     }
 }) 
 
-
-window.customElements.define('xio-script', class extends XIOElement {
-
-    render() {
-        var code = $(this).text()
-        var h = Function(code);
-        //$(this.html() = 
-        var element = this.nx.parent
-        h.call(element)   
-    }
-}) 
 
 window.customElements.define('xio-sample', class extends XIOElement {
 
