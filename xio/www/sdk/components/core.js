@@ -27,7 +27,13 @@ class XIOElement extends HTMLElement {
             this.log('connectedCallback')
             //window.setTimeout(function() {
                 self._init().then(function() {
-                    return self.render()
+                    // auto render for no-hidden element (eg page)
+
+                    if ( self.nx.hidden )
+                        $(self).hide()
+                    else
+                        return self.render()
+                        
                 })
             //},0)
         }
@@ -144,6 +150,8 @@ class XIOElement extends HTMLElement {
     }
 
     _getData() {
+        if (this.nx.data)
+            return this.nx.data
         var self = this
         var src = $(this).attr('data')
         if (src) {
@@ -380,7 +388,7 @@ app.tag('xio-app').bind( class extends XIOElement {
 
 
 
-window.customElements.define('xio-page', class extends XIOElement {
+app.tag('xio-page').bind( class extends XIOElement {
 
     getTemplate() {
         return `<div class="page slot">
@@ -390,12 +398,21 @@ window.customElements.define('xio-page', class extends XIOElement {
     } 
     
     init() {
+        this.nx.hidden = true
+    }
+
+    show() {
+        $('xio-page')[0].hide()
+        $(this).show()
+    }
+    hide() {
         $(this).hide()
     }
     render() {
+
         var self = this
         return super.render().then( function() {
-            $(self).show()
+            self.show()
         })
     }
     

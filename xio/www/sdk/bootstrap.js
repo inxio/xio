@@ -69,6 +69,7 @@
 
     var css = [
         'css/sdk.css',
+        'lib/fontawesome4/font-awesome.min.css',
     ]
 
 

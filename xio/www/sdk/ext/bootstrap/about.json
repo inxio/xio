@@ -3,6 +3,7 @@
     "version": "1.0.0", 
     "requirements": [
         "lib/tether.min.js",
+        "lib/popper.min.js",
         "lib/bootstrap.min.js",
         "lib/bootstrap.min.css",
         "ext.js"

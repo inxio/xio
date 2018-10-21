@@ -314,7 +314,6 @@
             'sdk/components/onboarding',
             'ethereum',
             'bootstrap',
-
         ]
 
 
@@ -353,6 +352,7 @@
 
             // init nav & layout data
             $.each(self.nav.sitemap, function( i,page ) { 
+                page.id = page.path.slice(1)
                 var slot = page.slot || 'header'
                 var slots = slot.split(' ')
                 for (var i in slot) {
@@ -440,6 +440,7 @@
             } 
             console.log('RUN SHOW ',path)
             self.emit('run')
+            self.render(path)
         })
     }
     XioUi.prototype.redirect = function (href) {
