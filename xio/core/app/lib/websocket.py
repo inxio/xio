@@ -94,7 +94,8 @@ class WebsocketService:
         def _createsession(*args, **kwargs):
             wsSession = _WebSocketSession(self, *args, **kwargs)
             return wsSession
-
+            
+        print('websockets running ... port=', self.port)
         server = WSGIServer(('localhost', self.port), WebSocketWSGIApplication(handler_cls=_createsession))
         server.serve_forever()
 

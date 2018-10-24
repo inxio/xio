@@ -89,6 +89,7 @@ window.customElements.define('xio-button', class extends XIOElement {
             this.code = this.action
             this.label = $(this).attr('label')
             this.type = $(this).attr('type')
+            this.value = $(this).attr('value')
             if (!this.type)
                 this.type = 'button'
             this.icon = $(this).attr('icon')
@@ -136,7 +137,7 @@ window.customElements.define('xio-button', class extends XIOElement {
                         </button>
                         <div class="dropdown-menu" aria-labelledby="dropdownMenu2">
                             {{#options}}
-                                <button class="dropdown-item" type="button" data-action="{{value}}">{{label}}</button>
+                                <button class="dropdown-item" type="button" data-action="auto" data-value="{{value}}">{{label}}</button>
                             {{/options}}
                         </div>
                     </div>
@@ -154,13 +155,15 @@ window.customElements.define('xio-button', class extends XIOElement {
                 //e.preventDefault(); 
                 //e.stopPropagation();
                 var action = $(this).data('action')
+                var value = $(this).data('value')
+                this.value = value
                 if (action=='auto') {
                     var code = $("code[data-id='"+self.id+"']").text()
                     //alert(code)
                     var h = Function(code);
-                    h()   
+                    h.apply(this)   
                 } else {
-                    alert(action)
+                    // ??
                 }
 
                 //return false;

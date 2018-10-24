@@ -120,6 +120,83 @@
         }
     } 
 
+    class AppUi {
+
+        constructor(app) {
+            this.app = app
+        }
+
+        panel(id) {
+            return $('#panel-'+id)[0]
+        }
+        confirm(config) {
+            var d = $.Deferred(); 
+
+            config.type = 'confirm'
+            config.footer = `
+                <button id="modalCancel" type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button id="modalConfirm" type="button" class="btn btn-primary">Confirm</button>
+            `
+            
+            try {
+                var popup = this.popup(config)
+                popup.find('#modalCancel').unbind().click(function() {
+                    d.reject(false);
+                })
+                popup.find('#modalConfirm').unbind().click(function() {
+                    $('#appmodal').modal('hide');
+                    d.resolve(true);
+                })
+                
+                
+            } catch(e) {
+                alert('error '+e)
+                d.resolve(false);
+            }
+
+            //d.resolve(true);
+            return d.promise()
+        }
+        popup(config) {
+            
+            var popup = $(`<div  class="modal fade"  tabindex="-1" role="dialog">
+              <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title" >Confirm action</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                  </div>
+                  <div class="modal-body">
+                    
+                  </div>
+                  <div class="modal-footer">
+                    
+                  </div>
+                </div>
+              </div>
+
+            </div>`)
+
+            if (config.href)
+                config.content = '<iframe src="'+config.href+'" style="width: 100%;height: 100%;position: relative;"></iframe>'
+
+            if (config.title)
+                popup.find('.modal-title').text(config.title)
+            if (config.content)
+                popup.find('.modal-body').html(config.content)
+
+            if (config.footer)
+                popup.find('.modal-footer').html(config.footer).show()
+            else
+                popup.find('.modal-footer').hide()
+            popup.modal('show')
+            return popup
+        }
+
+    }
+
 
 	XioUi = function(endpoint,handler) {
 
@@ -149,6 +226,7 @@
         this.tag = function(tagname) {
             return this._tags.get(tagname)
         }
+        this.ui = new AppUi(this)
         this.cache = {}
         this._loaded = {}
         
@@ -749,41 +827,7 @@
             return this.render('/'+path.slice(1))
         
     }
-    XioUi.prototype.confirm = function (config) {
-        alert('confirm '+config.title)
-        var d = $.Deferred(); 
-
-        //var template = doc.querySelector('#template-transaction-confirmation');
-        //var html = $(template).render({})
-        //$('#appmodal').html(html)
-        /*
-        try {
-            if (config.title)
-                $('#appmodal .modal-title').text(config.title)
-            if (config.description)
-                $('#appmodal .modal-body p.description').html(config.description)
-            if (config.amount)
-                $('#appmodal .modal-body p.amount').html(config.amount.label)
-            
-            $('#modalCancel').unbind().click(function() {
-                d.reject(false);
-            })
-            $('#modalConfirm').unbind().click(function() {
-                $('#appmodal').modal('hide');
-                d.resolve(true);
-            })
-
-            $('#appmodal').modal('show')
-            alert($('#appmodal'))
-        } catch(e) {
-            alert(e)
-            d.resolve(true);
-        }
-        */
-        d.resolve(true);
-        return d.promise()
-        
-    }
+    
     XioUi.prototype.render = function (path,data) {
 
         var self = this
