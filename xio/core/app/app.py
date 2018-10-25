@@ -301,9 +301,6 @@ class App(peer.Peer):
                     else:
                         log.warning('unable to load service', service)
 
-        # www/xio/sdk
-        sdkdir = os.path.dirname(os.path.realpath(xio.__file__)) + '/www/sdk'
-        self.bind('www/xio/sdk', resource.DirectoryHandler(sdkdir))
         # www/xio/admin
         try:
             from xio.core.app.ext.admin.app import app as adminapp
