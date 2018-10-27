@@ -156,6 +156,9 @@ class Node(App):
         # why this line ?
         #req.path = self.path +'/'+ req.path if self.path else req.path
 
+        if req.path == 'favicon.ico':
+            return
+
         self.log.info('NODE.RENDER', req)
         self.log.info(req.headers)
 

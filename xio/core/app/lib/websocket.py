@@ -94,7 +94,7 @@ class WebsocketService:
         def _createsession(*args, **kwargs):
             wsSession = _WebSocketSession(self, *args, **kwargs)
             return wsSession
-            
+
         print('websockets running ... port=', self.port)
         server = WSGIServer(('localhost', self.port), WebSocketWSGIApplication(handler_cls=_createsession))
         server.serve_forever()
@@ -380,4 +380,5 @@ class WebsocketSession:
                     'headers': response.headers,
                     'content': response.content
                 }
+                print('...SEND RESPONSE', msg)
                 self._send(json.dumps(msg, default=str))
