@@ -186,7 +186,7 @@ class Container(db.Item):
                 try:
                     self._containers.node.register(self.endpoint)
                 except Exception as err:
-                    xio.log.error('unable to register containers endpoint', err)
+                    xio.log.error('unable to register containers endpoint ', self.endpoint, err)
 
             else:
                 xio.log.warning('container not running, try to restart it ', self.iname)
@@ -233,7 +233,11 @@ class Container(db.Item):
 
     @workflowOperation
     def build(self):
-
+        dockercontainer = self._docker.container(name=self.cname)
+        if dockercontainer:
+            dockercontainer.stop()
+            dockercontainer.remove()
+            
         if self.dockerfile:
             print('building ...', self.id)
 
@@ -293,7 +297,6 @@ class Container(db.Item):
         """
 
         portmapping = dockercontainer.about().get('port')  # receive {32776: 8080}
-        print(dockercontainer.about())
         for k, v in portmapping.items():
             if v == cport:
                 self.endpoint = 'http://127.0.0.1:%s' % k
@@ -302,6 +305,10 @@ class Container(db.Item):
         assert self.endpoint
 
         self.state = 'running'
+
+    def test(self):
+        dockercontainer = self._docker.container(self.cname)
+        return dockercontainer.exec('python -m unittest app/tests.py')
 
     def logs(self):
         dockercontainer = self._docker.container(self.cname)

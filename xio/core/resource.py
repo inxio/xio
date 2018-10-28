@@ -565,6 +565,7 @@ class Resource(object):
         mapping = {
             'integer': int,
             'float': float,
+            'text': str
             #'date':
         }
 
