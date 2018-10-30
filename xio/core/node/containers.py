@@ -268,6 +268,8 @@ class Container(db.Item):
             assert self.iname
             assert self.directory
 
+            container_volume = '/apps/data/%s' % self.cname
+
             info = {
                 'name': self.cname,
                 'image': self.iname,
@@ -278,6 +280,7 @@ class Container(db.Item):
                 'volumes': {
                     '/apps/xio': '/apps/xio',
                     self.directory: '/apps/app',
+                    container_volume: '/data'
                 }
             }
             dockercontainer = self._docker.run(**info)
