@@ -7,4 +7,4 @@ pipelines:
         caches:
           - pip
         script:
-          - python setup.py
+          - python setup.py install
