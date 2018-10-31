@@ -240,7 +240,7 @@ def handleAuth(func):  # move to peer ??
         # resource requirements
         if not self.__CLIENT__:
 
-            if req.fullpath.startswith('admin'):
+            if req.fullpath.startswith('xio/admin'):
                 print('===handleAuth2')
                 req.require('auth', 'xio/ethereum')
                 req.require('scope', 'admin')

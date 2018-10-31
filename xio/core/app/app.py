@@ -271,7 +271,7 @@ class App(peer.Peer):
         """
 
         # build services
-        services = self._about.get('services')
+        services = copy.deepcopy(self._about.get('services'))
         if services:
             log.info('=== LOADING SERVICES ===')
             for service in services:
@@ -302,11 +302,9 @@ class App(peer.Peer):
                         log.warning('unable to load service', service)
 
         # www/xio/admin
-        try:
-            from xio.core.app.ext.admin.app import app as adminapp
-            self.bind('www/xio/admin', adminapp.get('www'))  #
-        except:
-            pass
+        from .admin import enhance
+        self.put('www/xio/admin', None)  # bug if not setted
+        enhance(self)
 
         # create default 'www' (required for ABOUT call which fail if not www)
         if not 'www' in self._children:
@@ -413,7 +411,7 @@ class App(peer.Peer):
                 time.sleep(0.1)
 
     def start(self, use_wsgi=False, **options):
-    
+
         import xio
         http = options.get('http', xio.env.get('http', 8080))
         ws = options.get('ws', xio.env.get('ws'))
@@ -425,7 +423,7 @@ class App(peer.Peer):
             self.put('etc/services/ws', {'port': int(ws)})
         if debug:
             log.setLevel('DEBUG')
-            
+
         self._started = time.time()
 
         for name, res in list(self.get('etc/services')._children.items()):
