@@ -28,7 +28,7 @@ setup(
         "web3",
     ],
     py_modules = ['xio'],
-    scripts=['xio/bin/xio'],
+    #scripts=['xio/bin/xio'],
     license = "MIT",
     zip_safe = False,
     keywords = 'microframework microservices prototyping',
