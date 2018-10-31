@@ -25,6 +25,7 @@ setup(
         "gevent",
         "uwsgi",
         "ws4py",
+        "eth-typing<2",
         "web3",
     ],
     py_modules = ['xio'],
