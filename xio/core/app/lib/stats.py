@@ -54,38 +54,48 @@ import datetime
 
 
 class PythonHandler:
-    
+
     def __init__(self):
         self.data = {}
 
-    def get(self,index):
-        return self.data.get(index,0)
+    def get(self, dt, *args):
+        key = 'xio:stats:%s:%s' % (dt, ':'.join(args))
+        return self.data.get(key, 0)
 
-    def incr(self,index):
-        self.data.setdefault(index,0)
-        self.data[index]+=1
-        return self.data[index]
+    def incr(self, dt, *args):
+        key = 'xio:stats:%s:%s' % (dt, ':'.join(args))
+        self.data.setdefault(key, 0)
+        self.data[key] += 1
+        return self.data[key]
+
+    def select(self):
+        return [{
+            '@id': key,
+            'counter': val
+        } for key, val in self.data.items()]
 
 
 class RedisHandler:
-    
+
     def __init__(self):
         import redis
         self.redis = redis.Redis()
 
-    def get(self,index):
-        key = 'xio:stats:%s' % (':'.join(index))
-        counter = self.redis.get(key) 
+    def get(self, dt, *args):
+        key = 'xio:stats:%s:%s' % (dt, ':'.join(args))
+        counter = self.redis.get(key)
         return counter or 0
 
-    def incr(self,index):
-        key = 'xio:stats:%s' % (':'.join(index))
+    def incr(self, dt, *args):
+        key = 'xio:stats:%s:%s' % (dt, ':'.join(args))
         counter = self.redis.get(key) or 0
-        self.redis.incr(key) 
+        self.redis.incr(key)
         return counter
 
+    def select(self):
+        return self.redis.keys('xio:stats')
 
-__HANDLERS__ =  {
+__HANDLERS__ = {
     'python': PythonHandler,
     'redis': RedisHandler,
 }
@@ -93,57 +103,47 @@ __HANDLERS__ =  {
 
 class StatsService:
 
-    def __init__(self,app,type='auto'):
+    def __init__(self, app, type='auto'):
 
-        if type=='auto':
+        if type == 'auto':
             type = 'redis' if app.redis else 'python'
 
         self.handler = __HANDLERS__.get(type)()
 
-    def get(self,uid):
-        dt1 = datetime.datetime.now().strftime('%y%m%d%H') # hourly
-        index1 = (dt1,uid)
-        return self.handler.get(index1)
+    def select(self):
+        return self.handler.select()
 
-    def incr(self,uid):
-        dt1 = datetime.datetime.now().strftime('%y%m%d%H') # hourly
-        index1 = (dt1,uid)
-        return self.handler.incr(index1)
-        """
+    def incr(self, path):
+        p = path.split('/')
+        dt1 = datetime.datetime.now().strftime('%y%m%d%H')  # hourly
+        dt2 = datetime.datetime.now().strftime('%y%m%d')  # daily
+        dt3 = datetime.datetime.now().strftime('%y%m')  # monthly
+        self.handler.incr(dt1, *p)
+        self.handler.incr(dt2, *p)
+        self.handler.incr(dt3, *p)
+        return True
 
-        dt1 = datetime.datetime.now().strftime('%y%m%d%H') # hourly
-        #dt2 = datetime.datetime.now().strftime('%y%m%d') # daily
-        #dt2 = datetime.datetime.now().strftime('%y%m') # monthly        
-        index1 = md5( path,userid )
-        #print 'putStat???', repr(path),userid,index1
-        #index2 = (userid,path,dt2)
-        #index3 = (userid,path,dt3)
+    def get(self, path):
+        p = path.split('/')
+        dt1 = datetime.datetime.now().strftime('%y%m%d%H')  # hourly
+        dt2 = datetime.datetime.now().strftime('%y%m%d')  # daily
+        dt3 = datetime.datetime.now().strftime('%y%m')  # monthly
+        v1 = self.handler.get(dt1, *p)
+        v2 = self.handler.get(dt2, *p)
+        v3 = self.handler.get(dt3, *p)
+        return {
+            'hourly': v1,
+            'daily': v2,
+            'monthly': v3,
+        }
 
-        stats = self.db.get(index1) or {'count': 0, 'path': path, 'userid': userid}
-        stats['count'] += 1
-        self.db.put(index1,stats)
-        return stats['count']
-        """
-
-
-
-    def __call__(self,req):
-
-        uid = req.path
+    def __call__(self, req):
 
         if req.GET:
-            return self.get(uid)
+            return self.get(req.path)
 
         if req.INCR:
-            return self.incr(uid)
+            return self.incr(req.path)
 
-        if req.POST:
-            return self.incr(req.data.get('path'),req.data.get('userid'))
-
-
-
-
-
-            
-
-
+        if req.SELECT:
+            return self.select()

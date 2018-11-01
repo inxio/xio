@@ -8,9 +8,34 @@ def enhance(app):
     def _(req):
         return app._about
 
-    @app.bind('www/xio/admin/debug')
+    @app.bind('www/xio/admin/info')
     def _(req):
-        return req._debug()
+        import xio
+        from threading import current_thread
+
+        key = req.query.get('key')
+        if key:
+            return key
+
+        result = {
+            'req': req._debug(),
+        }
+        # check env
+        import os
+        envos = dict()
+        for k, v in os.environ.items():
+            envos[k] = v
+
+        result['env'] = {
+            'thread': current_thread(),
+            'os': envos,
+            'xio': xio.context,
+            'req.context': req.context
+        }
+
+        # check redis
+        result['redis'] = app.redis
+        return result
 
     @app.bind('www/xio/admin/services')
     def _(req):
@@ -52,3 +77,18 @@ def enhance(app):
         print(peer)
         method = req.xmethod or req.method
         return peer.request(method, req.path, req.input)
+
+    @app.bind('www/xio/admin/redis')
+    def _(req):
+        import redis
+        r = redis.StrictRedis('localhost')
+        for key in r.keys():
+            row = {
+                '@id': key
+            }
+            yield row
+
+    @app.bind('www/xio/admin/stats')
+    def _(req):
+        service = app.service('stats')
+        return service.select()

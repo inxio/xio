@@ -201,7 +201,7 @@ class HttpService:
                 response.status = 401
                 response.content = ''
             """
-            
+
             # check HTTP 500 traceback
             if response.status == 500 and response.traceback:
                 response.content = response.traceback

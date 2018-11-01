@@ -215,15 +215,15 @@ class Request(object):
                 raise Exception(401, 'scope not allowed')
         elif key == 'quota':
             # get relevant service
-            service = self.service('stats')
-            if service:
-                uid = self.uid()
-                stat = service.get(uid)
-                current = int(stat.content or 0)  # .get('hourly')
-                print('????curent stat', current, value)
-                if current >= value:
-                    raise Exception(429, 'QUOTA EXCEEDED')
-                service.incr(uid)
+            statservice = self.service('stats')
+            if statservice:
+                # v2
+                path = '/'.join(content)
+                stat = statservice.get(path).content
+                hourly = stat.get('hourly')
+                assert hourly < value, Exception(429, 'QUOTA EXCEEDED')
+                assert statservice.incr(path)
+
         else:
             raise Exception('unknow require rule : %s' % key)
 
@@ -363,7 +363,7 @@ class ReqClient:
                 self.id = None
                 self.data = {}
             self.data.setdefault('scope', [])
-            if self.id and xio.env.get('adminuser') == self.id:
+            if self.id and xio.env.get('admin') == self.id:
                 self.data['scope'].append('admin')
 
         self._feedback = req.context.get('feedback')

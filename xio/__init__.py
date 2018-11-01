@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from gevent import monkey; monkey.patch_all() ##############@ TO FIX ! pb segmentationfault
+
 __version__ = "0.0.4"
 
 from .core.env import env, context, __PATH__ as path, register

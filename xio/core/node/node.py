@@ -247,11 +247,11 @@ class Node(App):
             peer = self.peers.get(peerid)
 
             quotas = networkhandler.getUserSubscription(req.client.id, serviceid)
-            pprint(quotas)
             assert quotas, Exception(428)
             assert quotas.get('ttl'), Exception(428)  # check ttl
             #raise Exception(428,'Precondition Required')
             #raise Exception(429,'QUOTA EXCEEDED')
+
             log.info('==== DELIVERY QUOTAS   =====', quotas)
             import json
             req.headers['XIO-quotas'] = json.dumps(quotas)
@@ -267,7 +267,9 @@ class Node(App):
         assert peer, Exception(404)
 
         # checkpoint, handle userid/serviceid registration,stats,quota
-        # req.require('quota',100)
+        profile = 'basic'
+        basestat = (req.client.id, peerid, profile)
+        req.require('quota', 10, basestat)
         userid = req.client.id
         assert userid
 
