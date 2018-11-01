@@ -265,8 +265,9 @@ def handleAuth(func):  # move to peer ??
 
                 # test handling 401/402 -> @handleAuth
                 if resp.status in (401, 403):
-                    print('401 recevied by', self)
+                    
                     auhtenticate = resp.headers.get('WWW-Authenticate')
+                    print('401 (%s) recevied by' % auhtenticate, self)
                     if auhtenticate:
                         scheme = auhtenticate.split(' ').pop(0).split('/').pop()
                         token = peer.key.generateToken(scheme)

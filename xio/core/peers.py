@@ -322,7 +322,10 @@ class PeerClient(Resource):
         if self.endpoint == '~':
             # get client instance from local storage
             endpoint = self.peers.localresources.get(self.uid).get('endpoint')
-            client = xio.client(endpoint, context)
+        else:
+            endpoint = self.endpoint
+
+        client = xio.client(endpoint, context)
 
         try:
             res = client.request(req.method, req.path, data=req.data, query=req.query, headers=req.headers)

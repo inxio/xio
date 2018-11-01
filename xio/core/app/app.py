@@ -529,14 +529,9 @@ class App(peer.Peer):
         print('...wsgi call stop')
         return result
 
-    def service(self, name, config=None):
-        if config == None:
-            # service = self.resource('services/%s' % name) ###### BUG ! return node
-            service = self.get('services/%s' % name)
-            return service
-        else:
-            service = self.put('services/%s' % name, config)
-        return service
+    def service(self, name):
+        self.debug()
+        return self.os.get('services').get(name)
 
     def schedule(self, *args, **kwargs):
 

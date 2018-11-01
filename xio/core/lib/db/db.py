@@ -34,7 +34,7 @@ except:
 
 def db(name=None,type='python',params=None):
     cls = __HANDLERS__.get(type)
-    assert cls
+    assert cls, 'no handler for dbtype %s ' % type
     params = params or {}
     return Db(name,cls,params) 
 

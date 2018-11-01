@@ -24,7 +24,7 @@ class Containers:
         # warning, services may be unavalable yet (required full app/init or app/start)
 
         self.docker = node.service('docker').content  # skip resource wrapper
-
+        assert self.docker
         self.ipfs = node.service('ipfs')  # pb ipfs is under network.ipfs (not a os.service)
         db = db or xio.db()
         self.db = db.container('containers')  # , factory=Container => pb for Containers arg
@@ -62,7 +62,7 @@ class Containers:
             name = container.name
             # find port 8080
             for k, v in container.ports.items():
-                if v == 8080:
+                if v == 80:
                     # look like deliverable container
                     http_endpoint = 'http://127.0.0.1:%s' % k
 
@@ -72,7 +72,7 @@ class Containers:
 
                     try:
                         print('REGISTER', http_endpoint)
-                        #self.node.register( http_endpoint )
+                        self.node.register(http_endpoint)
                     except Exception as err:
                         #import traceback
                         # traceback.print_exc()
@@ -81,6 +81,9 @@ class Containers:
         return running_endpoints
 
     def sync(self):
+
+        # resync from currents running docker containers
+        self.resync()
 
         # fetch container to provide
         try:
@@ -237,7 +240,7 @@ class Container(db.Item):
         if dockercontainer:
             dockercontainer.stop()
             dockercontainer.remove()
-            
+
         if self.dockerfile:
             print('building ...', self.id)
 

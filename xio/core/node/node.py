@@ -67,12 +67,12 @@ class Node(App):
 
         # service docker
         from .lib.docker.service import DockerService
-        self.put('services/docker', DockerService(self))
+        self.os.put('services/docker', DockerService(self))
 
         # service dht
         if hasattr(networkhandler, 'dht'):
             self.dht = networkhandler.dht
-            self.put('services/dht', self.dht)
+            self.os.put('services/dht', self.dht)
 
         # service memdb
         import xio
@@ -81,7 +81,7 @@ class Node(App):
         else:
             memdb = xio.db()
 
-        self.put('services/db', memdb)
+        self.os.put('services/db', memdb)
 
         # fix peers (default python handler)
         from xio.core.peers import Peers

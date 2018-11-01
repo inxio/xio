@@ -195,11 +195,13 @@ class HttpService:
 
             import inspect
 
+            """ 403 mean forbiden so confusion 
             if response.status == 403:
-                response.headers['WWW-Authenticate'] = 'Basic realm="myrealm"'
+                response.headers['WWW-Authenticate'] = 'Basic realm="myrealm?"'
                 response.status = 401
                 response.content = ''
-
+            """
+            
             # check HTTP 500 traceback
             if response.status == 500 and response.traceback:
                 response.content = response.traceback
