@@ -89,6 +89,7 @@ class XrnResourceHandler:
         import xio
         user = req.client.peer or xio.context.user
         network = xio.context.node or xio.context.network
+        assert network
         if not self.client or user != self.user or network != self.network:
             self.user = user
             self.network = network

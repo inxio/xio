@@ -203,7 +203,9 @@ class Node(App):
                 if req.client.peer:
                     about['user'] = {'id': req.client.peer.id}
                 return about
-
+            elif req.CHECK:
+                req.require('scope', 'admin')
+                return self._handleCheck(req)
             elif req.REGISTER:
                 endpoint = req.data.get('endpoint', req.context.get('REMOTE_ADDR').split(':').pop())  # '::ffff:127.0.0.1'
                 if not '://' in endpoint:

@@ -530,8 +530,8 @@ class App(peer.Peer):
         return result
 
     def service(self, name):
-        self.debug()
-        return self.os.get('services').get(name)
+        service = self.os.get('services').get(name)
+        return service
 
     def schedule(self, *args, **kwargs):
 

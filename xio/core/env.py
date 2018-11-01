@@ -40,8 +40,10 @@ class Context(dict):
             assert self.user.id
 
             # SETUP DEFAULT XIO ENDPOINT
-            network_uri = config.get('network', xioenvdefault.get('network'))
-            self.network = xio.network(network_uri)
+            network_uri = config.get('network') or env.get('network') or xioenvdefault.get('network')
+            node_uri = config.get('node') or env.get('node') or xioenvdefault.get('node')
+            uri = node_uri or network_uri
+            self.network = xio.network(uri) if uri else None
         except Exception as err:
             pass
 
@@ -105,15 +107,16 @@ __PATH__ = []
 __LOCAL_APPS__ = {}
 
 
-def register(xrn,app):
+def register(xrn, app):
     assert xrn.startswith('xrn:')
-    print ('..registering local app', xrn,app)
+    print('..registering local app', xrn, app)
     __LOCAL_APPS__[xrn] = app
+
 
 def resolv(uri):
     if uri in __LOCAL_APPS__:
-        return (__LOCAL_APPS__.get(uri),None)
-        
+        return (__LOCAL_APPS__.get(uri), None)
+
     info = urlparse(uri)
     scheme = info.scheme
     netloc = info.netloc

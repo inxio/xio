@@ -30,6 +30,8 @@ is_string = utils.is_string
 
 ABOUT_APP_PUBLIC_FIELDS = ['description', 'links', 'provide', 'configuration', 'links', 'profiles', 'network', 'methods', 'options', 'resources', 'scope']
 
+RESOURCES_DEFAULT_ALLOWED_OPTIONS = ['ABOUT', 'CHECK', 'API']
+
 
 def client(*args, **kwargs):
     res = resource(*args, **kwargs)
@@ -265,7 +267,7 @@ def handleAuth(func):  # move to peer ??
 
                 # test handling 401/402 -> @handleAuth
                 if resp.status in (401, 403):
-                    
+
                     auhtenticate = resp.headers.get('WWW-Authenticate')
                     print('401 (%s) recevied by' % auhtenticate, self)
                     if auhtenticate:
@@ -416,6 +418,9 @@ class Resource(object):
     def about(self, *args, **kwargs):
         return self.request('ABOUT', *args, **kwargs)
 
+    def check(self, *args, **kwargs):
+        return self.request('CHECK', *args, **kwargs)
+
     def api(self, *args, **kwargs):
         return self.request('API', *args, **kwargs)
 
@@ -559,7 +564,7 @@ class Resource(object):
             return req.PASS
 
         if not req.path and not req.OPTIONS and options:
-            assert method in options, Exception(405)
+            assert (method in options) or (method in RESOURCES_DEFAULT_ALLOWED_OPTIONS), Exception(405)
 
         # step3 : CHECK INPUT
         params = self._about.get('methods', {}).get(method, {}).get('input', {}).get('params', [])
@@ -629,6 +634,9 @@ class Resource(object):
 
         if method == 'ABOUT':
             return self._handleAbout(req)
+
+        if method == 'CHECK':
+            return self._handleCheck(req)
 
         if method == 'TEST':
             return self._handleTest(req)
@@ -781,6 +789,16 @@ class Resource(object):
             about['resources'][childname] = {}
 
         return about
+
+    def _handleCheck(self, req):
+        check = True
+        if self.os:
+            result = {}
+            for name, service in self.os.get('services')._children.items():
+                res = service.check()
+                result[name] = res.status
+        assert check, 'CHECK FAIL'
+        return result
 
     def _handleApi(self, req):
 
