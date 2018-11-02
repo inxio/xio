@@ -79,11 +79,15 @@ def fixAbout(about):
     pprint(about)
     print('=============')
     """
-
     # setup required keys
     options = about.pop('options', [])
     if not isinstance(options, list):
         options = [o.strip().upper() for o in options.split(',')]
+
+    # mod proxy for dynamic about (forward all to handler + skip check method/input)
+    if '*' in options:
+        about['proxy'] = True
+        options = RESOURCES_DEFAULT_ALLOWED_OPTIONS
 
     # fix scope
     scope = about.pop('scope', [])
@@ -137,22 +141,30 @@ def fixAbout(about):
 
 
 def extractAbout(h):
-    about = h if isinstance(h, dict) else {}
-    if not about:
-        import yaml
-        about = {}
-        docstring = h.__doc__ if h and not is_string(h) and isinstance(h, collections.Callable) else h
+    about = {}
+    if isinstance(h, str) and h.startswith('/'):
+        if os.path.isfile(h):
+            with open(h) as f:
+                raw = f.read()
+            about = yaml.load(raw)
+    else:
+        about = h if isinstance(h, dict) else {}
+        if not about:
+            about = {}
+            docstring = h.__doc__ if h and not is_string(h) and isinstance(h, collections.Callable) else h
 
-        if docstring and is_string(docstring):  # warning if h is open file !
-            try:
-                about = yaml.load(docstring)
-                assert isinstance(about, dict)
-                version = about.get('version')
-                if not version:
-                    print('DEPRECIATED ABOUT')
-                    assert 'type' in about or 'implement' in about or 'methods' in about or 'options' in about or 'resources' in about or 'description' or 'cache' in about  # a virer !
-            except Exception as err:
-                about = {}
+            if docstring and is_string(docstring):  # warning if h is open file !
+                print('==========>', docstring)
+                try:
+                    about = yaml.load(docstring)
+                    assert isinstance(about, dict)
+                    version = about.get('version')
+                    if not version:
+                        print('DEPRECIATED ABOUT')
+                        assert 'type' in about or 'implement' in about or 'methods' in about or 'options' in about or 'resources' in about or 'description' or 'cache' in about  # a virer !
+                except Exception as err:
+                    print('ERROR', err)
+                    about = {}
 
     return fixAbout(about)
 
@@ -563,35 +575,41 @@ class Resource(object):
         if not req.path and req.ABOUT and options and not 'ABOUT' in options:
             return req.PASS
 
-        if not req.path and not req.OPTIONS and options:
-            assert (method in options) or (method in RESOURCES_DEFAULT_ALLOWED_OPTIONS), Exception(405)
+        # step3: if not proxy mod check method and input
+        mod_proxy = self._about.get('proxy', False)
 
-        # step3 : CHECK INPUT
-        params = self._about.get('methods', {}).get(method, {}).get('input', {}).get('params', [])
-        mapping = {
-            'integer': int,
-            'float': float,
-            'text': str
-            #'date':
-        }
+        if not mod_proxy:
 
-        for param in params:
-            name = param.get('name')
-            paramtype = param.get('type')
-            required = param.get('required')
-            default = param.get('default')
-            pattern = param.get('pattern')
-            value = req.input.get(name)
+            if not req.path and not req.OPTIONS and options:
+                print('about', self._about)
+                assert (method in options) or (method in RESOURCES_DEFAULT_ALLOWED_OPTIONS), Exception(405)
 
-            # check required
-            assert value or not required, Exception(400, 'Missing required parameter : %s' % name)
-            # check type
-            assert not paramtype or value == None or isinstance(value, mapping.get(paramtype)), Exception(400, 'Wrong datatype parameter : %s' % name)
-            # check pattern
-            if pattern and value:
-                import re
-                rpattern = re.compile(pattern)
-                assert re.match(rpattern, value), Exception(400, 'Wrong format parameter : %s' % name)
+            # step3 : CHECK INPUT
+            params = self._about.get('methods', {}).get(method, {}).get('input', {}).get('params', [])
+            mapping = {
+                'integer': int,
+                'float': float,
+                'text': str
+                #'date':
+            }
+
+            for param in params:
+                name = param.get('name')
+                paramtype = param.get('type')
+                required = param.get('required')
+                default = param.get('default')
+                pattern = param.get('pattern')
+                value = req.input.get(name)
+
+                # check required
+                assert value or not required, Exception(400, 'Missing required parameter : %s' % name)
+                # check type
+                assert not paramtype or value == None or isinstance(value, mapping.get(paramtype)), Exception(400, 'Wrong datatype parameter : %s' % name)
+                # check pattern
+                if pattern and value:
+                    import re
+                    rpattern = re.compile(pattern)
+                    assert re.match(rpattern, value), Exception(400, 'Wrong format parameter : %s' % name)
 
         result = self._handler(req)
 

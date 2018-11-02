@@ -4,6 +4,20 @@
 
 def enhance(app):
 
+    @app.bind('www/xio/admin/bin')
+    def _(req):
+        for cmd, res in app.os.get('bin')._children.items():
+            yield {
+                'name': cmd,
+                'about': res._about
+            }
+
+    @app.bind('www/xio/admin/bin/:cmd')
+    def _(req):
+        cmd = req.context.get(':cmd')
+        handler = app.os.get('bin').get(cmd)
+        return handler.request(req)
+
     @app.bind('www/xio/admin/about')
     def _(req):
         return app._about
@@ -65,9 +79,8 @@ def enhance(app):
     @app.bind('www/xio/admin/peers/:id')
     def _(req):
         """
-        options: ABOUT,GET  
+        options: "*"
         """
-        # need to force ABOUT
 
         print('===============', req)
         peerid = req.context.get(':id')

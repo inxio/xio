@@ -638,36 +638,38 @@ class App(peer.Peer):
 
         elif args.cmd == 'get':
 
-            h = self.get('bin/%s' % cmd)
+            path = param1 or ''
+
+            h = getattr(self, method)
+            res = h(path)
+            print(type(res.content))
+            print()
+            print('_' * 30)
+            print()
+            print('\trequest:\t', method, repr(path or '/'))
+            print('\tresponse:\t', res)
+            print('\tresponse code:\t', res.status)
+            print('\tresponse headers:\t')
+            for k, v in list(res.headers.items()):
+                print('\t\t', k, ':', v)
+            print('\tresponse type:\t', res.content_type)
+            print('\tcontent:\t', res.content)
+            print()
+
+            if isinstance(res.content, list) or isinstance(res.content, dict):
+                pprint(res.content)
+            else:
+                print(str(res.content)[0:500])
+
+            print()
+
+        elif args.cmd:
+
+            h = self.os.get('bin/%s' % args.cmd)
             if h.content:
                 print('=====> bin', cmd,  h.content, args[2:])
                 res = h(xio.request('POST', '', data={'args': args[2:]}))
                 pprint(res)
-            else:
 
-                path = param1 or ''
-
-                h = getattr(self, method)
-                res = h(path)
-                print(type(res.content))
-                print()
-                print('_' * 30)
-                print()
-                print('\trequest:\t', method, repr(path or '/'))
-                print('\tresponse:\t', res)
-                print('\tresponse code:\t', res.status)
-                print('\tresponse headers:\t')
-                for k, v in list(res.headers.items()):
-                    print('\t\t', k, ':', v)
-                print('\tresponse type:\t', res.content_type)
-                print('\tcontent:\t', res.content)
-                print()
-
-                if isinstance(res.content, list) or isinstance(res.content, dict):
-                    pprint(res.content)
-                else:
-                    print(str(res.content)[0:500])
-
-                print()
         else:
             self.debug()

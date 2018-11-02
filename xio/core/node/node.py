@@ -269,7 +269,7 @@ class Node(App):
         # checkpoint, handle userid/serviceid registration,stats,quota
         profile = 'basic'
         basestat = (req.client.id, peerid, profile)
-        req.require('quota', 10, basestat)
+        req.require('quota', 1000, basestat)
         userid = req.client.id
         assert userid
 
