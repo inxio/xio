@@ -150,7 +150,7 @@ class Node(App):
 
     def renderWww(self, req):
         """
-        options: ABOUT
+        options: ABOUT,GET
         """
 
         # why this line ?
