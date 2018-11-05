@@ -142,7 +142,7 @@ class Peers:
             return peer
 
         # lookup by xrn
-        if index.startswith('xrn:'):
+        if index.startswith(b'xrn:'):
             rows = self.select(name=index)
             return rows[0] if rows else None
 

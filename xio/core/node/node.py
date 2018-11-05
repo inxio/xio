@@ -179,21 +179,23 @@ class Node(App):
 
             # handle network resources listings
             if req.GET:
-                # node peers
-                peers = [peer.about().content for peer in self.peers.select()]
-                return peers
-                """
 
-                peers =  [ peer.about().content for peer in self.peers.select() ]
+                # node peers
+                #peers = [peer.about().content for peer in self.peers.select()]
+                # return peers
+
+                peers = [peer.about().content for peer in self.peers.select()]
                 resources = []
-                rows = self.networkhandler.getResources(req.client.id)
+                rows = self.networkhandler.getUserResources(req.client.id)
                 for row in rows:
                     xrn = row.get('name')
                     peer = self.peers.get(xrn)
                     row['available'] = bool(peer)
-                    resources.append( row )
+                    row['subscription'] = self.networkhandler.getUserSubscription(req.client.id, row['id'])
+                    if row['subscription']['ttl']:
+                        resources.append(row)
                 return resources
-                """
+
             elif req.ABOUT:
 
                 about = self._handleAbout(req)
