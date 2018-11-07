@@ -57,9 +57,9 @@ if __name__ == '__main__':
 
     if action=='init':
 
-        seed = raw_input('seed (leave blank for automatic generation): ')
-        password = raw_input('password : ') or ''
-        network = raw_input('network : ') or ''
+        seed = input('seed (leave blank for automatic generation): ')
+        password = input('password : ') or ''
+        network = input('network : ') or 'http://127.0.0.1:8080'
         
         user = xio.user(seed=seed)
 
@@ -67,7 +67,7 @@ if __name__ == '__main__':
         data['id'] = user.id
         data['token'] = user.token
         data['key'] = user.key.encrypt(password)
-        data['network'] = 'http://127.0.0.1:8080'
+        data['network'] = network 
 
         setDefaultEnv(data)
         sys.exit()

@@ -125,7 +125,6 @@ class Peers:
             'type': peertype.lower(),
             'status': 200
         }
-        pprint(data)
         self.put(uid, data)
         return self.get(uid)
 
@@ -142,7 +141,7 @@ class Peers:
             return peer
 
         # lookup by xrn
-        if index.startswith(b'xrn:'):
+        if str(index).startswith('xrn:'):
             rows = self.select(name=index)
             return rows[0] if rows else None
 

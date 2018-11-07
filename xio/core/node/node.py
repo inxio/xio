@@ -183,13 +183,11 @@ class Node(App):
                 # node peers
                 #peers = [peer.about().content for peer in self.peers.select()]
                 # return peers
-
-                peers = [peer.about().content for peer in self.peers.select()]
                 resources = []
                 rows = self.networkhandler.getUserResources(req.client.id)
                 for row in rows:
-                    xrn = row.get('name')
-                    peer = self.peers.get(xrn)
+                    appid = row.get('service').get('provider')
+                    peer = self.peers.get(appid)
                     row['available'] = bool(peer)
                     row['subscription'] = self.networkhandler.getUserSubscription(req.client.id, row['id'])
                     if row['subscription']['ttl']:
@@ -258,6 +256,7 @@ class Node(App):
             import json
             req.headers['XIO-quotas'] = json.dumps(quotas)
 
+            log.info('==== DELIVERY PROVIDER   =====', peerid)
             """    
             # fallback about for peer not registered
             if req.ABOUT and not p and not peer:
