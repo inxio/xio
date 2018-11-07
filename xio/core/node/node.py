@@ -188,6 +188,7 @@ class Node(App):
                 for row in rows:
                     appid = row.get('service').get('provider')
                     peer = self.peers.get(appid)
+                    print('===== appid', appid, peer)
                     row['available'] = bool(peer)
                     row['subscription'] = self.networkhandler.getUserSubscription(req.client.id, row['id'])
                     if row['subscription']['ttl']:

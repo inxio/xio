@@ -30,7 +30,7 @@ is_string = utils.is_string
 
 ABOUT_APP_PUBLIC_FIELDS = ['description', 'links', 'provide', 'configuration', 'links', 'profiles', 'network', 'methods', 'options', 'resources', 'scope']
 
-RESOURCES_DEFAULT_ALLOWED_OPTIONS = ['ABOUT', 'CHECK', 'API']
+RESOURCES_DEFAULT_ALLOWED_OPTIONS = ['HEAD', 'ABOUT', 'CHECK', 'API']
 
 
 def client(*args, **kwargs):
