@@ -34,56 +34,55 @@ class Connector:
     WEB3VERSION = WEB3VERSION
     OLDWEB3VERSION = WEB3VERSION < 4
 
-    def __init__(self,network='local',user=None):
+    def __init__(self, network='local', user=None):
 
         from web3 import Web3, HTTPProvider
         print(network)
-        if network=='local':
+        if network == 'local':
             endpoint = ETH_DEFAULT_ENDPOINT
-        elif network=='ropsten':
+        elif network == 'ropsten':
             endpoint = 'https://ropsten.infura.io/'
-        elif network=='mainnet':
+        elif network == 'mainnet':
             endpoint = 'https://mainnet.infura.io/'
         else:
             endpoint = network
 
         self.endpoint = endpoint
         self.web3 = Web3(HTTPProvider(self.endpoint))
-        
+
         try:
             self.web3.eth.enable_unaudited_features()
         except:
-            pass # old version ?    
+            pass  # old version ?
         try:
             # tofix : prevent no endpoint availbale
             self.network = self.web3.version.network
             self.gasprice = self.web3.eth.gasPrice
-            self.blockNumber = self.web3.eth.gasPrice
+            self.blockNumber = self.web3.eth.blockNumber
         except:
             pass
         self._defaultaccount = self.account(user) if user else None
-        
-        
-    def account(self,*args,**kwargs):
-        if args and hasattr(args[0],'key'):
+
+    def account(self, *args, **kwargs):
+        if args and hasattr(args[0], 'key'):
             user = args[0]
             account = user.key.account('ethereum')
-            account.ethereum = self # need to use copy or regenrate new account
+            account.ethereum = self  # need to use copy or regenrate new account
             return account
-        return Account(self,*args,**kwargs)
-         
-    def contract(self,**kwargs):
-        kwargs.setdefault('account',self._defaultaccount)
-        return Contract(self,**kwargs)
+        return Account(self, *args, **kwargs)
 
-    def getBalance(self,address):
+    def contract(self, **kwargs):
+        kwargs.setdefault('account', self._defaultaccount)
+        return Contract(self, **kwargs)
+
+    def getBalance(self, address):
         return self.web3.eth.getBalance(address)
 
-    def transactions(self,address=None,filter=None):
+    def transactions(self, address=None, filter=None):
         if self.OLDWEB3VERSION:
-            filter = {'fromBlock': 'earliest', 'toBlock': 'latest', 'address': address} #,'address': self.address
+            filter = {'fromBlock': 'earliest', 'toBlock': 'latest', 'address': address}  # ,'address': self.address
             return self.web3.eth.filter(filter).get(only_changes=False)
-            #return []
+            # return []
 
     def about(self):
         about = {
@@ -92,16 +91,14 @@ class Connector:
             'blockNumber': self.web3.eth.blockNumber,
             'gasPrice': self.web3.eth.gasPrice,
             'coinbase': self.web3.eth.coinbase,
-        }      
-        return about    
+        }
+        return about
 
-    def transaction(self,data):
-        return Transaction(self,data)
+    def transaction(self, data):
+        return Transaction(self, data)
 
-
-
-    def sendRawTransaction(self,raw):
-        tx = self.web3.eth.sendRawTransaction(raw) 
+    def sendRawTransaction(self, raw):
+        tx = self.web3.eth.sendRawTransaction(raw)
         return tx
         """    
         # not ready for parsing response/logs 
@@ -110,11 +107,10 @@ class Connector:
         pprint(dict(log))
         """
 
-        
 
 class Transaction:
 
-    def __init__(self,ethereum,data):
+    def __init__(self, ethereum, data):
         self.ethereum = ethereum
         self.web3 = self.ethereum.web3
         self.data = data or {}
@@ -125,32 +121,31 @@ class Transaction:
             'nonce': self.web3.eth.getTransactionCount(data.get('from')),
             'gasPrice': self.web3.eth.gasPrice
         })
-        data.setdefault('value',0)
+        data.setdefault('value', 0)
         self.raw = None
-        
-        
-    def sign(self,key):
 
-        from xio.core.lib.utils import decode_hex,to_bytes
+    def sign(self, key):
+
+        from xio.core.lib.utils import decode_hex, to_bytes
 
         if self.ethereum.OLDWEB3VERSION:
             import rlp
             from ethereum.transactions import Transaction
 
             # ethereum.transactions not check if data is already 0x.. encoded
-            data = self.data.get('data') # '0x...'
-            data = bytes( decode_hex(data[2:]) )
+            data = self.data.get('data')  # '0x...'
+            data = bytes(decode_hex(data[2:]))
 
             tx = Transaction(
-                nonce       = self.data.get('nonce'),
-                gasprice    = self.data.get('gasPrice'),
-                startgas    = self.data.get('gas'),
-                to          = self.data.get('to'),
-                value       = self.data.get('value'),
-                data        = data,
+                nonce=self.data.get('nonce'),
+                gasprice=self.data.get('gasPrice'),
+                startgas=self.data.get('gas'),
+                to=self.data.get('to'),
+                value=self.data.get('value'),
+                data=data,
             )
             #key = b'b26c4bf3a911c0eaafaedee9ce3ba2c7cf3fa4988eccdafc9fa908ab1e7e7c33'
-            #pprint(tx.to_dict())
+            # pprint(tx.to_dict())
             tx.sign(key)
             raw_tx = rlp.encode(tx)
             raw_tx_hex = self.ethereum.web3.toHex(raw_tx)
@@ -158,14 +153,10 @@ class Transaction:
         else:
             # http://web3py.readthedocs.io/en/latest/web3.eth.account.html
             key = decode_hex(key)
-            signed = self.web3.eth.account.signTransaction(self.data,key)
+            signed = self.web3.eth.account.signTransaction(self.data, key)
             self.raw = signed.get('rawTransaction')
-
 
         return self.raw
 
-
     def send(self):
-        return self.ethereum.sendRawTransaction(self.raw)  
-        
-
+        return self.ethereum.sendRawTransaction(self.raw)
