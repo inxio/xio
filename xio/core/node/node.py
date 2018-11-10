@@ -186,7 +186,7 @@ class Node(App):
                 resources = []
                 rows = self.networkhandler.getUserResources(req.client.id)
                 for row in rows:
-                    appid = row.get('service').get('provider')
+                    appid = row.get('provider')
                     peer = self.peers.get(appid)
                     print('===== appid', appid, peer)
                     row['available'] = bool(peer)
@@ -244,7 +244,7 @@ class Node(App):
             assert service, Exception(404)
 
             serviceid = service.get('id')
-            peerid = service.get('service').get('provider')
+            peerid = service.get('provider')
             peer = self.peers.get(peerid)
 
             quotas = networkhandler.getUserSubscription(req.client.id, serviceid)
