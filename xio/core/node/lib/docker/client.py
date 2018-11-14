@@ -71,6 +71,9 @@ class Docker:
         assert iname and cname
 
         env = info.get('env', {})
+        if isinstance(env,str):
+            import docker.utils
+            env = docker.utils.parse_env_file(info.get('env'))
 
         ports = {}
         for key, val in info.get('ports', {}).items():

@@ -56,7 +56,6 @@ class Node(App):
         # SERVER NODE ONLY - this node need to publish stuff to network (dht mainly)
         # networkhandler sync ===> server context only
         try:
-
             networkhandler = self.network._handler.handler._handler
             self._about['network'] = networkhandler.about()
 

@@ -165,6 +165,7 @@ class App(peer.Peer):
         self.endpoint = None
         self._started = None
         self.log = log
+        self._events = {}
 
         self.init()
 
@@ -410,9 +411,27 @@ class App(peer.Peer):
             while True:
                 time.sleep(0.1)
 
+    def uwsgi(self):
+        """
+        run app in uwsgi thread
+        return app as wsgi application
+        usage :  uwsgi --python --module app:uwsgi()
+        """
+        import uwsgidecorators
+
+        @uwsgidecorators.postfork
+        @uwsgidecorators.thread
+        def _run():
+            self.run()
+
+        return self
+
     def start(self, use_wsgi=False, **options):
 
         import xio
+
+        self.emit('start')
+
         http = options.get('http', xio.env.get('http', 8080))
         ws = options.get('ws', xio.env.get('ws'))
         debug = options.get('debug', xio.env.get('debug'))
@@ -460,6 +479,7 @@ class App(peer.Peer):
             except Exception as err:
                 self.log.error('STARTING SERVICE %s FAIL : %s' % (name, err))
 
+        self.emit('started')
         self.debug()
 
     def __call__(self, environ, start_response=None):
@@ -474,39 +494,6 @@ class App(peer.Peer):
             req = environ
             return self.request(req)
 
-        print('...wsgi call', self._started, environ)
-        if not self._started:
-
-            # pb because app was not started (uwsgi case) for this process
-            # need to start app but run.sh already do it (so servers started twice)
-            # so we just init http/ws handlers
-            print('...wsgi start app')
-            self.run(loop=False)
-
-            #import gevent
-            #from gevent import monkey; monkey.patch_all()
-            # gevent.spawn(self.start,use_wsgi=True)
-
-            """
-            from .lib import http
-            self.wsgi_http = http.HttpService(app=self,context=environ)
-
-            from .lib import websocket
-            self.wsgi_ws = websocket.WebsocketService(app=self,context=environ)
-            """
-
-            """
-            #import gevent
-            #gevent.spawn(self.start,use_wsgi=True)
-            self.start(use_wsgi=True)
-            self.wsgi_http = self.get('run/services/http')._handler
-            assert self.wsgi_http 
-            """
-
-        # select handler
-
-        # tofix: self.get make call and self.resource do not return original resource (miss some methode ...)
-
         if environ.get('HTTP_CONNECTION') == 'Upgrade' and environ.get('HTTP_UPGRADE') == 'websocket' and environ.get('HTTP_SEC_WEBSOCKET_KEY'):
             handler = self.get('run/services/ws')._handler
         else:
@@ -518,7 +505,7 @@ class App(peer.Peer):
             self.log.warning('BAD WSGI CTX')
             return None
 
-        # handle
+        # handle error
         try:
             result = handler(environ, start_response)
         except Exception as err:
@@ -544,6 +531,26 @@ class App(peer.Peer):
                 c = args[0]
                 return scheduler.schedule(c, func, *args[1:], **kwargs)
             return _wrapper
+
+    def on(self, *args):
+
+        if len(args) > 1:
+            event, handler = args
+            self._events.setdefault(event, [])
+            self._events[event].append(handler)
+        else:
+            def _(handler):
+                event = args[0]
+                self._events.setdefault(event, [])
+                self._events[event].append(handler)
+            return _
+
+    def emit(self, event, *args, **kwargs):
+        for handler in self._events.get(event, []):
+            try:
+                handler(*args, **kwargs)
+            except Exception as err:
+                log.warning('event handler error', err)
 
     def publish(self, topic, *args, **kwargs):
         # to fix,  pb loopback with pubsubservice.publish
@@ -583,8 +590,9 @@ class App(peer.Peer):
         parser.add_argument('--ws', type=int, nargs='?', const=8484, default=None)
         parser.add_argument('--debug', action='store_true')
         parser.add_argument('--network', action='store_true')
+        parser.add_argument('--env', type=str, default=None)
 
-        # add custome env
+        # add custom env
         for k, v in xio.env.items():
             try:
                 parser.add_argument('--' + k, default=v)
@@ -596,6 +604,16 @@ class App(peer.Peer):
         for key, val in options.items():
             xio.env.set(key, val)
 
+        # handler env file
+        if xio.env.get('env'):
+            with open(xio.env.get('env')) as f:
+                for row in f.readlines():
+                    if row.strip() and '=' in row:
+                        try:
+                            key, val = row.split('=')
+                            xio.env.set(key.strip(), val.strip())
+                        except:
+                            log.warning('ENV FILE ERROR', row)
         print()
         print("\tapp=", self)
         print("\tapp=", self.id)
