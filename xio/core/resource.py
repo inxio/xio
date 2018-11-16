@@ -166,7 +166,7 @@ def extractAbout(h):
             docstring = h.__doc__ if h and not is_string(h) and isinstance(h, collections.Callable) else h
 
             if docstring and is_string(docstring):  # warning if h is open file !
-                print('==========>', docstring)
+
                 try:
                     about = yaml.load(docstring)
                     assert isinstance(about, dict)
@@ -714,7 +714,8 @@ class Resource(object):
                 return getattr(self.content, name)
             else:
                 # server fallback ?
-                setattr(self, name, lambda *args, **kwargs: self.request(name.upper(), *args, data=kwargs))
+                #setattr(self, name, lambda *args, **kwargs: self.request(name.upper(), *args, data=kwargs))
+                pass
 
         return object.__getattribute__(self, name)
 

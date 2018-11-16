@@ -153,9 +153,11 @@ class Node(App):
                 rows = self.network.request(req).content
                 for row in rows:
                     appid = row.get('provider')
-                    peer = self.peers.get(appid)
-                    print('===== appid', appid, peer)
-                    row['available'] = bool(peer)
+                    if appid:
+                        peer = self.peers.get(appid)
+                        print('===== appid', appid, peer)
+                        row['available'] = bool(peer)
+                    resources.append(rows)
                 return resources
 
             elif req.ABOUT:
@@ -163,7 +165,7 @@ class Node(App):
                 about = self._handleAbout(req)
                 about['id'] = self.id  # fix id missing
                 if self.network:
-                    about['network'] = self.network.about()
+                    about['network'] = self.network.about().content
                 if req.client.peer:
                     about['user'] = {'id': req.client.peer.id}
                 return about
@@ -207,15 +209,22 @@ class Node(App):
         # check if peerid is a contract serviceid
         if not peer:
 
-            service = self.network.getResource(peerid)
+            service = self.network.get('www/%s' % peerid).content
 
             assert service, Exception(404)
+            assert service.get('id') == peerid
 
+            pprint(service)
             serviceid = service.get('id')
             peerid = service.get('provider')
             peer = self.peers.get(peerid)
 
-            quotas = self.network.getUserSubscription(req.client.id, serviceid)
+            # to fix - surity pb
+            quotas = self.network.request('GET', 'www/user/subscriptions/%s' % serviceid, headers={'Authorization': req.headers.get('Authorization')}).content
+
+            #quotas = self.network.get('www/user/subscriptions/%s' % serviceid).content
+
+            #self.network.getUserSubscription(req.client.id, serviceid)
             assert quotas, Exception(428)
             assert quotas.get('ttl'), Exception(428)  # check ttl
             #raise Exception(428,'Precondition Required')

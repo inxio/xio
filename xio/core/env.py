@@ -86,11 +86,14 @@ class Env:
         # handler env file
         with open(filepath) as f:
             for row in f.readlines():
-                if row.strip() and '=' in row:
+                if row and row.strip() and '=' in row and row.strip().startswith('XIO_'):
                     try:
-                        key, val = row.split('=')
-                        if key.strip().startswith('XIO_'):
-                            self.set(key.strip()[4:], val.strip())
+                        nfo = row.split('=')
+                        key = nfo.pop(0).strip()
+                        val = '='.join(nfo).strip()
+                        if val and val[0]==val[-1] and val[0]in("'",'"'):
+                            val = val[1:-1]
+                        self.set(key[4:], val)
                     except:
                         print('ENV FILE ERROR', row)
 

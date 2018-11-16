@@ -17,14 +17,6 @@ try:
 except Exception as err:
     WEB3VERSION = 0
 
-try:
-    import socket
-    socket.gethostbyname('ethereum')
-    ETHEREUM_ENDPOINT = 'http://ethereum:8545'
-except socket.error:
-    ETHEREUM_ENDPOINT = None
-
-
 import xio
 ETH_DEFAULT_ENDPOINT = xio.env.get('ethereum', 'http://localhost:8545')
 
