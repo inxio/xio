@@ -79,6 +79,21 @@ def setDefaultEnv(data):
 
 class Env:
 
+    def load(self,filepath):
+        """
+        load from .env file
+        """
+        # handler env file
+        with open(filepath) as f:
+            for row in f.readlines():
+                if row.strip() and '=' in row:
+                    try:
+                        key, val = row.split('=')
+                        if key.strip().startswith('XIO_'):
+                            self.set(key.strip()[4:], val.strip())
+                    except:
+                        print('ENV FILE ERROR', row)
+
     def items(self):
         for key, val in context.items():
             if key.startswith('XIO_'):

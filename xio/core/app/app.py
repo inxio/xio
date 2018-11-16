@@ -188,6 +188,9 @@ class App(peer.Peer):
     def load(self):
         module = self.module
         import xio
+        # check env
+        if os.path.isfile(self.directory + '/.env'):
+            xio.env.load(self.directory + '/.env')
         # loading ext first because about can refer on
         if os.path.isdir(self.directory + '/ext'):
 
@@ -226,6 +229,13 @@ class App(peer.Peer):
                 self._tests = 'error'
 
     def init(self):
+
+        # auto inspect
+        for m in dir(self):
+            h = getattr(self, m)
+            if callable(h) and hasattr(h, '__xio_path__'):
+                self.bind(h.__xio_path__, h)
+
         self.redis = False
         try:
             import xio
@@ -605,15 +615,9 @@ class App(peer.Peer):
             xio.env.set(key, val)
 
         # handler env file
-        if xio.env.get('env'):
-            with open(xio.env.get('env')) as f:
-                for row in f.readlines():
-                    if row.strip() and '=' in row:
-                        try:
-                            key, val = row.split('=')
-                            xio.env.set(key.strip(), val.strip())
-                        except:
-                            log.warning('ENV FILE ERROR', row)
+        envfilepath = xio.env.get('env')
+        if envfilepath and os.path.isfile(envfilepath):
+            xio.env.load(envfilepath)
         print()
         print("\tapp=", self)
         print("\tapp=", self.id)

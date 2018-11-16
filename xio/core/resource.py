@@ -69,6 +69,18 @@ def resource(handler=None, context=None, about=None, **kwargs):
     return res
 
 
+def bind(path):
+    """
+    method decorator for auto binding class method to path
+    """
+
+    def _(func):
+        setattr(func, '__xio_path__', path)
+        return func
+
+    return _
+
+
 def getResponse(res, req, func):
     return req.send(lambda req: func(res, req))
 
@@ -707,7 +719,7 @@ class Resource(object):
         return object.__getattribute__(self, name)
 
     def __repr__(self):
-        return '%s #%s %s %s [%s] %s' % (self.__class__.__name__.upper(), id(self), repr(self.path), self._handler or 'nohandler', self.status, str(self.content)[0:50] + '...')
+        return '%s %s #%s %s %s [%s] %s' % ('CLI' if self.__CLIENT__ else '', self.__class__.__name__.upper(), id(self), repr(self.path), self._handler or 'nohandler', self.status, str(self.content)[0:50] + '...')
 
     def __call__(self, *args, **kwargs):
         return self.content(*args, **kwargs)

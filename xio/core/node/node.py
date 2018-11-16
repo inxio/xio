@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #-*- coding: utf-8 -*--
-
+import xio
 from xio.core import resource
 from xio.core.request import Request, Response
 
@@ -51,27 +51,20 @@ class Node(App):
         self.uid = generateuid()
 
         # if network defined we have to connect to it for AUTH handling
+        # to fix ... need to handle node connected to 0x... network or http:/// network
         self.network = self.connect(network) if network else None
+        #self.network = network if network else None
 
-        # SERVER NODE ONLY - this node need to publish stuff to network (dht mainly)
-        # networkhandler sync ===> server context only
         try:
-            networkhandler = self.network._handler.handler._handler
-            self._about['network'] = networkhandler.about()
-
+            self._about['network'] = self.network.about()
         except Exception as err:
-            self.log.warning('networkhandler error', err)
+            self.log.warning('self.network error', err)
 
         self.bind('www', self.renderWww)
 
         # service docker
         from .lib.docker.service import DockerService
         self.os.put('services/docker', DockerService(self))
-
-        # service dht
-        if hasattr(networkhandler, 'dht'):
-            self.dht = networkhandler.dht
-            self.os.put('services/dht', self.dht)
 
         # service memdb
         import xio
@@ -97,31 +90,18 @@ class Node(App):
         node_containers_heartbeat = xio.env.get('node_containers_heartbeat', 300)
         self.schedule(node_containers_heartbeat, self.containers.sync)
 
-        # dht sync
-        node_dht_heartbeat = xio.env.get('node_dht_heartbeat', 300)
-        self.schedule(node_dht_heartbeat, self.syncDht)
-
     def start(self, **kwargs):
         """
-        if networkhandler is object we have to start some services (eg dht)
+        if self.network is object we have to start some services (eg dht)
         network = xio.core.handlers.pythonResourceHandler
         """
 
         App.start(self, **kwargs)
 
-        try:
-            # if exist this node act as a server
-            self.networkhandler = self.network._handler.handler._handler
-        except:
-            # maybe remote network, this node is a client
-            self.networkhandler = None
-
-        if self.networkhandler:
-            self.networkhandler.start(self)
+        # self.network.start(self)
 
         self.containers.sync()
         self.peers.sync()
-        self.syncDht()
 
     def register(self, endpoints):
 
@@ -133,19 +113,6 @@ class Node(App):
 
     def deliver(self, uri):
         return self.containers.deliver(uri)
-
-    def syncDht(self):
-
-        if self.dht and self.dht.dhtd.running:
-            print('=============> SYNC DHT', self.dht)
-
-            # declare node
-            self.dht.put('xrn:xio:node', self.id)
-
-            # declare apps
-            for peer in self.peers.select(type='app'):
-                print(peer)
-                self.dht.put(peer.id, self.id)
 
     def renderWww(self, req):
         """
@@ -167,13 +134,10 @@ class Node(App):
         # require ethereum account based authentication
         req.require('auth', 'xio/ethereum')
 
-        # handle resource REQUEST
-        networkhandler = self.network._handler.handler._handler
-
         # NODE DELIVERY
         if not req.path:
 
-            log.info('==== NODE DELIVERY =====', req.path, req.method, req.xmethod)
+            log.info('==== NODE DELIVERY =====', req.method or req.xmethod, repr(req.path))
             log.info('==== USER =====', req.client.id)
 
             # handle network resources listings
@@ -182,16 +146,16 @@ class Node(App):
                 # node peers
                 #peers = [peer.about().content for peer in self.peers.select()]
                 # return peers
+
                 resources = []
-                rows = self.networkhandler.getUserResources(req.client.id)
+                print(self.network)
+                req.path = 'www'  # bug
+                rows = self.network.request(req).content
                 for row in rows:
                     appid = row.get('provider')
                     peer = self.peers.get(appid)
                     print('===== appid', appid, peer)
                     row['available'] = bool(peer)
-                    row['subscription'] = self.networkhandler.getUserSubscription(req.client.id, row['id'])
-                    if row['subscription']['ttl']:
-                        resources.append(row)
                 return resources
 
             elif req.ABOUT:
@@ -199,7 +163,7 @@ class Node(App):
                 about = self._handleAbout(req)
                 about['id'] = self.id  # fix id missing
                 if self.network:
-                    about['network'] = networkhandler.about()
+                    about['network'] = self.network.about()
                 if req.client.peer:
                     about['user'] = {'id': req.client.peer.id}
                 return about
@@ -229,6 +193,11 @@ class Node(App):
         peerid = p.pop(0)
         assert peerid
 
+        # forward /user to network
+        if peerid == 'user':
+            req.path = 'www/' + req.path
+            return self.network.request(req)
+
         log.info('==== DELIVERY REQUEST =====', req.method, req.xmethod)
         log.info('==== DELIVERY FROM =====', req.client.id)
         log.info('==== DELIVERY TO   =====', peerid)
@@ -238,7 +207,7 @@ class Node(App):
         # check if peerid is a contract serviceid
         if not peer:
 
-            service = networkhandler.getResource(peerid)
+            service = self.network.getResource(peerid)
 
             assert service, Exception(404)
 
@@ -246,7 +215,7 @@ class Node(App):
             peerid = service.get('provider')
             peer = self.peers.get(peerid)
 
-            quotas = networkhandler.getUserSubscription(req.client.id, serviceid)
+            quotas = self.network.getUserSubscription(req.client.id, serviceid)
             assert quotas, Exception(428)
             assert quotas.get('ttl'), Exception(428)  # check ttl
             #raise Exception(428,'Precondition Required')
@@ -260,7 +229,7 @@ class Node(App):
             """    
             # fallback about for peer not registered
             if req.ABOUT and not p and not peer:
-                row = networkhandler.getResource(peerid)
+                row = self.network.getResource(peerid)
                 assert row,404
                 return row
             """
